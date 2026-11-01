@@ -64,3 +64,43 @@ export interface MovimientoKardex {
   documentoReferencia?: string;
   fechaHora: string;
 }
+
+// Modelos para Almacenes Físicos (Isaí Armuto)
+export interface Almacen {
+  id: number;
+  codigo: string;
+  nombre: string;
+  ubicacion?: string;
+  tipo: string;
+  capacidadMaxima: number;
+  ocupacionActual: number;
+  porcentajeOcupacion: number;
+  nivelOcupacion: 'OPTIMO' | 'ALTO' | 'CRITICO';
+  responsable?: string;
+  activo: boolean;
+  version?: number;
+}
+
+export interface AlmacenRequest {
+  codigo: string;
+  nombre: string;
+  ubicacion?: string;
+  tipo?: string;
+  capacidadMaxima: number;
+  ocupacionActual?: number;
+  responsable?: string;
+  activo?: boolean;
+}
+
+// Reporte de Stock Crítico (Isaí Armuto)
+export interface StockCritico {
+  productoId: number;
+  nombreProducto: string;
+  categoria: string;
+  precioUnitario: number;
+  stockActual: number;
+  stockLotesVigentes: number;
+  stockMinimo: number;
+  deficit: number;
+  nivelAlerta: 'AGOTADO' | 'CRITICO' | 'PREVENTIVO' | 'OPTIMO';
+}

@@ -27,6 +27,19 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.CONFLICT, "Conflict", ex.getMessage(), null);
     }
 
+    @ExceptionHandler({
+            org.springframework.orm.ObjectOptimisticLockingFailureException.class,
+            jakarta.persistence.OptimisticLockException.class
+    })
+    public ResponseEntity<Map<String, Object>> handleOptimisticLock(Exception ex) {
+        return buildResponse(
+                HttpStatus.CONFLICT,
+                "Conflict",
+                "Conflicto de concurrencia detectado: el registro fue actualizado simultáneamente por otro operador. Recargue e intente nuevamente.",
+                null
+        );
+    }
+
     @ExceptionHandler(VentaYaAnuladaException.class)
     public ResponseEntity<Map<String, Object>> handleVentaYaAnulada(VentaYaAnuladaException ex) {
         return buildResponse(HttpStatus.CONFLICT, "Conflict", ex.getMessage(), null);

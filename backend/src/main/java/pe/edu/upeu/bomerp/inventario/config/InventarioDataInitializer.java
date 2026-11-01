@@ -8,8 +8,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import pe.edu.upeu.bomerp.catalogo.producto.dto.ProductoResponse;
 import pe.edu.upeu.bomerp.catalogo.producto.service.ProductoService;
+import pe.edu.upeu.bomerp.inventario.dto.AlmacenRequest;
 import pe.edu.upeu.bomerp.inventario.dto.LoteCreateDto;
+import pe.edu.upeu.bomerp.inventario.repository.AlmacenRepository;
 import pe.edu.upeu.bomerp.inventario.repository.LoteRepository;
+import pe.edu.upeu.bomerp.inventario.service.AlmacenService;
 import pe.edu.upeu.bomerp.inventario.service.InventarioService;
 
 import java.math.BigDecimal;
@@ -24,11 +27,60 @@ import java.util.List;
 public class InventarioDataInitializer implements CommandLineRunner {
 
     private final LoteRepository loteRepository;
+    private final AlmacenRepository almacenRepository;
     private final ProductoService productoService;
     private final InventarioService inventarioService;
+    private final AlmacenService almacenService;
 
     @Override
     public void run(String... args) {
+        if (almacenRepository.count() == 0) {
+            log.info("Inicializando almacenes físicos para Agro Peruvian Foods...");
+            almacenService.crear(AlmacenRequest.builder()
+                    .codigo("ALM-PT-01")
+                    .nombre("Almacén Central Producto Terminado FEFO")
+                    .ubicacion("Planta Industrial Pisco - Nave Principal A")
+                    .tipo("PRODUCTO_TERMINADO")
+                    .capacidadMaxima(new BigDecimal("5000.00"))
+                    .ocupacionActual(new BigDecimal("4175.00"))
+                    .responsable("Ing. Isaí Armuto - Jefe de Planta")
+                    .activo(true)
+                    .build());
+
+            almacenService.crear(AlmacenRequest.builder()
+                    .codigo("ALM-MP-02")
+                    .nombre("Almacén Climatizado Materia Prima Orgánica")
+                    .ubicacion("Planta Industrial Pisco - Zona Recepción Copra y Cacao")
+                    .tipo("MATERIA_PRIMA")
+                    .capacidadMaxima(new BigDecimal("8000.00"))
+                    .ocupacionActual(new BigDecimal("2450.00"))
+                    .responsable("Tec. Marco Quispe - Control MP")
+                    .activo(true)
+                    .build());
+
+            almacenService.crear(AlmacenRequest.builder()
+                    .codigo("ALM-ENV-03")
+                    .nombre("Bodega Sanitaria Envases y Empaques HACCP")
+                    .ubicacion("Zona Limpia Nivel 2 - Frascos Vidrio y Doypacks")
+                    .tipo("ENVASES_EMPAQUES")
+                    .capacidadMaxima(new BigDecimal("10000.00"))
+                    .ocupacionActual(new BigDecimal("6800.00"))
+                    .responsable("Lic. Rosa Huamán - Inocuidad")
+                    .activo(true)
+                    .build());
+
+            almacenService.crear(AlmacenRequest.builder()
+                    .codigo("ALM-EXP-04")
+                    .nombre("Cámara de Despacho y Cuarentena Exportación")
+                    .ubicacion("Muelle Logístico Callao / Hub Agroexportador")
+                    .tipo("CAMARA_DESPACHO")
+                    .capacidadMaxima(new BigDecimal("2500.00"))
+                    .ocupacionActual(new BigDecimal("2310.00"))
+                    .responsable("Ing. Carlos Mendoza - Despachos")
+                    .activo(true)
+                    .build());
+        }
+
         if (loteRepository.count() == 0) {
             log.info("Inicializando lotes de inventario FEFO para Agro Peruvian Foods...");
 

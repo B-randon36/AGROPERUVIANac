@@ -42,6 +42,8 @@ public class ProduccionServiceImpl implements ProduccionService {
                 .cantidadProgramada(request.getCantidadProgramada())
                 .fechaInicio(LocalDateTime.now())
                 .estado(EstadoOrdenProduccion.PLANIFICADA)
+                .centroTrabajoId(request.getCentroTrabajoId())
+                .centroTrabajoNombre(request.getCentroTrabajoNombre())
                 .observaciones(request.getObservaciones())
                 .insumosConsumidos(new ArrayList<>())
                 .build();
@@ -180,10 +182,20 @@ public class ProduccionServiceImpl implements ProduccionService {
         List<OrdenProduccion> ordenes = ordenProduccionRepository.buscar(estado, desde, hasta);
 
         long totalOrdenes = ordenes.size();
+        long ordenesCompletadas = 0;
+        long ordenesEnProceso = 0;
+        long ordenesPlanificadas = 0;
         long totalProgramada = 0;
         long totalProducida = 0;
 
         for (OrdenProduccion o : ordenes) {
+            if (o.getEstado() == EstadoOrdenProduccion.COMPLETADA) {
+                ordenesCompletadas++;
+            } else if (o.getEstado() == EstadoOrdenProduccion.EN_PROCESO) {
+                ordenesEnProceso++;
+            } else if (o.getEstado() == EstadoOrdenProduccion.PLANIFICADA) {
+                ordenesPlanificadas++;
+            }
             if (o.getCantidadProgramada() != null) {
                 totalProgramada += o.getCantidadProgramada();
             }
@@ -199,6 +211,9 @@ public class ProduccionServiceImpl implements ProduccionService {
 
         return ProduccionReporte.builder()
                 .totalOrdenes(totalOrdenes)
+                .ordenesCompletadas(ordenesCompletadas)
+                .ordenesEnProceso(ordenesEnProceso)
+                .ordenesPlanificadas(ordenesPlanificadas)
                 .totalCantidadProgramada(totalProgramada)
                 .totalCantidadProducida(totalProducida)
                 .porcentajeEficiencia(eficiencia)
@@ -269,7 +284,10 @@ public class ProduccionServiceImpl implements ProduccionService {
                 .fechaInicio(o.getFechaInicio())
                 .fechaFin(o.getFechaFin())
                 .estado(o.getEstado())
+                .centroTrabajoId(o.getCentroTrabajoId())
+                .centroTrabajoNombre(o.getCentroTrabajoNombre())
                 .observaciones(o.getObservaciones())
+                .version(o.getVersion())
                 .insumosConsumidos(consumos)
                 .build();
     }

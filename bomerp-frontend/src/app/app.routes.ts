@@ -145,7 +145,7 @@ export const routes: Routes = [
           ),
         title: 'Reportes y Dashboard Financiero · ERP Agro Peruvian Foods',
       },
-      // --- Inventario: Lotes, FEFO y Kardex ---
+      // --- Inventario: Lotes, FEFO, Kardex, Almacenes y Stock Crítico ---
       {
         path: 'inventario/lotes',
         canActivate: [authGuard],
@@ -159,6 +159,20 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/inventario/kardex-list').then((m) => m.KardexList),
         title: 'Kardex de Inventario · ERP Agro Peruvian Foods',
+      },
+      {
+        path: 'inventario/almacenes',
+        canActivate: [authGuard, rolGuard('SUPERVISOR', 'ADMIN')],
+        loadComponent: () =>
+          import('./features/inventario/almacen-list').then((m) => m.AlmacenList),
+        title: 'Almacenes y Ocupación · ERP Agro Peruvian Foods',
+      },
+      {
+        path: 'inventario/stock-critico',
+        canActivate: [authGuard, rolGuard('SUPERVISOR', 'ADMIN')],
+        loadComponent: () =>
+          import('./features/inventario/stock-critico').then((m) => m.StockCriticoComponent),
+        title: 'Stock Crítico & Semáforo · ERP Agro Peruvian Foods',
       },
       // --- Delivery y Omnicanal ---
       {
@@ -198,9 +212,23 @@ export const routes: Routes = [
       },
       {
         path: 'produccion/nueva',
-        canActivate: [authGuard, rolGuard('ADMIN')],
+        canActivate: [authGuard, rolGuard('SUPERVISOR', 'ADMIN')],
         loadComponent: () => import('./features/produccion/orden-form').then((m) => m.OrdenForm),
         title: 'Nueva Orden de Trabajo · ERP Agro Peruvian Foods',
+      },
+      {
+        path: 'produccion/recetas',
+        canActivate: [authGuard, rolGuard('SUPERVISOR', 'ADMIN')],
+        loadComponent: () =>
+          import('./features/produccion/lista-materiales-list').then((m) => m.ListaMaterialesList),
+        title: 'Recetas Maestras BOM · ERP Agro Peruvian Foods',
+      },
+      {
+        path: 'produccion/centros-trabajo',
+        canActivate: [authGuard, rolGuard('SUPERVISOR', 'ADMIN')],
+        loadComponent: () =>
+          import('./features/produccion/centro-trabajo-list').then((m) => m.CentroTrabajoList),
+        title: 'Centros de Trabajo de Planta · ERP Agro Peruvian Foods',
       },
       // Catálogo S07 (Categorías)
       {

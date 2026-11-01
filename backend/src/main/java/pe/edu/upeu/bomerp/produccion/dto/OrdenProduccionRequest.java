@@ -26,6 +26,10 @@ public class OrdenProduccionRequest {
     @Positive(message = "La cantidad programada debe ser mayor a 0")
     private Integer cantidadProgramada;
 
+    private Long centroTrabajoId;
+
+    private String centroTrabajoNombre;
+
     private String observaciones;
 
     @NotEmpty(message = "La orden de producción debe listar los insumos de la receta BOM a consumir")

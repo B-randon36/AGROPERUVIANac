@@ -18,6 +18,7 @@ export class OrdenList implements OnInit {
   protected readonly ordenes = signal<OrdenProduccion[]>([]);
   protected readonly resumen = signal<ProduccionReporte | null>(null);
   protected readonly loading = signal(false);
+  protected readonly descargandoPdf = signal<number | null>(null);
   protected readonly error = signal<string | null>(null);
   protected readonly successMsg = signal<string | null>(null);
 
@@ -93,6 +94,27 @@ export class OrdenList implements OnInit {
       error: (err) => {
         this.error.set(err?.error?.message || 'Error al completar la orden.');
         this.loading.set(false);
+      },
+    });
+  }
+
+  descargarPdf(orden: OrdenProduccion): void {
+    this.descargandoPdf.set(orden.id);
+    this.produccionService.descargarReportePdf(orden.id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `OrdenProduccion_${orden.codigoOrden || orden.id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        this.descargandoPdf.set(null);
+      },
+      error: () => {
+        this.error.set(`No se pudo generar el reporte PDF para la orden ${orden.codigoOrden}.`);
+        this.descargandoPdf.set(null);
       },
     });
   }

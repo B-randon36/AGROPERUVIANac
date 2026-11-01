@@ -15,6 +15,7 @@ import pe.edu.upeu.bomerp.inventario.dto.LoteCreateDto;
 import pe.edu.upeu.bomerp.inventario.dto.LoteDescontadoItem;
 import pe.edu.upeu.bomerp.inventario.dto.LoteDto;
 import pe.edu.upeu.bomerp.inventario.dto.MovimientoKardexDto;
+import pe.edu.upeu.bomerp.inventario.dto.StockCriticoDto;
 import pe.edu.upeu.bomerp.inventario.entity.EstadoLote;
 import pe.edu.upeu.bomerp.inventario.entity.Lote;
 import pe.edu.upeu.bomerp.inventario.entity.MovimientoKardex;
@@ -669,5 +670,59 @@ public class InventarioServiceImpl implements InventarioService {
                 .lotesVencidos(vencidos)
                 .lotes(dtos)
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StockCriticoDto> obtenerReporteStockCritico(int stockMinimo, boolean soloAlertas) {
+        int umbral = Math.max(1, stockMinimo);
+        List<ProductoResponse> productos = productoService.listar();
+        List<StockCriticoDto> reporte = new ArrayList<>();
+
+        for (ProductoResponse p : productos) {
+            int stockActual = p.getStock() != null ? p.getStock() : 0;
+            List<Lote> lotesVigentes = loteRepository.findLotesParaDespachoFEFO(
+                    p.getId(),
+                    List.of(EstadoLote.DISPONIBLE, EstadoLote.PROXIMO_A_VENCER)
+            );
+            BigDecimal stockLotes = lotesVigentes.stream()
+                    .map(Lote::getStockActual)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            String nivelAlerta;
+            if (stockActual <= 0) {
+                nivelAlerta = "AGOTADO";
+            } else if (stockActual <= (umbral / 2)) {
+                nivelAlerta = "CRITICO";
+            } else if (stockActual <= umbral) {
+                nivelAlerta = "PREVENTIVO";
+            } else {
+                nivelAlerta = "OPTIMO";
+            }
+
+            if (soloAlertas && "OPTIMO".equals(nivelAlerta)) {
+                continue;
+            }
+
+            int deficit = Math.max(0, umbral - stockActual);
+            String categoriaNombre = (p.getCategoria() != null && p.getCategoria().nombre() != null)
+                    ? p.getCategoria().nombre()
+                    : "General";
+
+            reporte.add(StockCriticoDto.builder()
+                    .productoId(p.getId())
+                    .nombreProducto(p.getNombre())
+                    .categoria(categoriaNombre)
+                    .precioUnitario(p.getPrecio())
+                    .stockActual(stockActual)
+                    .stockLotesVigentes(stockLotes)
+                    .stockMinimo(umbral)
+                    .deficit(deficit)
+                    .nivelAlerta(nivelAlerta)
+                    .build());
+        }
+
+        reporte.sort((a, b) -> Integer.compare(a.getStockActual(), b.getStockActual()));
+        return reporte;
     }
 }

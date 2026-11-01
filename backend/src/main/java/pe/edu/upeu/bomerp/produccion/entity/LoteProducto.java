@@ -36,4 +36,9 @@ public class LoteProducto {
 
     @Column(name = "FECHA_VENCIMIENTO", nullable = false)
     private LocalDate fechaVencimiento;
+
+    @Version
+    @Column(name = "VERSION", columnDefinition = "BIGINT DEFAULT 0")
+    @Builder.Default
+    private Long version = 0L;
 }

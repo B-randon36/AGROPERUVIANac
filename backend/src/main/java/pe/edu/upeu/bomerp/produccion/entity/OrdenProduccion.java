@@ -49,6 +49,17 @@ public class OrdenProduccion {
     @Column(name = "OBSERVACIONES", length = 300)
     private String observaciones;
 
+    @Column(name = "ID_CENTRO_TRABAJO")
+    private Long centroTrabajoId;
+
+    @Column(name = "NOMBRE_CENTRO_TRABAJO", length = 120)
+    private String centroTrabajoNombre;
+
+    @Version
+    @Column(name = "VERSION", columnDefinition = "BIGINT DEFAULT 0")
+    @Builder.Default
+    private Long version = 0L;
+
     @Builder.Default
     @OneToMany(mappedBy = "ordenProduccion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleConsumoInsumo> insumosConsumidos = new ArrayList<>();

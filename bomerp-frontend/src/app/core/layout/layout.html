@@ -64,7 +64,7 @@
         </a>
 
         <!-- Módulo Inventario & FEFO -->
-        <div class="nav-section-title">INVENTARIO & LOTES</div>
+        <div class="nav-section-title">INVENTARIO & ALMACENES</div>
         <a routerLink="/inventario/lotes" routerLinkActive="active" class="nav-item">
           <span class="material-symbols-outlined nav-icon">inventory_2</span>
           <span>Lotes FEFO</span>
@@ -73,19 +73,35 @@
           <span class="material-symbols-outlined nav-icon">assignment</span>
           <span>Kardex Físico</span>
         </a>
+        @if (auth.tieneRol('SUPERVISOR', 'ADMIN')) {
+          <a routerLink="/inventario/almacenes" routerLinkActive="active" class="nav-item">
+            <span class="material-symbols-outlined nav-icon">warehouse</span>
+            <span>Almacenes & Ocupación</span>
+          </a>
+          <a routerLink="/inventario/stock-critico" routerLinkActive="active" class="nav-item">
+            <span class="material-symbols-outlined nav-icon">notification_important</span>
+            <span>Stock Crítico & Alertas</span>
+          </a>
+        }
 
         <!-- Módulo 3: Producción & BOM + Catálogo -->
-        <div class="nav-section-title">MÓDULO 3 · PRODUCCIÓN</div>
+        <div class="nav-section-title">MÓDULO 3 · PRODUCCIÓN (ISAÍ)</div>
         @if (auth.tieneRol('SUPERVISOR', 'ADMIN')) {
           <a routerLink="/produccion" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-item">
             <span class="material-symbols-outlined nav-icon">precision_manufacturing</span>
             <span>Órdenes de Planta</span>
           </a>
-        }
-        @if (auth.tieneRol('ADMIN')) {
           <a routerLink="/produccion/nueva" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">playlist_add</span>
-            <span>Nueva Orden BOM</span>
+            <span>Planificar Orden BOM</span>
+          </a>
+          <a routerLink="/produccion/recetas" routerLinkActive="active" class="nav-item">
+            <span class="material-symbols-outlined nav-icon">receipt_long</span>
+            <span>Recetas Maestras BOM</span>
+          </a>
+          <a routerLink="/produccion/centros-trabajo" routerLinkActive="active" class="nav-item">
+            <span class="material-symbols-outlined nav-icon">factory</span>
+            <span>Centros de Trabajo</span>
           </a>
         }
         <a routerLink="/catalogo/categorias" routerLinkActive="active" class="nav-item">
@@ -139,7 +155,6 @@
       </div>
 
       <div class="topbar-right">
-
         @if (auth.autenticado()) {
           <div class="user-profile" title="Sesión activa Keycloak">
             <div class="user-avatar">{{ (auth.usuario()?.nombre || 'US').substring(0,2).toUpperCase() }}</div>

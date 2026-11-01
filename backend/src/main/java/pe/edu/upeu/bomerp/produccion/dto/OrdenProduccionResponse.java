@@ -21,6 +21,9 @@ public class OrdenProduccionResponse {
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaFin;
     private EstadoOrdenProduccion estado;
+    private Long centroTrabajoId;
+    private String centroTrabajoNombre;
     private String observaciones;
+    private Long version;
     private List<DetalleConsumoResponse> insumosConsumidos;
 }

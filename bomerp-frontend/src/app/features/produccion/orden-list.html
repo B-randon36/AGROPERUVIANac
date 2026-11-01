@@ -3,14 +3,17 @@
     <div>
       <div class="badge badge-warning">MÓDULO 3 · PRODUCCIÓN Y RECETAS BOM</div>
       <h1>Órdenes de Trabajo en Planta & Lotes FEFO</h1>
-      <p class="subtitle">Responsable: Isaí Armuto Uñapilco</p>
+      <p class="subtitle">Responsable: Isaí Armuto Uñapilco · Planta Pisco HACCP</p>
     </div>
     <div class="header-actions">
       <a routerLink="/produccion/nueva" class="btn btn-primary">
-        <span class="material-symbols-outlined icon-inline">precision_manufacturing</span> Planificar Nueva Orden BOM
+        <span class="material-symbols-outlined icon-inline">precision_manufacturing</span> Planificar Orden BOM
       </a>
-      <a routerLink="/catalogo/categorias" class="btn btn-secondary">
-        <span class="material-symbols-outlined icon-inline">category</span> Categorías
+      <a routerLink="/produccion/recetas" class="btn btn-secondary">
+        <span class="material-symbols-outlined icon-inline">receipt_long</span> Recetas Maestras BOM
+      </a>
+      <a routerLink="/produccion/centros-trabajo" class="btn btn-secondary">
+        <span class="material-symbols-outlined icon-inline">factory</span> Centros de Trabajo
       </a>
       <button class="btn btn-secondary" (click)="cargarDatos()" title="Actualizar">
         <span class="material-symbols-outlined" style="vertical-align: middle;">refresh</span>
@@ -31,28 +34,35 @@
     </div>
   }
 
-  <!-- KPI Reporte -->
+  <!-- KPI Reporte Ejecutivo -->
   @if (resumen(); as r) {
     <div class="metrics-grid">
       <div class="metric-card">
         <span class="material-symbols-outlined metric-icon">assignment</span>
         <div>
-          <span class="metric-label">Órdenes Planificadas</span>
+          <span class="metric-label">Total Órdenes</span>
           <h3 class="metric-value">{{ r.totalOrdenes }}</h3>
         </div>
       </div>
       <div class="metric-card">
-        <span class="material-symbols-outlined metric-icon text-success">precision_manufacturing</span>
+        <span class="material-symbols-outlined metric-icon text-success">task_alt</span>
         <div>
-          <span class="metric-label">Órdenes Completadas</span>
+          <span class="metric-label">Completadas</span>
           <h3 class="metric-value text-success">{{ r.ordenesCompletadas }}</h3>
         </div>
       </div>
       <div class="metric-card">
-        <span class="material-symbols-outlined metric-icon text-warning">inventory_2</span>
+        <span class="material-symbols-outlined metric-icon text-warning">pending</span>
         <div>
-          <span class="metric-label">Unidades Fabricadas</span>
-          <h3 class="metric-value text-warning">{{ r.unidadesTotalesProducidas }}</h3>
+          <span class="metric-label">En Proceso</span>
+          <h3 class="metric-value text-warning">{{ r.ordenesEnProceso }}</h3>
+        </div>
+      </div>
+      <div class="metric-card">
+        <span class="material-symbols-outlined metric-icon text-info">trending_up</span>
+        <div>
+          <span class="metric-label">Eficiencia Operativa</span>
+          <h3 class="metric-value text-info">{{ r.porcentajeEficiencia }}%</h3>
         </div>
       </div>
     </div>
@@ -66,6 +76,7 @@
           <tr>
             <th>Código Orden</th>
             <th>Producto a Elaborar</th>
+            <th>Línea / Centro</th>
             <th>Programado</th>
             <th>Producido</th>
             <th>Inicio</th>
@@ -79,13 +90,18 @@
             <tr>
               <td><code>{{ o.codigoOrden }}</code></td>
               <td><strong>{{ o.nombreProducto }}</strong></td>
+              <td>
+                <span class="badge badge-secondary" style="font-size: 0.75rem;">
+                  {{ o.centroTrabajoNombre || 'Línea Estándar' }}
+                </span>
+              </td>
               <td>{{ o.cantidadProgramada }} u.</td>
               <td>{{ o.cantidadProducida != null ? o.cantidadProducida + ' u.' : '—' }}</td>
               <td>{{ o.fechaInicio ? (o.fechaInicio | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
               <td>{{ o.fechaFin ? (o.fechaFin | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
               <td>
                 <span class="badge" 
-                  [class.badge-info]="o.estado === 'PROGRAMADA'"
+                  [class.badge-info]="o.estado === 'PLANIFICADA' || o.estado === 'PROGRAMADA'"
                   [class.badge-warning]="o.estado === 'EN_PROCESO'"
                   [class.badge-success]="o.estado === 'COMPLETADA'"
                   [class.badge-danger]="o.estado === 'CANCELADA'">
@@ -94,17 +110,28 @@
               </td>
               <td class="text-center">
                 <div class="btn-group">
-                  <button class="btn btn-secondary btn-sm" (click)="verDetalle(o)">
+                  <button class="btn btn-secondary btn-sm" (click)="verDetalle(o)" title="Ver insumos consumidos de la receta BOM">
                     <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">visibility</span> Insumos
                   </button>
-                  @if (o.estado === 'PROGRAMADA') {
+
+                  <button
+                    class="btn btn-secondary btn-sm"
+                    (click)="descargarPdf(o)"
+                    [disabled]="descargandoPdf() === o.id"
+                    title="Descargar Reporte Oficial de Auditoría en PDF (OpenPDF)"
+                  >
+                    <span class="material-symbols-outlined icon-inline" style="font-size: 1rem; color: #dc2626;">picture_as_pdf</span>
+                    {{ descargandoPdf() === o.id ? '...' : 'PDF' }}
+                  </button>
+
+                  @if (o.estado === 'PLANIFICADA' || o.estado === 'PROGRAMADA') {
                     <button class="btn btn-primary btn-sm" (click)="iniciar(o)">
                       <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">play_arrow</span> Iniciar
                     </button>
                   }
                   @if (o.estado === 'EN_PROCESO') {
                     <button class="btn btn-success btn-sm" (click)="abrirCompletar(o)">
-                      <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">check_circle</span> Completar Lote
+                      <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">check_circle</span> Completar
                     </button>
                   }
                 </div>
@@ -113,7 +140,7 @@
           } @empty {
             @if (!loading()) {
               <tr>
-                <td colspan="8" class="text-center py-4">No hay órdenes de producción registradas.</td>
+                <td colspan="9" class="text-center py-4">No hay órdenes de producción registradas.</td>
               </tr>
             }
           }
@@ -174,7 +201,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (ins of ord.insumos; track ins.id || ins.insumoId) {
+            @for (ins of (ord.insumosConsumidos || ord.insumos || []); track ins.id || ins.insumoId) {
               <tr>
                 <td><strong>{{ ins.nombreInsumo }}</strong></td>
                 <td>{{ ins.cantidadRequerida }}</td>
@@ -190,7 +217,10 @@
         </table>
       </div>
 
-      <div class="modal-footer">
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn btn-secondary btn-sm" (click)="descargarPdf(ord)">
+          <span class="material-symbols-outlined icon-inline" style="color: #dc2626;">picture_as_pdf</span> Imprimir PDF A4
+        </button>
         <button class="btn btn-secondary" (click)="modalDetalle.set(false)">Cerrar</button>
       </div>
     </div>

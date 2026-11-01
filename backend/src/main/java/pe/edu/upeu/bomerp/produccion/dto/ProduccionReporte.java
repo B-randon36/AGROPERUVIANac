@@ -11,6 +11,9 @@ import java.util.List;
 @AllArgsConstructor
 public class ProduccionReporte {
     private Long totalOrdenes;
+    private Long ordenesCompletadas;
+    private Long ordenesEnProceso;
+    private Long ordenesPlanificadas;
     private Long totalCantidadProgramada;
     private Long totalCantidadProducida;
     private Double porcentajeEficiencia;

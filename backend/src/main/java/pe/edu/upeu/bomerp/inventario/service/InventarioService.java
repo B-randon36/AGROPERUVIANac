@@ -6,6 +6,7 @@ import pe.edu.upeu.bomerp.inventario.dto.LoteCreateDto;
 import pe.edu.upeu.bomerp.inventario.dto.LoteDto;
 import pe.edu.upeu.bomerp.inventario.dto.MovimientoKardexDto;
 import pe.edu.upeu.bomerp.inventario.dto.ReporteSemaforoInventarioResponse;
+import pe.edu.upeu.bomerp.inventario.dto.StockCriticoDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -80,4 +81,6 @@ public interface InventarioService {
     void evaluarEstadosVencimiento();
 
     ReporteSemaforoInventarioResponse obtenerReporteSemaforoInventario();
+
+    List<StockCriticoDto> obtenerReporteStockCritico(int stockMinimo, boolean soloAlertas);
 }
