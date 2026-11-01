@@ -2,10 +2,13 @@ package pe.edu.upeu.bomerp.finanzas.controller;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.servlet.OAuth2ResourceServerAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import pe.edu.upeu.bomerp.exception.GlobalExceptionHandler;
 import pe.edu.upeu.bomerp.exception.ResourceNotFoundException;
 import pe.edu.upeu.bomerp.finanzas.dto.CategoriaFinancieraRequest;
 import pe.edu.upeu.bomerp.finanzas.dto.CategoriaFinancieraResponse;
@@ -24,7 +27,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CategoriaFinancieraController.class)
+@WebMvcTest(
+        controllers = CategoriaFinancieraController.class,
+        excludeAutoConfiguration = OAuth2ResourceServerAutoConfiguration.class
+)
+@Import(GlobalExceptionHandler.class)
 class CategoriaFinancieraControllerTest {
 
     @Autowired

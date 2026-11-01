@@ -1,0 +1,143 @@
+<div class="feature-container">
+  <div class="page-header">
+    <div>
+      <div class="badge badge-success">MÓDULO 4 · COMPRAS CABECERA-DETALLE</div>
+      <h1>Registrar Orden de Compra de Insumos</h1>
+      <p class="subtitle">Abastecimiento de materias primas y materiales de envase · Elisban Huaylla Nestor</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/compras/proveedores/nuevo" class="btn btn-secondary">
+        <span class="material-symbols-outlined icon-inline">person_add</span> Nuevo Proveedor
+      </a>
+      <a routerLink="/compras" class="btn btn-secondary">← Volver al Historial</a>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger" style="display: flex; align-items: center; gap: 0.5rem;">
+      <span class="material-symbols-outlined">warning</span>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="guardar()" class="compra-grid">
+    <!-- Cabecera de Factura / Orden de Compra -->
+    <div class="card">
+      <h2 class="section-title">1. Datos del Comprobante y Proveedor (Cabecera)</h2>
+      <div class="header-fields">
+        <div class="form-group">
+          <label class="form-label">Proveedor Agroindustrial / Industrial *</label>
+          <select formControlName="proveedorId" class="form-control">
+            @for (p of proveedores(); track p.id) {
+              <option [value]="p.id">{{ p.razonSocial }} — RUC: {{ p.ruc }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">N° Factura / Comprobante *</label>
+          <input
+            type="text"
+            formControlName="numeroComprobante"
+            placeholder="Ej: F001-004912"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Fecha de Emisión *</label>
+          <input type="date" formControlName="fechaEmision" class="form-control" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Detalle de Insumos Adquiridos -->
+    <div class="card">
+      <div class="detalle-header">
+        <div>
+          <h2 class="section-title">2. Ítems de Materia Prima e Insumos de Empaque (Detalle)</h2>
+          <p class="section-hint">Seleccione un insumo del maestro o personalice la descripción y costo pactado.</p>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="agregarLinea()">
+          <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">add</span> Agregar Ítem
+        </button>
+      </div>
+
+      <div class="table-container mt-2" formArrayName="detalles">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 26%;">Plantilla Insumo</th>
+              <th style="width: 30%;">Descripción en Factura *</th>
+              <th style="width: 14%;">Cantidad *</th>
+              <th style="width: 14%;">Costo Unit. (S/) *</th>
+              <th style="width: 12%;">Subtotal</th>
+              <th style="width: 4%;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ctrl of detallesArray.controls; track $index; let i = $index) {
+              <tr [formGroupName]="i">
+                <td>
+                  <select class="form-control" [value]="ctrl.controls.insumoId.value" (change)="seleccionarInsumoCatalogo(i, $event)">
+                    @for (ins of catalogoInsumos; track ins.id) {
+                      <option [value]="ins.id">{{ ins.nombre }}</option>
+                    }
+                  </select>
+                </td>
+                <td>
+                  <input type="text" formControlName="nombreInsumo" class="form-control" />
+                </td>
+                <td>
+                  <input type="number" step="0.01" formControlName="cantidad" class="form-control" />
+                </td>
+                <td>
+                  <input type="number" step="0.01" formControlName="precioUnitario" class="form-control" />
+                </td>
+                <td>
+                  <strong>{{ subtotalesLinea()[i] | currency:'PEN':'S/ ' }}</strong>
+                </td>
+                <td class="text-center">
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    (click)="eliminarLinea(i)"
+                    [disabled]="detallesArray.length === 1"
+                    title="Quitar línea"
+                  >
+                    ×
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Resumen Tributario -->
+      <div class="totales-box">
+        <div class="totales-row">
+          <span>Base Imponible (Subtotal):</span>
+          <strong>{{ baseImponible() | currency:'PEN':'S/ ' }}</strong>
+        </div>
+        <div class="totales-row">
+          <span>IGV (18%):</span>
+          <strong>{{ igvCalculado() | currency:'PEN':'S/ ' }}</strong>
+        </div>
+        <div class="totales-row total-final">
+          <span>Total Cuenta por Pagar:</span>
+          <strong>{{ totalFactura() | currency:'PEN':'S/ ' }}</strong>
+        </div>
+      </div>
+
+      <div class="form-actions mt-4">
+        <button type="submit" class="btn btn-primary" [disabled]="loading() || form.invalid">
+          <span class="material-symbols-outlined icon-inline">save</span>
+          {{ loading() ? 'Registrando Compra...' : 'Confirmar y Registrar Compra' }}
+        </button>
+        <a routerLink="/compras" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </div>
+  </form>
+</div>
+

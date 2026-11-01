@@ -34,7 +34,15 @@ export class AuthService {
   readonly roles = computed<string[]>(() => {
     const token = this.sesion()?.accessToken;
     if (!token) return [];
-    return decodeJwtPayload(token)?.realm_access?.roles ?? [];
+    const payload = decodeJwtPayload(token);
+    if (!payload) return [];
+
+    const realmRoles = payload.realm_access?.roles ?? [];
+    const clientRoles = Object.values(payload.resource_access ?? {}).flatMap(
+      (recurso) => recurso?.roles ?? [],
+    );
+
+    return Array.from(new Set([...realmRoles, ...clientRoles]));
   });
 
   readonly usuario = computed(() => {
@@ -46,7 +54,14 @@ export class AuthService {
   });
 
   tieneRol(...rolesPermitidos: string[]): boolean {
-    return rolesPermitidos.some((rol) => this.roles().includes(rol));
+    const actuales = this.roles().map((r) => r.trim().toUpperCase());
+    if (actuales.includes('ADMIN') || actuales.includes('ROLE_ADMIN')) {
+      return true;
+    }
+    return rolesPermitidos.some((rol) => {
+      const limpio = rol.trim().toUpperCase();
+      return actuales.includes(limpio) || actuales.includes(`ROLE_${limpio}`);
+    });
   }
 
   accessToken(): string | null {

@@ -12,6 +12,9 @@ import pe.edu.upeu.bomerp.compras.repository.CompraRepository;
 import pe.edu.upeu.bomerp.compras.repository.ProveedorRepository;
 import pe.edu.upeu.bomerp.exception.BusinessConflictException;
 import pe.edu.upeu.bomerp.exception.ResourceNotFoundException;
+import pe.edu.upeu.bomerp.finanzas.api.FinanzasApi;
+import pe.edu.upeu.bomerp.finanzas.entity.MetodoPago;
+import pe.edu.upeu.bomerp.inventario.service.InventarioService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -25,6 +28,8 @@ public class CompraServiceImpl implements CompraService {
 
     private final CompraRepository compraRepository;
     private final ProveedorRepository proveedorRepository;
+    private final InventarioService inventarioService;
+    private final FinanzasApi finanzasApi;
 
     @Override
     @Transactional
@@ -82,6 +87,17 @@ public class CompraServiceImpl implements CompraService {
 
             compra.getDetalles().add(detalle);
             total = total.add(subtotalItem);
+
+            // RN-COM-01: Ingreso automático del lote de insumo a Almacén y Kardex Físico
+            if (inventarioService != null) {
+                inventarioService.registrarIngresoCompraInsumo(
+                        item.getInsumoId(),
+                        item.getNombreInsumo(),
+                        item.getCantidad(),
+                        item.getPrecioUnitario(),
+                        request.getNumeroComprobante()
+                );
+            }
         }
 
         BigDecimal igv = total.multiply(new BigDecimal("0.18")).setScale(2, RoundingMode.HALF_UP);
@@ -92,7 +108,19 @@ public class CompraServiceImpl implements CompraService {
         compra.setTotal(total);
         compra.setSaldoPendiente(total);
 
-        return toCompraResponse(compraRepository.save(compra));
+        Compra guardada = compraRepository.save(compra);
+
+        // Integración Financiera: Asentar cuenta por pagar (EGRESO PENDIENTE) en Finanzas
+        if (finanzasApi != null) {
+            finanzasApi.registrarFacturaCompraPendiente(
+                    guardada.getNumeroComprobante(),
+                    proveedor.getRazonSocial(),
+                    total,
+                    guardada.getFechaEmision()
+            );
+        }
+
+        return toCompraResponse(guardada);
     }
 
     @Override
@@ -115,9 +143,23 @@ public class CompraServiceImpl implements CompraService {
         }
 
         BigDecimal nuevoSaldo = compra.getSaldoPendiente().subtract(request.getMontoPago());
-        compra.setSaldoPendiente(nuevoSaldo);
+        boolean liquidadaTotalmente = nuevoSaldo.compareTo(BigDecimal.ZERO) == 0;
 
-        if (nuevoSaldo.compareTo(BigDecimal.ZERO) == 0) {
+        // 1. Integración Financiera primero: Registrar salida en Sesión de Caja Activa (con control RN-FIN-01) y Finanzas
+        if (finanzasApi != null) {
+            MetodoPago mp = resolverMetodoPago(request.getMetodoPago());
+            finanzasApi.registrarPagoProveedorCompra(
+                    compra.getNumeroComprobante(),
+                    compra.getProveedor().getRazonSocial(),
+                    request.getMontoPago(),
+                    mp,
+                    liquidadaTotalmente
+            );
+        }
+
+        // 2. Actualizar saldo y estado de la compra únicamente tras confirmar solvencia financiera
+        compra.setSaldoPendiente(nuevoSaldo);
+        if (liquidadaTotalmente) {
             compra.setEstado(EstadoCompra.PAGADA);
         }
 
@@ -137,7 +179,22 @@ public class CompraServiceImpl implements CompraService {
         compra.setEstado(EstadoCompra.ANULADA);
         compra.setSaldoPendiente(BigDecimal.ZERO);
 
+        if (finanzasApi != null) {
+            finanzasApi.anularFacturaCompra(compra.getNumeroComprobante());
+        }
+
         return toCompraResponse(compraRepository.save(compra));
+    }
+
+    private MetodoPago resolverMetodoPago(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return MetodoPago.TRANSFERENCIA;
+        }
+        try {
+            return MetodoPago.valueOf(raw.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return MetodoPago.TRANSFERENCIA;
+        }
     }
 
     @Override

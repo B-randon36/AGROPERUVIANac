@@ -5,7 +5,9 @@ import { ApiService } from '../../core/services/api.service';
 import {
   Proveedor,
   ProveedorRequest,
+  RucConsultaResponse,
   Compra,
+  CompraRequest,
   AmortizarPagoRequest,
   CompraReporte,
 } from './compra.model';
@@ -23,8 +25,16 @@ export class CompraService {
     return this.http.post<Proveedor>(this.api.buildUrl('/api/v1/compras/proveedores'), request);
   }
 
+  consultarRuc(ruc: string): Observable<RucConsultaResponse> {
+    return this.http.get<RucConsultaResponse>(this.api.buildUrl(`/api/v1/personas/ruc/${ruc}`));
+  }
+
   listarCompras(): Observable<Compra[]> {
     return this.http.get<Compra[]>(this.api.buildUrl('/api/v1/compras'));
+  }
+
+  crearCompra(request: CompraRequest): Observable<Compra> {
+    return this.http.post<Compra>(this.api.buildUrl('/api/v1/compras'), request);
   }
 
   obtenerCompra(id: number): Observable<Compra> {

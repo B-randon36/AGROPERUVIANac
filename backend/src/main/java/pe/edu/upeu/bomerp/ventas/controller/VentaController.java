@@ -20,6 +20,9 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Tag(name = "Ventas - Punto de Venta POS", description = "Transacciones comerciales, emisión de tickets y salida por lote (Zaggy Morales)")
 @RestController
@@ -38,14 +41,14 @@ public class VentaController {
             @RequestParam(defaultValue = "fecha") String ordenarPor,
             @RequestParam(defaultValue = "DESC") String direccion,
             @AuthenticationPrincipal Jwt jwt) {
-        String vendedorId = esVendedor(jwt) ? jwt.getSubject() : null;
+        String vendedorId = esVendedorRestringido(jwt) ? jwt.getSubject() : null;
         return ResponseEntity.ok(ventaService.buscar(estado, desde, hasta, ordenarPor, direccion, vendedorId));
     }
 
     @Operation(summary = "Consultar una venta por ID con validación de propiedad RN8 (VENDEDOR solo ve sus ventas)")
     @GetMapping("/{id}")
     public ResponseEntity<VentaResponse> obtener(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
-        String vendedorId = esVendedor(jwt) ? jwt.getSubject() : null;
+        String vendedorId = esVendedorRestringido(jwt) ? jwt.getSubject() : null;
         return ResponseEntity.ok(ventaService.obtener(id, vendedorId));
     }
 
@@ -87,10 +90,22 @@ public class VentaController {
         return ResponseEntity.noContent().build();
     }
 
-    private boolean esVendedor(Jwt jwt) {
+    private boolean esVendedorRestringido(Jwt jwt) {
         if (jwt == null) return false;
         Map<String, Object> realmAccess = jwt.getClaim("realm_access");
         Object roles = realmAccess == null ? null : realmAccess.get("roles");
-        return roles instanceof Collection<?> lista && lista.contains("VENDEDOR");
+        if (!(roles instanceof Collection<?> lista)) {
+            return false;
+        }
+        Set<String> normalizados = lista.stream()
+                .filter(Objects::nonNull)
+                .map(r -> r.toString().trim().toUpperCase())
+                .collect(Collectors.toSet());
+
+        if (normalizados.contains("ADMIN") || normalizados.contains("ROLE_ADMIN")
+                || normalizados.contains("SUPERVISOR") || normalizados.contains("ROLE_SUPERVISOR")) {
+            return false;
+        }
+        return normalizados.contains("VENDEDOR") || normalizados.contains("ROLE_VENDEDOR");
     }
 }

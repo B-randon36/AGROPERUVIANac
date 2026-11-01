@@ -185,7 +185,7 @@ export const routes: Routes = [
       },
       {
         path: 'ventas/nueva',
-        canActivate: [authGuard, rolGuard('VENDEDOR', 'SUPERVISOR')],
+        canActivate: [authGuard, rolGuard('ADMIN', 'VENDEDOR', 'SUPERVISOR')],
         loadComponent: () => import('./features/ventas/venta-form').then((m) => m.VentaForm),
         title: 'Nueva Venta POS (S09) · ERP Agro Peruvian Foods',
       },
@@ -259,6 +259,12 @@ export const routes: Routes = [
         canActivate: [authGuard, rolGuard('SUPERVISOR', 'ADMIN')],
         loadComponent: () => import('./features/compras/compra-list').then((m) => m.CompraList),
         title: 'Compras de Insumos · ERP Agro Peruvian Foods',
+      },
+      {
+        path: 'compras/nueva',
+        canActivate: [authGuard, rolGuard('SUPERVISOR', 'ADMIN')],
+        loadComponent: () => import('./features/compras/compra-form').then((m) => m.CompraForm),
+        title: 'Nueva Orden de Compra · ERP Agro Peruvian Foods',
       },
       {
         path: 'compras/proveedores',

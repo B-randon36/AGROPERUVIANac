@@ -1,11 +1,15 @@
+export type MetodoPagoPos = 'EFECTIVO' | 'YAPE' | 'PLIN' | 'TRANSFERENCIA' | 'TARJETA' | 'CREDITO';
+
 export interface DetalleVentaRequest {
   productoId: number;
   cantidad: number;
+  loteId?: number;
 }
 
 export interface DetalleVentaResponse {
   id?: number;
   productoId: number;
+  loteId?: number;
   nombreProducto: string;
   precioUnitario: number;
   cantidad: number;
@@ -16,7 +20,9 @@ export type DetalleVenta = DetalleVentaResponse;
 
 export interface VentaRequest {
   clienteNombre?: string;
-  metodoPago?: 'EFECTIVO' | 'YAPE' | 'PLIN' | 'TRANSFERENCIA';
+  clienteDocumento?: string;
+  diasCredito?: number;
+  metodoPago?: MetodoPagoPos;
   detalles: DetalleVentaRequest[];
 }
 

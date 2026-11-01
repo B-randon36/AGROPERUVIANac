@@ -1,12 +1,13 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CajaService } from './caja.service';
 import { SesionCaja, CajaReporte } from './caja.model';
 
 @Component({
   selector: 'app-caja-dashboard',
-  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe, DatePipe],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, CurrencyPipe, DatePipe],
   templateUrl: './caja-dashboard.html',
   styleUrl: './caja-dashboard.css',
 })
@@ -38,7 +39,7 @@ export class CajaDashboard implements OnInit {
   protected readonly formApertura = this.fb.nonNullable.group({
     cajeroNombre: ['Brandon Ccalla', [Validators.required]],
     montoApertura: [500, [Validators.required, Validators.min(0)]],
-    observaciones: ['Apertura de turno de caja chica'],
+    observaciones: ['Apertura de turno de caja diaria'],
   });
 
   protected readonly formCierre = this.fb.nonNullable.group({
@@ -68,7 +69,7 @@ export class CajaDashboard implements OnInit {
 
     this.cajaService.listarHistorial().subscribe({
       next: (hist) => this.historial.set(hist),
-      error: () => this.error.set('No se pudo cargar el historial de cajas.'),
+      error: () => this.error.set('No se pudo cargar el historial de sesiones de caja.'),
     });
 
     this.cajaService.obtenerResumen().subscribe({
@@ -81,6 +82,9 @@ export class CajaDashboard implements OnInit {
   }
 
   registrarMovimiento(): void {
+    const sesion = this.sesionActiva();
+    if (!sesion) return;
+
     if (this.formMovimiento.invalid) {
       this.formMovimiento.markAllAsTouched();
       return;
@@ -89,7 +93,7 @@ export class CajaDashboard implements OnInit {
     this.loading.set(true);
     const val = this.formMovimiento.getRawValue();
 
-    this.cajaService.registrarMovimiento(val).subscribe({
+    this.cajaService.registrarMovimiento(sesion.id, val).subscribe({
       next: () => {
         this.successMsg.set(`Movimiento de ${val.tipo} registrado correctamente.`);
         this.modalMovimiento.set(false);

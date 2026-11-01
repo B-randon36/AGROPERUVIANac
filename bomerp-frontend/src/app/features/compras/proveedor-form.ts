@@ -16,7 +16,9 @@ export class ProveedorForm {
   private readonly router = inject(Router);
 
   protected readonly loading = signal(false);
+  protected readonly buscandoRuc = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly rucStatus = signal<{ estado: string; condicion: string } | null>(null);
 
   protected readonly form = this.fb.nonNullable.group({
     ruc: ['', [Validators.required, Validators.pattern(/^[0-9]{11}$/)]],
@@ -25,6 +27,37 @@ export class ProveedorForm {
     email: ['', [Validators.email]],
     direccion: ['', [Validators.maxLength(200)]],
   });
+
+  consultarRuc(): void {
+    const ruc = this.form.controls.ruc.value.trim();
+    if (!/^[0-9]{11}$/.test(ruc)) {
+      this.error.set('Ingrese un RUC válido de 11 dígitos para consultar en SUNAT.');
+      return;
+    }
+
+    this.buscandoRuc.set(true);
+    this.error.set(null);
+
+    this.compraService.consultarRuc(ruc).subscribe({
+      next: (data) => {
+        this.buscandoRuc.set(false);
+        if (data.razonSocial) {
+          this.form.patchValue({
+            razonSocial: data.razonSocial,
+            direccion: data.direccion || '',
+          });
+          this.rucStatus.set({
+            estado: data.estado || 'ACTIVO',
+            condicion: data.condicion || 'HABIDO',
+          });
+        }
+      },
+      error: (err) => {
+        this.buscandoRuc.set(false);
+        this.error.set(err?.error?.message || 'No se pudo consultar el RUC en SUNAT / APIsPERU.');
+      },
+    });
+  }
 
   guardar(): void {
     if (this.form.invalid) {

@@ -7,12 +7,15 @@ import org.springframework.transaction.annotation.Transactional;
 import pe.edu.upeu.bomerp.catalogo.producto.dto.ProductoResponse;
 import pe.edu.upeu.bomerp.catalogo.producto.service.ProductoService;
 import pe.edu.upeu.bomerp.exception.AccesoDenegadoException;
-import pe.edu.upeu.bomerp.exception.BusinessConflictException;
 import pe.edu.upeu.bomerp.exception.ResourceNotFoundException;
 import pe.edu.upeu.bomerp.exception.VentaYaAnuladaException;
+import pe.edu.upeu.bomerp.finanzas.api.FinanzasApi;
+import pe.edu.upeu.bomerp.finanzas.entity.MetodoPago;
+import pe.edu.upeu.bomerp.inventario.service.InventarioService;
 import pe.edu.upeu.bomerp.ventas.dto.*;
 import pe.edu.upeu.bomerp.ventas.entity.DetalleVenta;
 import pe.edu.upeu.bomerp.ventas.entity.EstadoVenta;
+import pe.edu.upeu.bomerp.ventas.entity.MetodoPagoVenta;
 import pe.edu.upeu.bomerp.ventas.entity.Venta;
 import pe.edu.upeu.bomerp.ventas.repository.VentaRepository;
 
@@ -29,6 +32,8 @@ public class VentaServiceImpl implements VentaService {
 
     private final VentaRepository ventaRepository;
     private final ProductoService productoService;
+    private final InventarioService inventarioService;
+    private final FinanzasApi finanzasApi;
 
     @Override
     @Transactional(readOnly = true)
@@ -63,12 +68,17 @@ public class VentaServiceImpl implements VentaService {
         String ticket = "TKT-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
                 + "-" + (int) (Math.random() * 900 + 100);
 
+        MetodoPagoVenta metodoVenta = request.getMetodoPago() != null ? request.getMetodoPago() : MetodoPagoVenta.EFECTIVO;
+        String cliente = (request.getClienteNombre() != null && !request.getClienteNombre().isBlank())
+                ? request.getClienteNombre().trim()
+                : "Cliente General";
+
         Venta venta = Venta.builder()
                 .numeroTicket(ticket)
                 .fecha(LocalDateTime.now())
                 .estado(EstadoVenta.REGISTRADA)
-                .metodoPago(request.getMetodoPago())
-                .clienteNombre(request.getClienteNombre() != null ? request.getClienteNombre() : "Cliente General")
+                .metodoPago(metodoVenta)
+                .clienteNombre(cliente)
                 .vendedorId(vendedorId)
                 .detalles(new ArrayList<>())
                 .build();
@@ -76,18 +86,32 @@ public class VentaServiceImpl implements VentaService {
         BigDecimal total = BigDecimal.ZERO;
 
         for (DetalleVentaRequest item : request.getDetalles()) {
-            // Verificación y obtención de datos del producto
+            // 1. Verificación y obtención de datos del producto en Catálogo
             ProductoResponse prod = productoService.obtener(item.getProductoId());
 
-            // Descuento atómico de stock (si no alcanza, lanza BusinessConflictException y revierte todo)
+            // 2. Descuento atómico en Catálogo (lanza BusinessConflictException y revierte todo si no alcanza)
             productoService.descontarStock(item.getProductoId(), item.getCantidad());
+
+            // 3. Despacho FEFO y registro automático de SALIDA en Kardex Físico
+            Long loteConsumidoId = item.getLoteId();
+            if (inventarioService != null) {
+                Long loteFefoId = inventarioService.registrarSalidaVentaFEFO(
+                        prod.getId(),
+                        prod.getNombre(),
+                        item.getCantidad(),
+                        ticket
+                );
+                if (loteConsumidoId == null) {
+                    loteConsumidoId = loteFefoId;
+                }
+            }
 
             BigDecimal subtotalItem = prod.getPrecio().multiply(BigDecimal.valueOf(item.getCantidad()));
 
             DetalleVenta detalle = DetalleVenta.builder()
                     .venta(venta)
                     .productoId(prod.getId())
-                    .loteId(item.getLoteId())
+                    .loteId(loteConsumidoId)
                     .nombreProducto(prod.getNombre())
                     .precioUnitario(prod.getPrecio())
                     .cantidad(item.getCantidad())
@@ -106,6 +130,27 @@ public class VentaServiceImpl implements VentaService {
         venta.setTotal(total);
 
         Venta guardada = ventaRepository.save(venta);
+
+        // 4. Integración Financiera Automática (Sesión de Caja Activa o Cuenta por Cobrar)
+        if (finanzasApi != null) {
+            if (metodoVenta == MetodoPagoVenta.CREDITO) {
+                finanzasApi.registrarVentaACredito(
+                        ticket,
+                        cliente,
+                        request.getClienteDocumento(),
+                        total,
+                        request.getDiasCredito()
+                );
+            } else {
+                finanzasApi.registrarIngresoVentaPos(
+                        total,
+                        mapearMetodoPagoFinanzas(metodoVenta),
+                        ticket,
+                        cliente
+                );
+            }
+        }
+
         return toResponse(guardada);
     }
 
@@ -119,18 +164,48 @@ public class VentaServiceImpl implements VentaService {
             throw new VentaYaAnuladaException("La venta " + id + " ya está anulada");
         }
 
-        // Reposición atómica de inventario para cada producto del detalle
+        // 1. Reposición atómica en Catálogo, Lote FEFO y Kardex
         if (venta.getDetalles() != null) {
             for (DetalleVenta detalle : venta.getDetalles()) {
                 if (detalle.getProductoId() != null && detalle.getCantidad() != null) {
                     productoService.restaurarStock(detalle.getProductoId(), detalle.getCantidad());
+                    if (inventarioService != null) {
+                        inventarioService.revertirSalidaVenta(
+                                detalle.getProductoId(),
+                                detalle.getNombreProducto(),
+                                detalle.getLoteId(),
+                                detalle.getCantidad(),
+                                venta.getNumeroTicket()
+                        );
+                    }
                 }
             }
+        }
+
+        // 2. Extorno financiero en Caja / Cuentas por Cobrar / Transacciones
+        if (finanzasApi != null) {
+            boolean eraCredito = venta.getMetodoPago() == MetodoPagoVenta.CREDITO;
+            MetodoPago mp = eraCredito ? null : mapearMetodoPagoFinanzas(venta.getMetodoPago());
+            finanzasApi.revertirVentaPos(venta.getNumeroTicket(), venta.getTotal(), mp, eraCredito);
         }
 
         venta.setEstado(EstadoVenta.ANULADA);
         Venta anulada = ventaRepository.save(venta);
         return toResponse(anulada);
+    }
+
+    private MetodoPago mapearMetodoPagoFinanzas(MetodoPagoVenta mp) {
+        if (mp == null) {
+            return MetodoPago.EFECTIVO;
+        }
+        return switch (mp) {
+            case EFECTIVO -> MetodoPago.EFECTIVO;
+            case YAPE -> MetodoPago.YAPE;
+            case PLIN -> MetodoPago.PLIN;
+            case TRANSFERENCIA -> MetodoPago.TRANSFERENCIA;
+            case TARJETA -> MetodoPago.TARJETA;
+            case CREDITO -> MetodoPago.TRANSFERENCIA;
+        };
     }
 
     @Override

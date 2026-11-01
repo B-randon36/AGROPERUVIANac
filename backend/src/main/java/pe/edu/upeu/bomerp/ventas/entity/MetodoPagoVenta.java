@@ -4,5 +4,7 @@ public enum MetodoPagoVenta {
     EFECTIVO,
     YAPE,
     PLIN,
-    TRANSFERENCIA
+    TRANSFERENCIA,
+    TARJETA,
+    CREDITO
 }

@@ -8,8 +8,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pe.edu.upeu.bomerp.catalogo.producto.service.ProductoService;
-import pe.edu.upeu.bomerp.exception.BusinessConflictException;
+import pe.edu.upeu.bomerp.inventario.service.InventarioService;
 import pe.edu.upeu.bomerp.produccion.dto.*;
+import pe.edu.upeu.bomerp.produccion.entity.DetalleConsumoInsumo;
 import pe.edu.upeu.bomerp.produccion.entity.EstadoOrdenProduccion;
 import pe.edu.upeu.bomerp.produccion.entity.LoteProducto;
 import pe.edu.upeu.bomerp.produccion.entity.OrdenProduccion;
@@ -26,6 +27,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,6 +42,9 @@ class ProduccionServiceTest {
     @Mock
     private ProductoService productoService;
 
+    @Mock
+    private InventarioService inventarioService;
+
     @InjectMocks
     private ProduccionServiceImpl produccionService;
 
@@ -47,31 +52,40 @@ class ProduccionServiceTest {
 
     @BeforeEach
     void setUp() {
+        DetalleConsumoInsumo insumoBom = DetalleConsumoInsumo.builder()
+                .id(10L)
+                .insumoId(103L)
+                .nombreInsumo("Copra Blanca Deshidratada Grado Alimentario")
+                .cantidadRequerida(new BigDecimal("220.00"))
+                .cantidadConsumida(new BigDecimal("225.00"))
+                .unidadMedida("KG")
+                .build();
+
         ordenPlanificada = OrdenProduccion.builder()
                 .id(1L)
-                .codigoOrden("OP-20260913-001")
-                .productoId(10L)
-                .nombreProducto("Quinua Blanca Real Orgánica 1kg")
+                .codigoOrden("OP-20261031-001")
+                .productoId(14L)
+                .nombreProducto("Aceite de coco Virgen 250 ml | Prensado en Frío")
                 .cantidadProgramada(500)
                 .fechaInicio(LocalDateTime.now())
                 .estado(EstadoOrdenProduccion.PLANIFICADA)
-                .insumosConsumidos(new ArrayList<>())
+                .insumosConsumidos(new ArrayList<>(List.of(insumoBom)))
                 .build();
     }
 
     @Test
-    @DisplayName("Debe planificar una orden de producción con sus insumos")
+    @DisplayName("Debe planificar una orden de producción con sus insumos BOM")
     void crearOrden_debeCrearEnEstadoPlanificada() {
         DetalleConsumoRequest insumo = new DetalleConsumoRequest();
-        insumo.setInsumoId(9L);
-        insumo.setNombreInsumo("Bolsa Bilaminada 1kg");
+        insumo.setInsumoId(106L);
+        insumo.setNombreInsumo("Frasco de Vidrio 250ml");
         insumo.setCantidadRequerida(new BigDecimal("500.000"));
         insumo.setCantidadConsumida(new BigDecimal("500.000"));
-        insumo.setUnidadMedida("UNIDADES");
+        insumo.setUnidadMedida("UNID");
 
         OrdenProduccionRequest req = new OrdenProduccionRequest();
-        req.setProductoId(10L);
-        req.setNombreProducto("Quinua Blanca Real Orgánica 1kg");
+        req.setProductoId(14L);
+        req.setNombreProducto("Aceite de coco Virgen 250 ml | Prensado en Frío");
         req.setCantidadProgramada(500);
         req.setInsumos(List.of(insumo));
 
@@ -104,16 +118,17 @@ class ProduccionServiceTest {
     }
 
     @Test
-    @DisplayName("Debe completar la orden, aumentar stock en catálogo y crear lote FEFO con vencimiento")
-    void completarOrden_debeActualizarStockYGenerarLoteFEFO() {
+    @DisplayName("Debe completar la orden descontando insumos BOM en Kardex y unificando Lote FEFO en Inventario")
+    void completarOrden_debeActualizarStockDescontarInsumosYUnificarLoteFEFO() {
         ordenPlanificada.setEstado(EstadoOrdenProduccion.EN_PROCESO);
+        LocalDate vencimiento = LocalDate.now().plusYears(1);
 
         CompletarOrdenRequest req = new CompletarOrdenRequest();
         req.setCantidadProducida(480);
-        req.setFechaVencimiento(LocalDate.now().plusYears(1));
+        req.setFechaVencimiento(vencimiento);
 
         when(ordenProduccionRepository.findById(1L)).thenReturn(Optional.of(ordenPlanificada));
-        doNothing().when(productoService).aumentarStock(10L, 480);
+        doNothing().when(productoService).aumentarStock(14L, 480);
         when(loteProductoRepository.save(any(LoteProducto.class))).thenAnswer(i -> i.getArgument(0));
         when(ordenProduccionRepository.save(any(OrdenProduccion.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -123,7 +138,22 @@ class ProduccionServiceTest {
         assertEquals(EstadoOrdenProduccion.COMPLETADA, resp.getEstado());
         assertEquals(480, resp.getCantidadProducida());
 
-        verify(productoService, times(1)).aumentarStock(10L, 480);
+        verify(inventarioService, times(1)).registrarConsumoInsumoBom(
+                eq(103L),
+                eq("Copra Blanca Deshidratada Grado Alimentario"),
+                eq(new BigDecimal("225.00")),
+                eq("KG"),
+                eq("OP-20261031-001")
+        );
+        verify(productoService, times(1)).aumentarStock(14L, 480);
+        verify(inventarioService, times(1)).registrarIngresoProduccion(
+                eq(14L),
+                eq("Aceite de coco Virgen 250 ml | Prensado en Frío"),
+                any(),
+                eq(480),
+                eq(vencimiento),
+                eq("OP-20261031-001")
+        );
         verify(loteProductoRepository, times(1)).save(any(LoteProducto.class));
         verify(ordenProduccionRepository, times(1)).save(ordenPlanificada);
     }

@@ -1,10 +1,10 @@
 <div class="transaccion-container">
   <div class="header-section">
     <div>
-      <span class="badge badge-primary">S09 · Formulario Transaccional</span>
-      <h2>Emitir Nueva Venta POS </h2>
+      <span class="badge badge-primary">S09 · POS Integrado FEFO + Caja + Créditos</span>
+      <h2>Emitir Nueva Venta POS</h2>
       <p class="subtitle">
-        Punto de Venta transaccional con FormArray dinámico, recálculo en vivo de subtotales y total con <code>computed</code>, y validación compuesta pre-vuelo (Zaggy Morales).
+        Punto de Venta transaccional conectado en tiempo real con Lotes FEFO, Kardex Físico, Sesión de Caja Activa y Cuentas por Cobrar (Zaggy Morales · Brandon Ccalla).
       </p>
     </div>
     <div class="header-actions">
@@ -53,9 +53,10 @@
             #dniInput
             id="dniBusqueda"
             type="text"
-            maxlength="8"
+            maxlength="11"
+            formControlName="clienteDocumento"
             class="form-control"
-            placeholder="8 dígitos (ej. 72345678)"
+            placeholder="DNI (8 díg.) o RUC"
             (keydown.enter)="$event.preventDefault(); buscarPorDni(dniInput.value)"
           />
           <button
@@ -87,27 +88,49 @@
       </div>
 
       <div class="form-group">
-        <label for="metodoPago" class="form-label">Método de Pago</label>
+        <label for="metodoPago" class="form-label">Método de Pago / Modalidad</label>
         <select id="metodoPago" formControlName="metodoPago" class="form-control">
-          <option value="EFECTIVO">Efectivo al Contado</option>
+          <option value="EFECTIVO">Efectivo al Contado (Impacta Gaveta)</option>
           <option value="YAPE">Yape (Billetera Digital)</option>
           <option value="PLIN">Plin (Billetera Digital)</option>
+          <option value="TARJETA">Tarjeta POS (Visa / Mastercard)</option>
           <option value="TRANSFERENCIA">Transferencia Bancaria (BCP / BBVA)</option>
+          <option value="CREDITO">Crédito Comercial (Genera Cuenta por Cobrar)</option>
         </select>
       </div>
     </div>
 
+    @if (form.controls.metodoPago.value === 'CREDITO') {
+      <div class="alert alert-info" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span class="material-symbols-outlined" style="color: #0284c7;">credit_score</span>
+          <span>
+            <strong>Integración con Cuentas por Cobrar:</strong> Esta venta no ingresará efectivo hoy; generará automáticamente un crédito pendiente para <strong>{{ form.controls.clienteNombre.value || 'el cliente' }}</strong> en el módulo de Finanzas.
+          </span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <label for="diasCredito" style="font-weight: 600; font-size: 0.85rem; white-space: nowrap;">Plazo de crédito:</label>
+          <select id="diasCredito" formControlName="diasCredito" class="form-control" style="width: 130px; padding: 0.35rem 0.6rem;">
+            <option [value]="15">15 días</option>
+            <option [value]="30">30 días</option>
+            <option [value]="45">45 días</option>
+            <option [value]="60">60 días</option>
+          </select>
+        </div>
+      </div>
+    }
+
     <div class="detalles-section">
       <div class="section-title-row">
         <h3>Líneas de Detalle de Venta</h3>
-        <span class="badge badge-info">{{ lineasForm.length }} línea(s) en la orden</span>
+        <span class="badge badge-info">{{ lineasForm.length }} línea(s) · Despacho automático FEFO</span>
       </div>
 
       <div class="table-responsive">
         <table class="tabla-transaccional" formArrayName="detalles">
           <thead>
             <tr>
-              <th style="width: 45%;">Producto (Búsqueda en Catálogo)</th>
+              <th style="width: 45%;">Producto (Búsqueda en Catálogo Oficial)</th>
               <th style="width: 15%;">Precio Unitario</th>
               <th style="width: 15%;">Cantidad</th>
               <th style="width: 15%;">Subtotal</th>
@@ -124,7 +147,7 @@
                       matInput
                       formControlName="busqueda"
                       [matAutocomplete]="auto"
-                      placeholder="Buscar por nombre (ej. Quinua, Palta...)"
+                      placeholder="Buscar por nombre (ej. Aceite de Coco, Cacao...)"
                     />
                     <mat-autocomplete
                       #auto="matAutocomplete"
@@ -213,7 +236,7 @@
     <div class="form-footer">
       <div class="info-aviso">
         <span class="material-symbols-outlined icon-inline" style="color: #0284c7;">info</span>
-        <em>El subtotal y total calculados en pantalla son una vista anticipada informativa. El backend calculará y certificará los valores autoritativos al registrar la transacción.</em>
+        <em>Al confirmar, el ERP descuenta automáticamente los lotes más próximos a vencer (FEFO), registra la salida en el Kardex Físico e impacta la Sesión de Caja activa o Cuentas por Cobrar.</em>
       </div>
 
       <div class="botones-confirmacion">
@@ -256,7 +279,7 @@
               {{ esBorrador() ? 'BORRADOR / VISTA PREVIA' : 'VENTA EMITIDA CON ÉXITO' }}
             </span>
             <span class="ticket-status-chip">
-              {{ esBorrador() ? 'Comprobante no asentado' : 'Ticket Autorizado Oficial' }}
+              {{ esBorrador() ? 'Comprobante no asentado' : 'Kardex FEFO + Finanzas Actualizados' }}
             </span>
           </div>
           <button type="button" class="btn-close-modal" (click)="cerrarModalTicket()" title="Cerrar modal">&times;</button>
@@ -295,7 +318,12 @@
               <tbody>
                 @for (det of ticket.detalles; track det.productoId || $index) {
                   <tr>
-                    <td class="td-prod">{{ det.nombreProducto }}</td>
+                    <td class="td-prod">
+                      {{ det.nombreProducto }}
+                      @if (det.loteId) {
+                        <small style="display: block; font-size: 0.68rem; opacity: 0.75;">[Lote FEFO #{{ det.loteId }}]</small>
+                      }
+                    </td>
                     <td class="td-cant text-center">{{ det.cantidad }}</td>
                     <td class="td-price text-right">{{ (det.precioUnitario || 0) | currency:'PEN':'S/ ' }}</td>
                     <td class="td-subtotal text-right"><strong>{{ (det.subtotal || 0) | currency:'PEN':'S/ ' }}</strong></td>
@@ -316,7 +344,7 @@
               <span>{{ (ticket.igv || 0) | currency:'PEN':'S/ ' }}</span>
             </div>
             <div class="tot-row grand-total">
-              <span>TOTAL A PAGAR:</span>
+              <span>TOTAL {{ ticket.metodoPago === 'CREDITO' ? 'A CRÉDITO:' : 'A PAGAR:' }}</span>
               <span class="total-big">{{ (ticket.total || 0) | currency:'PEN':'S/ ' }}</span>
             </div>
           </div>
@@ -382,11 +410,9 @@
         </div>
 
         <div class="scanner-body">
-          <!-- Visor de la Cámara con Overlay de Escaneo -->
           <div class="scanner-viewport">
             <video #videoScanner autoplay playsinline muted class="scanner-video"></video>
 
-            <!-- Guía de Enfoque y Láser Animado -->
             <div class="scanner-overlay-guide">
               <div class="scanner-corner top-left"></div>
               <div class="scanner-corner top-right"></div>
@@ -404,7 +430,6 @@
             }
           </div>
 
-          <!-- Selector de Cámara (Laptop o Móvil) -->
           @if (camarasDisponibles().length > 1) {
             <div class="scanner-camera-selector">
               <label for="selectCamara" class="camera-label">
@@ -426,7 +451,6 @@
             </div>
           }
 
-          <!-- Mensaje de Feedback de Escaneo -->
           @if (mensajeEscaneo(); as msg) {
             <div
               class="scanner-feedback"
@@ -445,7 +469,6 @@
             </div>
           }
 
-          <!-- Simulación Rápida de Prueba para Sustentación -->
           <div class="scanner-demo-box">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
               <span class="demo-box-title" style="margin: 0;">

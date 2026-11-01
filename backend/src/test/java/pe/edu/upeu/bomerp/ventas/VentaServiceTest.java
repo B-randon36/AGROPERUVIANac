@@ -11,6 +11,9 @@ import pe.edu.upeu.bomerp.catalogo.categoria.dto.CategoriaResumen;
 import pe.edu.upeu.bomerp.catalogo.producto.dto.ProductoResponse;
 import pe.edu.upeu.bomerp.catalogo.producto.service.ProductoService;
 import pe.edu.upeu.bomerp.exception.BusinessConflictException;
+import pe.edu.upeu.bomerp.finanzas.api.FinanzasApi;
+import pe.edu.upeu.bomerp.finanzas.entity.MetodoPago;
+import pe.edu.upeu.bomerp.inventario.service.InventarioService;
 import pe.edu.upeu.bomerp.ventas.dto.DetalleVentaRequest;
 import pe.edu.upeu.bomerp.ventas.dto.VentaRequest;
 import pe.edu.upeu.bomerp.ventas.dto.VentaResponse;
@@ -25,6 +28,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +40,12 @@ class VentaServiceTest {
     @Mock
     private ProductoService productoService;
 
+    @Mock
+    private InventarioService inventarioService;
+
+    @Mock
+    private FinanzasApi finanzasApi;
+
     @InjectMocks
     private VentaServiceImpl ventaService;
 
@@ -44,19 +54,19 @@ class VentaServiceTest {
     @BeforeEach
     void setUp() {
         mockProducto = ProductoResponse.builder()
-                .id(1L)
-                .nombre("Quinua Blanca Real Orgánica 1kg")
+                .id(13L)
+                .nombre("Aceite de Coco Virgen 460 ml | Prensado en Frío")
                 .precio(new BigDecimal("10.00"))
                 .stock(100)
-                .categoria(new CategoriaResumen(1L, "Granos Andinos"))
+                .categoria(new CategoriaResumen(6L, "Aceites y Derivados de Coco"))
                 .build();
     }
 
     @Test
-    @DisplayName("Debe registrar venta cabecera-detalle calculando subtotal, IGV (18%) y total")
-    void crear_ventaValida_debeCalcularTotalesYDescontarStock() {
+    @DisplayName("Debe registrar venta POS descontando lote FEFO e impactando Sesión de Caja activa")
+    void crear_ventaValida_debeCalcularTotalesDespacharFefoERegistrarEnCaja() {
         DetalleVentaRequest item = new DetalleVentaRequest();
-        item.setProductoId(1L);
+        item.setProductoId(13L);
         item.setCantidad(2);
 
         VentaRequest request = new VentaRequest();
@@ -64,8 +74,9 @@ class VentaServiceTest {
         request.setMetodoPago(MetodoPagoVenta.EFECTIVO);
         request.setDetalles(List.of(item));
 
-        when(productoService.obtener(1L)).thenReturn(mockProducto);
-        doNothing().when(productoService).descontarStock(1L, 2);
+        when(productoService.obtener(13L)).thenReturn(mockProducto);
+        doNothing().when(productoService).descontarStock(13L, 2);
+        when(inventarioService.registrarSalidaVentaFEFO(eq(13L), any(), eq(2), any())).thenReturn(77L);
 
         when(ventaRepository.save(any(Venta.class))).thenAnswer(invocation -> {
             Venta v = invocation.getArgument(0);
@@ -80,20 +91,64 @@ class VentaServiceTest {
         assertEquals("Supermercados Wong", response.getClienteNombre());
         assertEquals(EstadoVenta.REGISTRADA, response.getEstado());
         assertEquals(MetodoPagoVenta.EFECTIVO, response.getMetodoPago());
-        
+        assertEquals(77L, response.getDetalles().get(0).getLoteId());
+
         assertEquals(new BigDecimal("20.00"), response.getTotal());
         assertEquals(new BigDecimal("3.60"), response.getIgv());
         assertEquals(new BigDecimal("16.40"), response.getSubtotal());
 
-        verify(productoService, times(1)).descontarStock(1L, 2);
+        verify(productoService, times(1)).descontarStock(13L, 2);
+        verify(inventarioService, times(1)).registrarSalidaVentaFEFO(eq(13L), any(), eq(2), any());
+        verify(finanzasApi, times(1)).registrarIngresoVentaPos(
+                eq(new BigDecimal("20.00")),
+                eq(MetodoPago.EFECTIVO),
+                any(),
+                eq("Supermercados Wong")
+        );
         verify(ventaRepository, times(1)).save(any(Venta.class));
+    }
+
+    @Test
+    @DisplayName("Debe generar automáticamente una Cuenta por Cobrar cuando la venta POS es a CREDITO")
+    void crear_ventaACredito_debeGenerarCuentaPorCobrarEnFinanzas() {
+        DetalleVentaRequest item = new DetalleVentaRequest();
+        item.setProductoId(13L);
+        item.setCantidad(5);
+
+        VentaRequest request = VentaRequest.builder()
+                .clienteNombre("BioMercado Chacarilla S.A.C.")
+                .clienteDocumento("20601234567")
+                .metodoPago(MetodoPagoVenta.CREDITO)
+                .diasCredito(45)
+                .detalles(List.of(item))
+                .build();
+
+        when(productoService.obtener(13L)).thenReturn(mockProducto);
+        when(ventaRepository.save(any(Venta.class))).thenAnswer(i -> {
+            Venta v = i.getArgument(0);
+            v.setId(105L);
+            return v;
+        });
+
+        VentaResponse response = ventaService.crear(request, "vendedor-1");
+
+        assertNotNull(response);
+        assertEquals(MetodoPagoVenta.CREDITO, response.getMetodoPago());
+        verify(finanzasApi, times(1)).registrarVentaACredito(
+                any(),
+                eq("BioMercado Chacarilla S.A.C."),
+                eq("20601234567"),
+                eq(new BigDecimal("50.00")),
+                eq(45)
+        );
+        verify(finanzasApi, never()).registrarIngresoVentaPos(any(), any(), any(), any());
     }
 
     @Test
     @DisplayName("Debe fallar y abortar la venta si el stock es insuficiente (rollback)")
     void crear_stockInsuficiente_debeLanzarExcepcion() {
         DetalleVentaRequest item = new DetalleVentaRequest();
-        item.setProductoId(1L);
+        item.setProductoId(13L);
         item.setCantidad(500);
 
         VentaRequest request = new VentaRequest();
@@ -101,21 +156,23 @@ class VentaServiceTest {
         request.setMetodoPago(MetodoPagoVenta.TRANSFERENCIA);
         request.setDetalles(List.of(item));
 
-        when(productoService.obtener(1L)).thenReturn(mockProducto);
+        when(productoService.obtener(13L)).thenReturn(mockProducto);
         doThrow(new BusinessConflictException("Stock insuficiente"))
-                .when(productoService).descontarStock(1L, 500);
+                .when(productoService).descontarStock(13L, 500);
 
         assertThrows(BusinessConflictException.class, () -> ventaService.crear(request));
         verify(ventaRepository, never()).save(any(Venta.class));
+        verify(finanzasApi, never()).registrarIngresoVentaPos(any(), any(), any(), any());
     }
 
     @Test
-    @DisplayName("Debe anular una venta registrada restaurando el stock de cada producto")
-    void anular_ventaRegistrada_debeRestaurarStockYCambiarEstado() {
+    @DisplayName("Debe anular una venta registrada restaurando catálogo, lote FEFO y extornando Finanzas")
+    void anular_ventaRegistrada_debeRestaurarStockLoteYExtornarFinanzas() {
         pe.edu.upeu.bomerp.ventas.entity.DetalleVenta detalle = pe.edu.upeu.bomerp.ventas.entity.DetalleVenta.builder()
                 .id(1L)
-                .productoId(1L)
-                .nombreProducto("Quinua Blanca Real Orgánica 1kg")
+                .productoId(13L)
+                .loteId(77L)
+                .nombreProducto("Aceite de Coco Virgen 460 ml")
                 .precioUnitario(new BigDecimal("10.00"))
                 .cantidad(5)
                 .subtotal(new BigDecimal("50.00"))
@@ -125,6 +182,7 @@ class VentaServiceTest {
                 .id(200L)
                 .numeroTicket("TKT-20261021-001")
                 .estado(EstadoVenta.REGISTRADA)
+                .metodoPago(MetodoPagoVenta.EFECTIVO)
                 .total(new BigDecimal("50.00"))
                 .detalles(new java.util.ArrayList<>(List.of(detalle)))
                 .build();
@@ -136,7 +194,9 @@ class VentaServiceTest {
 
         assertNotNull(response);
         assertEquals(EstadoVenta.ANULADA, response.getEstado());
-        verify(productoService, times(1)).restaurarStock(1L, 5);
+        verify(productoService, times(1)).restaurarStock(13L, 5);
+        verify(inventarioService, times(1)).revertirSalidaVenta(13L, "Aceite de Coco Virgen 460 ml", 77L, 5, "TKT-20261021-001");
+        verify(finanzasApi, times(1)).revertirVentaPos("TKT-20261021-001", new BigDecimal("50.00"), MetodoPago.EFECTIVO, false);
         verify(ventaRepository, times(1)).save(venta);
     }
 
@@ -159,14 +219,14 @@ class VentaServiceTest {
     @DisplayName("RN5: Debe persistir el vendedorId tomado del JWT en la cabecera de la venta")
     void crear_conVendedorId_debeAsignarVendedorIdEnCabecera() {
         DetalleVentaRequest item = new DetalleVentaRequest();
-        item.setProductoId(1L);
+        item.setProductoId(13L);
         item.setCantidad(1);
 
         VentaRequest request = new VentaRequest();
         request.setClienteNombre("Cliente Prueba");
         request.setDetalles(List.of(item));
 
-        when(productoService.obtener(1L)).thenReturn(mockProducto);
+        when(productoService.obtener(13L)).thenReturn(mockProducto);
         when(ventaRepository.save(any(Venta.class))).thenAnswer(i -> {
             Venta v = i.getArgument(0);
             v.setId(301L);
@@ -230,4 +290,3 @@ class VentaServiceTest {
         assertEquals(403L, response.getId());
     }
 }
-

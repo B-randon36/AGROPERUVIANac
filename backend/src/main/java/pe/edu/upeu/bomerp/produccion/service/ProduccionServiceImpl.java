@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pe.edu.upeu.bomerp.catalogo.producto.service.ProductoService;
 import pe.edu.upeu.bomerp.exception.BusinessConflictException;
 import pe.edu.upeu.bomerp.exception.ResourceNotFoundException;
+import pe.edu.upeu.bomerp.inventario.service.InventarioService;
 import pe.edu.upeu.bomerp.produccion.dto.*;
 import pe.edu.upeu.bomerp.produccion.entity.DetalleConsumoInsumo;
 import pe.edu.upeu.bomerp.produccion.entity.EstadoOrdenProduccion;
@@ -27,6 +28,7 @@ public class ProduccionServiceImpl implements ProduccionService {
     private final OrdenProduccionRepository ordenProduccionRepository;
     private final LoteProductoRepository loteProductoRepository;
     private final ProductoService productoService;
+    private final InventarioService inventarioService;
 
     @Override
     @Transactional
@@ -91,10 +93,23 @@ public class ProduccionServiceImpl implements ProduccionService {
         orden.setCantidadProducida(request.getCantidadProducida());
         orden.setFechaFin(LocalDateTime.now());
 
-        // Aumentar stock del producto en el catálogo
+        // 1. RN-PROD-01: Descontar insumos consumidos de almacén y asentar SALIDAS en Kardex
+        if (inventarioService != null && orden.getInsumosConsumidos() != null) {
+            for (DetalleConsumoInsumo insumo : orden.getInsumosConsumidos()) {
+                inventarioService.registrarConsumoInsumoBom(
+                        insumo.getInsumoId(),
+                        insumo.getNombreInsumo(),
+                        insumo.getCantidadConsumida() != null ? insumo.getCantidadConsumida() : insumo.getCantidadRequerida(),
+                        insumo.getUnidadMedida(),
+                        orden.getCodigoOrden()
+                );
+            }
+        }
+
+        // 2. Aumentar stock del producto terminado en el Catálogo Oficial
         productoService.aumentarStock(orden.getProductoId(), request.getCantidadProducida());
 
-        // Generar lote terminado con fecha de vencimiento (Criterio FEFO)
+        // 3. Generar lote terminado con fecha de vencimiento (Criterio FEFO)
         String codigoLote = "LOT-" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
                 + "-" + (int) (Math.random() * 900 + 100);
 
@@ -108,6 +123,18 @@ public class ProduccionServiceImpl implements ProduccionService {
                 .build();
 
         loteProductoRepository.save(lote);
+
+        // 4. Unificar con el módulo Inventario FEFO y asentar ENTRADA en Kardex Físico
+        if (inventarioService != null) {
+            inventarioService.registrarIngresoProduccion(
+                    orden.getProductoId(),
+                    orden.getNombreProducto(),
+                    codigoLote,
+                    request.getCantidadProducida(),
+                    request.getFechaVencimiento(),
+                    orden.getCodigoOrden()
+            );
+        }
 
         return toOrdenResponse(ordenProduccionRepository.save(orden));
     }

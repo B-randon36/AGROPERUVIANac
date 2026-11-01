@@ -6,8 +6,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import pe.edu.upeu.bomerp.catalogo.producto.entity.Producto;
-import pe.edu.upeu.bomerp.catalogo.producto.repository.ProductoRepository;
+import pe.edu.upeu.bomerp.catalogo.producto.dto.ProductoResponse;
+import pe.edu.upeu.bomerp.catalogo.producto.service.ProductoService;
+import pe.edu.upeu.bomerp.exception.BusinessConflictException;
 import pe.edu.upeu.bomerp.inventario.dto.DescuentoFefoRequest;
 import pe.edu.upeu.bomerp.inventario.dto.DescuentoFefoResponse;
 import pe.edu.upeu.bomerp.inventario.dto.LoteCreateDto;
@@ -22,6 +23,7 @@ import pe.edu.upeu.bomerp.inventario.repository.LoteRepository;
 import pe.edu.upeu.bomerp.inventario.repository.MovimientoKardexRepository;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -36,13 +38,11 @@ public class InventarioServiceImpl implements InventarioService {
 
     private final LoteRepository loteRepository;
     private final MovimientoKardexRepository kardexRepository;
-    private final ProductoRepository productoRepository;
+    private final ProductoService productoService;
 
     @Override
     public LoteDto registrarLote(LoteCreateDto dto) {
-        Producto producto = productoRepository.findById(dto.getProductoId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Producto no encontrado con ID: " + dto.getProductoId()));
+        ProductoResponse producto = productoService.obtener(dto.getProductoId());
 
         if (loteRepository.findByCodigoLote(dto.getCodigoLote()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -85,10 +85,8 @@ public class InventarioServiceImpl implements InventarioService {
                 .build();
         kardexRepository.save(kardex);
 
-        // Actualizar stock consolidado del producto
-        int nuevoStock = (producto.getStock() != null ? producto.getStock() : 0) + dto.getStockInicial().intValue();
-        producto.setStock(nuevoStock);
-        productoRepository.save(producto);
+        // Actualizar stock consolidado del producto mediante la interfaz pública del módulo catálogo
+        productoService.aumentarStock(producto.getId(), dto.getStockInicial().intValue());
 
         log.info("Lote {} creado exitosamente para el producto '{}'. Stock inicial: {}",
                 guardado.getCodigoLote(), producto.getNombre(), guardado.getStockInicial());
@@ -98,9 +96,7 @@ public class InventarioServiceImpl implements InventarioService {
 
     @Override
     public DescuentoFefoResponse descontarStockFEFO(DescuentoFefoRequest request) {
-        Producto producto = productoRepository.findById(request.getProductoId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Producto no encontrado con ID: " + request.getProductoId()));
+        ProductoResponse producto = productoService.obtener(request.getProductoId());
 
         BigDecimal cantidadSolicitada = request.getCantidad();
         if (cantidadSolicitada.compareTo(BigDecimal.ZERO) <= 0) {
@@ -136,14 +132,12 @@ public class InventarioServiceImpl implements InventarioService {
             boolean loteQuedaAgotado;
 
             if (disponibleEnLote.compareTo(pendiente) <= 0) {
-                // Se agota completamente este lote
                 aDescontar = disponibleEnLote;
                 lote.setStockActual(BigDecimal.ZERO);
                 lote.setEstado(EstadoLote.AGOTADO);
                 loteQuedaAgotado = true;
                 pendiente = pendiente.subtract(aDescontar);
             } else {
-                // El lote cubre el restante y le queda saldo
                 aDescontar = pendiente;
                 BigDecimal nuevoStock = disponibleEnLote.subtract(aDescontar);
                 lote.setStockActual(nuevoStock);
@@ -153,7 +147,6 @@ public class InventarioServiceImpl implements InventarioService {
 
             loteRepository.save(lote);
 
-            // Registro en Kardex para este lote
             MovimientoKardex kardex = MovimientoKardex.builder()
                     .tipo(TipoMovimientoKardex.SALIDA)
                     .lote(lote)
@@ -177,10 +170,13 @@ public class InventarioServiceImpl implements InventarioService {
                     .build());
         }
 
-        // Actualizar stock agregado en entidad Producto
-        int stockRestanteCatalogo = Math.max(0, (producto.getStock() != null ? producto.getStock() : 0) - cantidadSolicitada.intValue());
-        producto.setStock(stockRestanteCatalogo);
-        productoRepository.save(producto);
+        int aDescontarCatalogo = Math.min(
+                producto.getStock() != null ? producto.getStock() : 0,
+                cantidadSolicitada.intValue()
+        );
+        if (aDescontarCatalogo > 0) {
+            productoService.descontarStock(producto.getId(), aDescontarCatalogo);
+        }
 
         BigDecimal stockTotalRestanteLotes = stockDisponibleTotal.subtract(cantidadSolicitada);
 
@@ -195,6 +191,327 @@ public class InventarioServiceImpl implements InventarioService {
                 .stockTotalRestante(stockTotalRestanteLotes)
                 .lotesAfectados(lotesAfectados)
                 .build();
+    }
+
+    @Override
+    public Long registrarSalidaVentaFEFO(Long productoId, String productoNombre, int cantidad, String numeroTicket) {
+        if (cantidad <= 0) {
+            return null;
+        }
+        String nombreSeguro = truncarNombre(productoNombre != null ? productoNombre : ("Producto #" + productoId));
+        BigDecimal pendiente = BigDecimal.valueOf(cantidad);
+
+        List<Lote> todosLotesProducto = loteRepository.findByProductoIdOrderByFechaVencimientoAsc(productoId);
+        List<Lote> lotesVigentes = loteRepository.findLotesParaDespachoFEFO(
+                productoId,
+                List.of(EstadoLote.DISPONIBLE, EstadoLote.PROXIMO_A_VENCER)
+        );
+
+        // Si el producto solo tiene lotes vencidos con saldo y ningún lote vigente suficiente, bloquear por regla sanitaria FEFO
+        BigDecimal stockVencido = todosLotesProducto.stream()
+                .filter(l -> l.getEstado() == EstadoLote.VENCIDO && l.getStockActual().compareTo(BigDecimal.ZERO) > 0)
+                .map(Lote::getStockActual)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal stockVigente = lotesVigentes.stream()
+                .map(Lote::getStockActual)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (stockVencido.compareTo(BigDecimal.ZERO) > 0 && stockVigente.compareTo(pendiente) < 0) {
+            throw new BusinessConflictException(String.format(
+                    "Bloqueo sanitario FEFO para '%s': existen unidades en lotes VENCIDOS y el stock en lotes vigentes (%s) no cubre lo solicitado (%d).",
+                    nombreSeguro, stockVigente, cantidad
+            ));
+        }
+
+        Long lotePrincipalId = null;
+
+        for (Lote lote : lotesVigentes) {
+            if (pendiente.compareTo(BigDecimal.ZERO) <= 0) {
+                break;
+            }
+            if (lotePrincipalId == null) {
+                lotePrincipalId = lote.getId();
+            }
+
+            BigDecimal disponible = lote.getStockActual();
+            BigDecimal aDescontar;
+            if (disponible.compareTo(pendiente) <= 0) {
+                aDescontar = disponible;
+                lote.setStockActual(BigDecimal.ZERO);
+                lote.setEstado(EstadoLote.AGOTADO);
+                pendiente = pendiente.subtract(aDescontar);
+            } else {
+                aDescontar = pendiente;
+                lote.setStockActual(disponible.subtract(aDescontar));
+                lote.setEstado(calcularEstadoLote(lote.getFechaVencimiento(), lote.getStockActual()));
+                pendiente = BigDecimal.ZERO;
+            }
+            loteRepository.save(lote);
+
+            kardexRepository.save(MovimientoKardex.builder()
+                    .tipo(TipoMovimientoKardex.SALIDA)
+                    .lote(lote)
+                    .productoId(productoId)
+                    .productoNombre(nombreSeguro)
+                    .cantidad(aDescontar)
+                    .saldoStockResultante(lote.getStockActual())
+                    .motivo("VENTA_POS_FEFO")
+                    .documentoReferencia(numeroTicket)
+                    .fechaHora(LocalDateTime.now())
+                    .build());
+        }
+
+        // Si el producto tenía stock base en catálogo sin lote asignado aún, asentar igualmente el movimiento en Kardex
+        if (pendiente.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal saldoCatalogo = BigDecimal.ZERO;
+            try {
+                ProductoResponse p = productoService.obtener(productoId);
+                if (p.getStock() != null) {
+                    saldoCatalogo = BigDecimal.valueOf(p.getStock());
+                }
+            } catch (Exception ignored) {
+                // fallback silencioso
+            }
+
+            kardexRepository.save(MovimientoKardex.builder()
+                    .tipo(TipoMovimientoKardex.SALIDA)
+                    .lote(null)
+                    .productoId(productoId)
+                    .productoNombre(nombreSeguro)
+                    .cantidad(pendiente)
+                    .saldoStockResultante(saldoCatalogo)
+                    .motivo("VENTA_POS")
+                    .documentoReferencia(numeroTicket)
+                    .fechaHora(LocalDateTime.now())
+                    .build());
+        }
+
+        return lotePrincipalId;
+    }
+
+    @Override
+    public void revertirSalidaVenta(Long productoId, String productoNombre, Long loteId, int cantidad, String numeroTicket) {
+        if (cantidad <= 0) {
+            return;
+        }
+        String nombreSeguro = truncarNombre(productoNombre != null ? productoNombre : ("Producto #" + productoId));
+        BigDecimal cant = BigDecimal.valueOf(cantidad);
+
+        Lote loteRestaurado = null;
+        BigDecimal saldoResultante = cant;
+
+        if (loteId != null) {
+            loteRestaurado = loteRepository.findById(loteId).orElse(null);
+            if (loteRestaurado != null) {
+                BigDecimal nuevoStock = loteRestaurado.getStockActual().add(cant);
+                loteRestaurado.setStockActual(nuevoStock);
+                loteRestaurado.setEstado(calcularEstadoLote(loteRestaurado.getFechaVencimiento(), nuevoStock));
+                loteRepository.save(loteRestaurado);
+                saldoResultante = nuevoStock;
+            }
+        } else {
+            try {
+                ProductoResponse p = productoService.obtener(productoId);
+                if (p.getStock() != null) {
+                    saldoResultante = BigDecimal.valueOf(p.getStock());
+                }
+            } catch (Exception ignored) {
+                // fallback
+            }
+        }
+
+        kardexRepository.save(MovimientoKardex.builder()
+                .tipo(TipoMovimientoKardex.ENTRADA)
+                .lote(loteRestaurado)
+                .productoId(productoId)
+                .productoNombre(nombreSeguro)
+                .cantidad(cant)
+                .saldoStockResultante(saldoResultante)
+                .motivo("ANULACION_VENTA_POS")
+                .documentoReferencia(numeroTicket)
+                .fechaHora(LocalDateTime.now())
+                .build());
+    }
+
+    @Override
+    public LoteDto registrarIngresoProduccion(
+            Long productoId,
+            String productoNombre,
+            String codigoLote,
+            int cantidadProducida,
+            LocalDate fechaVencimiento,
+            String codigoOrden) {
+
+        String nombreSeguro = truncarNombre(productoNombre != null ? productoNombre : ("Producto #" + productoId));
+        BigDecimal stock = BigDecimal.valueOf(cantidadProducida);
+        LocalDate hoy = LocalDate.now();
+        LocalDate vencimiento = (fechaVencimiento != null && !fechaVencimiento.isBefore(hoy))
+                ? fechaVencimiento
+                : hoy.plusYears(1);
+
+        BigDecimal costoEstimado = new BigDecimal("15.00");
+        try {
+            ProductoResponse p = productoService.obtener(productoId);
+            if (p.getPrecio() != null) {
+                costoEstimado = p.getPrecio().multiply(new BigDecimal("0.60")).setScale(2, RoundingMode.HALF_UP);
+            }
+        } catch (Exception ignored) {
+            // Usa costo base si no está en catálogo
+        }
+
+        String codUnico = codigoLote != null ? codigoLote.trim().toUpperCase() : ("LOT-" + System.currentTimeMillis());
+        if (loteRepository.findByCodigoLote(codUnico).isPresent()) {
+            codUnico = codUnico + "-P";
+        }
+
+        EstadoLote estado = calcularEstadoLote(vencimiento, stock);
+
+        Lote lote = Lote.builder()
+                .codigoLote(codUnico)
+                .productoId(productoId)
+                .productoNombre(nombreSeguro)
+                .fechaFabricacion(hoy)
+                .fechaVencimiento(vencimiento)
+                .stockInicial(stock)
+                .stockActual(stock)
+                .costoUnitario(costoEstimado)
+                .estado(estado)
+                .observaciones("Ingreso automático desde Orden de Producción " + codigoOrden)
+                .build();
+
+        Lote guardado = loteRepository.save(lote);
+
+        kardexRepository.save(MovimientoKardex.builder()
+                .tipo(TipoMovimientoKardex.ENTRADA)
+                .lote(guardado)
+                .productoId(productoId)
+                .productoNombre(nombreSeguro)
+                .cantidad(stock)
+                .saldoStockResultante(stock)
+                .motivo("INGRESO_PLANTA_BOM")
+                .documentoReferencia(codigoOrden)
+                .fechaHora(LocalDateTime.now())
+                .build());
+
+        log.info("Lote FEFO {} unificado en Inventario desde Orden de Producción {}", guardado.getCodigoLote(), codigoOrden);
+        return mapToDto(guardado);
+    }
+
+    @Override
+    public void registrarConsumoInsumoBom(
+            Long insumoId,
+            String nombreInsumo,
+            BigDecimal cantidadConsumida,
+            String unidadMedida,
+            String codigoOrden) {
+
+        if (cantidadConsumida == null || cantidadConsumida.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        String etiqueta = truncarNombre(nombreInsumo + (unidadMedida != null ? " [" + unidadMedida + "]" : ""));
+        BigDecimal pendiente = cantidadConsumida;
+
+        List<Lote> lotesInsumo = loteRepository.findLotesParaDespachoFEFO(
+                insumoId,
+                List.of(EstadoLote.DISPONIBLE, EstadoLote.PROXIMO_A_VENCER)
+        );
+
+        for (Lote lote : lotesInsumo) {
+            if (pendiente.compareTo(BigDecimal.ZERO) <= 0) {
+                break;
+            }
+            BigDecimal disp = lote.getStockActual();
+            BigDecimal desc;
+            if (disp.compareTo(pendiente) <= 0) {
+                desc = disp;
+                lote.setStockActual(BigDecimal.ZERO);
+                lote.setEstado(EstadoLote.AGOTADO);
+                pendiente = pendiente.subtract(desc);
+            } else {
+                desc = pendiente;
+                lote.setStockActual(disp.subtract(desc));
+                lote.setEstado(calcularEstadoLote(lote.getFechaVencimiento(), lote.getStockActual()));
+                pendiente = BigDecimal.ZERO;
+            }
+            loteRepository.save(lote);
+
+            kardexRepository.save(MovimientoKardex.builder()
+                    .tipo(TipoMovimientoKardex.SALIDA)
+                    .lote(lote)
+                    .productoId(insumoId)
+                    .productoNombre(etiqueta)
+                    .cantidad(desc)
+                    .saldoStockResultante(lote.getStockActual())
+                    .motivo("CONSUMO_INSUMO_BOM")
+                    .documentoReferencia(codigoOrden)
+                    .fechaHora(LocalDateTime.now())
+                    .build());
+        }
+
+        if (pendiente.compareTo(BigDecimal.ZERO) > 0) {
+            kardexRepository.save(MovimientoKardex.builder()
+                    .tipo(TipoMovimientoKardex.SALIDA)
+                    .lote(null)
+                    .productoId(insumoId)
+                    .productoNombre(etiqueta)
+                    .cantidad(pendiente)
+                    .saldoStockResultante(BigDecimal.ZERO)
+                    .motivo("CONSUMO_INSUMO_BOM")
+                    .documentoReferencia(codigoOrden)
+                    .fechaHora(LocalDateTime.now())
+                    .build());
+        }
+    }
+
+    @Override
+    public LoteDto registrarIngresoCompraInsumo(
+            Long insumoId,
+            String nombreInsumo,
+            BigDecimal cantidad,
+            BigDecimal costoUnitario,
+            String numeroComprobante) {
+
+        String nombreSeguro = truncarNombre(nombreInsumo != null ? nombreInsumo : ("Insumo #" + insumoId));
+        LocalDate hoy = LocalDate.now();
+        LocalDate vencimiento = hoy.plusMonths(12);
+
+        String baseComprobante = (numeroComprobante != null ? numeroComprobante.replaceAll("[^A-Za-z0-9]", "") : "COMP");
+        String codigoLote = ("LOT-INS-" + baseComprobante + "-" + insumoId + "-" + (int) (Math.random() * 900 + 100));
+        if (codigoLote.length() > 48) {
+            codigoLote = codigoLote.substring(0, 48);
+        }
+
+        Lote lote = Lote.builder()
+                .codigoLote(codigoLote.toUpperCase())
+                .productoId(insumoId)
+                .productoNombre(nombreSeguro)
+                .fechaFabricacion(hoy)
+                .fechaVencimiento(vencimiento)
+                .stockInicial(cantidad)
+                .stockActual(cantidad)
+                .costoUnitario(costoUnitario != null ? costoUnitario : BigDecimal.ZERO)
+                .estado(EstadoLote.DISPONIBLE)
+                .observaciones("Ingreso por Orden de Compra " + numeroComprobante)
+                .build();
+
+        Lote guardado = loteRepository.save(lote);
+
+        kardexRepository.save(MovimientoKardex.builder()
+                .tipo(TipoMovimientoKardex.ENTRADA)
+                .lote(guardado)
+                .productoId(insumoId)
+                .productoNombre(nombreSeguro)
+                .cantidad(cantidad)
+                .saldoStockResultante(cantidad)
+                .motivo("COMPRA_INSUMO_PROVEEDOR")
+                .documentoReferencia(numeroComprobante)
+                .fechaHora(LocalDateTime.now())
+                .build());
+
+        log.info("Ingreso en almacén y Kardex registrado para insumo '{}' ({} unidades) desde comprobante {}",
+                nombreSeguro, cantidad, numeroComprobante);
+        return mapToDto(guardado);
     }
 
     @Override
@@ -251,6 +568,13 @@ public class InventarioServiceImpl implements InventarioService {
                 loteRepository.save(l);
             }
         }
+    }
+
+    private String truncarNombre(String texto) {
+        if (texto == null) {
+            return "Item Inventario";
+        }
+        return texto.length() > 145 ? texto.substring(0, 145) : texto;
     }
 
     private EstadoLote calcularEstadoLote(LocalDate fechaVencimiento, BigDecimal stockActual) {

@@ -6,6 +6,9 @@
       <p class="subtitle">Responsable: Elisban Huaylla Nestor</p>
     </div>
     <div class="header-actions">
+      <a routerLink="/compras/nueva" class="btn btn-primary">
+        <span class="material-symbols-outlined icon-inline">add_shopping_cart</span> Nueva Orden de Compra
+      </a>
       <a routerLink="/compras/proveedores" class="btn btn-secondary">
         <span class="material-symbols-outlined icon-inline">store</span> Directorio de Proveedores
       </a>
@@ -42,14 +45,21 @@
         <span class="material-symbols-outlined metric-icon">payments</span>
         <div>
           <span class="metric-label">Total Facturado</span>
-          <h3 class="metric-value">{{ r.totalFacturado | currency:'PEN':'S/ ' }}</h3>
+          <h3 class="metric-value">{{ r.montoTotalComprado | currency:'PEN':'S/ ' }}</h3>
+        </div>
+      </div>
+      <div class="metric-card">
+        <span class="material-symbols-outlined metric-icon text-success">task_alt</span>
+        <div>
+          <span class="metric-label">Total Pagado</span>
+          <h3 class="metric-value text-success">{{ r.montoTotalPagado | currency:'PEN':'S/ ' }}</h3>
         </div>
       </div>
       <div class="metric-card">
         <span class="material-symbols-outlined metric-icon text-danger">pending_actions</span>
         <div>
           <span class="metric-label">Saldo Pendiente de Pago</span>
-          <h3 class="metric-value text-danger">{{ r.totalPendientePago | currency:'PEN':'S/ ' }}</h3>
+          <h3 class="metric-value text-danger">{{ r.saldoPendienteTotal | currency:'PEN':'S/ ' }}</h3>
         </div>
       </div>
     </div>
@@ -62,7 +72,7 @@
         <thead>
           <tr>
             <th>Comprobante</th>
-            <th>Proveedor ID</th>
+            <th>Proveedor / RUC</th>
             <th>Fecha Emisión</th>
             <th>Subtotal</th>
             <th>IGV (18%)</th>
@@ -76,7 +86,14 @@
           @for (c of compras(); track c.id) {
             <tr>
               <td><code>{{ c.numeroComprobante }}</code></td>
-              <td>Proveedor #{{ c.proveedorId }}</td>
+              <td>
+                @if (c.proveedor) {
+                  <div><strong>{{ c.proveedor.razonSocial }}</strong></div>
+                  <div style="font-size: 0.78rem; color: var(--text-muted);">RUC: {{ c.proveedor.ruc }}</div>
+                } @else {
+                  <span>Proveedor #{{ c.proveedorId }}</span>
+                }
+              </td>
               <td>{{ c.fechaEmision }}</td>
               <td>{{ c.subtotal | currency:'PEN':'S/ ' }}</td>
               <td>{{ c.igv | currency:'PEN':'S/ ' }}</td>
@@ -87,7 +104,7 @@
                 </span>
               </td>
               <td>
-                <span class="badge" 
+                <span class="badge"
                   [class.badge-success]="c.estado === 'PAGADA'"
                   [class.badge-warning]="c.estado === 'REGISTRADA'"
                   [class.badge-danger]="c.estado === 'ANULADA'">
@@ -102,6 +119,11 @@
                   @if (c.saldoPendiente > 0 && c.estado !== 'ANULADA') {
                     <button class="btn btn-primary btn-sm" (click)="abrirAmortizar(c)">
                       <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">payments</span> Amortizar
+                    </button>
+                  }
+                  @if (c.estado !== 'ANULADA') {
+                    <button class="btn btn-danger btn-sm" (click)="anular(c)" title="Anular Compra">
+                      <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">cancel</span>
                     </button>
                   }
                 </div>
@@ -134,7 +156,7 @@
       <form [formGroup]="formAmortizar" (ngSubmit)="confirmarAmortizar()">
         <div class="form-group">
           <label class="form-label">Monto a Amortizar / Pagar (S/) *</label>
-          <input type="number" step="0.10" formControlName="montoAmortizado" class="form-control" />
+          <input type="number" step="0.10" formControlName="montoPago" class="form-control" />
         </div>
         <div class="form-group">
           <label class="form-label">Método de Pago</label>

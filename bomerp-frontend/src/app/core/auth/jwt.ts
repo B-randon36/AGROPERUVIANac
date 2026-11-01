@@ -5,6 +5,7 @@ export interface JwtPayload {
   email?: string;
   preferred_username?: string;
   realm_access?: { roles: string[] };
+  resource_access?: Record<string, { roles?: string[] }>;
 }
 
 export function decodeJwtPayload(token: string): JwtPayload | null {

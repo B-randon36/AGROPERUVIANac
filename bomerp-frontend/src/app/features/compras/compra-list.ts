@@ -26,7 +26,7 @@ export class CompraList implements OnInit {
   protected readonly modalDetalle = signal(false);
 
   protected readonly formAmortizar = this.fb.nonNullable.group({
-    montoAmortizado: [500, [Validators.required, Validators.min(1)]],
+    montoPago: [500, [Validators.required, Validators.min(0.01)]],
     metodoPago: ['TRANSFERENCIA', [Validators.required]],
     referencia: ['OP-BANCARIA-8891'],
   });
@@ -59,7 +59,7 @@ export class CompraList implements OnInit {
   abrirAmortizar(compra: Compra): void {
     this.compraSeleccionada.set(compra);
     this.formAmortizar.patchValue({
-      montoAmortizado: compra.saldoPendiente,
+      montoPago: compra.saldoPendiente,
     });
     this.modalAmortizar.set(true);
   }
@@ -69,16 +69,33 @@ export class CompraList implements OnInit {
     if (!c || this.formAmortizar.invalid) return;
 
     this.loading.set(true);
+    this.error.set(null);
     const val = this.formAmortizar.getRawValue();
 
     this.compraService.amortizarPago(c.id, val).subscribe({
       next: () => {
-        this.successMsg.set(`Pago amortizado para la compra ${c.numeroComprobante}.`);
+        this.successMsg.set(`Pago de S/ ${val.montoPago.toFixed(2)} amortizado en la factura ${c.numeroComprobante}.`);
         this.modalAmortizar.set(false);
         this.cargarDatos();
       },
       error: (err) => {
         this.error.set(err?.error?.message || 'Error al amortizar el pago.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  anular(compra: Compra): void {
+    if (!confirm(`¿Desea anular el comprobante de compra ${compra.numeroComprobante}?`)) return;
+    this.loading.set(true);
+    this.error.set(null);
+    this.compraService.anularCompra(compra.id).subscribe({
+      next: () => {
+        this.successMsg.set(`Compra ${compra.numeroComprobante} anulada correctamente.`);
+        this.cargarDatos();
+      },
+      error: (err) => {
+        this.error.set(err?.error?.message || 'Error al anular la compra.');
         this.loading.set(false);
       },
     });

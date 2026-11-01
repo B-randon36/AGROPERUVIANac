@@ -2,16 +2,17 @@
   <!-- Hero Section -->
   <div class="hero-card">
     <div class="hero-content">
-      <div class="hero-badge">ARQUITECTURA SPA · SEGUNDO CORTE INTEGRADO</div>
+      <div class="hero-badge">ARQUITECTURA INTEGRADA · SEGUNDO CORTE (4 MÓDULOS)</div>
       <h1 class="hero-title">ERP Agro Peruvian Foods S.A.C.</h1>
       <p class="hero-subtitle">
-        Plataforma empresarial integrada para el control financiero de caja, punto de venta (POS), 
-        producción por lotes con recetas BOM y gestión de compras a proveedores agroindustriales.
+        Plataforma empresarial para el control de turnos y arqueos de caja, punto de venta (POS), 
+        planificación de producción por recetas BOM y gestión de compras de insumos agroindustriales.
       </p>
       <div class="hero-meta">
-        <span class="meta-tag">Angular 19 (Standalone)</span>
-        <span class="meta-tag">Spring Boot 4 + Oracle / H2</span>
+        <span class="meta-tag">Angular Standalone</span>
+        <span class="meta-tag">Spring Boot 4 (Spring Modulith)</span>
         <span class="meta-tag">Keycloak v26 (PKCE S256)</span>
+        <span class="meta-tag">SUNAT & RENIEC en Vivo</span>
       </div>
     </div>
     <div class="hero-status">
@@ -29,6 +30,126 @@
     </div>
   </div>
 
+  <!-- KPI Executive Dashboard (Prioridad 3) -->
+  @if (auth.autenticado()) {
+    <div class="dashboard-section">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h2>Panel Ejecutivo de Indicadores en Tiempo Real (KPIs)</h2>
+          <p>Métricas operativas sincronizadas entre Caja, Ventas, Planta, Almacén y Compras</p>
+        </div>
+        <button
+          class="btn btn-secondary btn-sm"
+          (click)="cargarMetricasEjecutivas()"
+          [disabled]="loadingKpis()"
+          style="display: flex; align-items: center; gap: 0.35rem;"
+        >
+          <span class="material-symbols-outlined icon-inline" [class.spin]="loadingKpis()">sync</span>
+          {{ loadingKpis() ? 'Sincronizando...' : 'Actualizar KPIs' }}
+        </button>
+      </div>
+
+      <div class="kpi-grid">
+        <!-- KPI 1: Ventas del Día -->
+        <div class="kpi-card kpi-blue">
+          <div class="kpi-header">
+            <span class="material-symbols-outlined kpi-icon">point_of_sale</span>
+            <span class="kpi-badge">Ventas POS</span>
+          </div>
+          <div class="kpi-value">{{ kpis().montoVentas | currency:'PEN':'symbol':'1.2-2' }}</div>
+          <div class="kpi-footer">
+            <span><strong>{{ kpis().cantidadVentas }}</strong> tickets emitidos</span>
+            <span>Ticket prom: <strong>{{ kpis().ticketPromedio | currency:'PEN':'symbol':'1.2-2' }}</strong></span>
+          </div>
+        </div>
+
+        <!-- KPI 2: Caja Operativa Activa -->
+        <div class="kpi-card kpi-green">
+          <div class="kpi-header">
+            <span class="material-symbols-outlined kpi-icon">account_balance_wallet</span>
+            <span class="kpi-badge">Caja Diaria</span>
+          </div>
+          <div class="kpi-value">{{ kpis().saldoCajaActiva | currency:'PEN':'symbol':'1.2-2' }}</div>
+          <div class="kpi-footer">
+            @if (kpis().codigoSesionActiva) {
+              <span>Turno: <strong>{{ kpis().codigoSesionActiva }}</strong></span>
+              <span>Cajero: <strong>{{ kpis().cajeroActivo || 'Brandon Ccalla' }}</strong></span>
+            } @else {
+              <span class="text-muted">Sin turno de caja abierto hoy</span>
+            }
+          </div>
+        </div>
+
+        <!-- KPI 3: Producción en Planta -->
+        <div class="kpi-card kpi-orange">
+          <div class="kpi-header">
+            <span class="material-symbols-outlined kpi-icon">precision_manufacturing</span>
+            <span class="kpi-badge">Planta BOM</span>
+          </div>
+          <div class="kpi-value">
+            {{ kpis().ordenesEnProceso }}
+            <span class="kpi-subtext">en proceso</span>
+          </div>
+          <div class="kpi-footer">
+            <span><strong>{{ kpis().ordenesPlanificadas }}</strong> planificadas</span>
+            <span><strong>{{ kpis().ordenesCompletadas }}</strong> completadas</span>
+          </div>
+        </div>
+
+        <!-- KPI 4: Almacén y Semáforo FEFO -->
+        <div class="kpi-card kpi-purple">
+          <div class="kpi-header">
+            <span class="material-symbols-outlined kpi-icon">inventory</span>
+            <span class="kpi-badge">Semáforo FEFO</span>
+          </div>
+          <div class="kpi-value">{{ kpis().valorInventario | currency:'PEN':'symbol':'1.2-2' }}</div>
+          <div class="kpi-footer">
+            <span class="badge badge-success" title="Lotes con caducidad lejana (>60 días)">🟢 {{ kpis().lotesOptimos }} Óptimos</span>
+            <span class="badge badge-warning" title="Lotes próximos a vencer (30-60 días)">🟡 {{ kpis().lotesPreventivos }} Alerta</span>
+            <span class="badge badge-danger" title="Lotes críticos (<30 días)">🔴 {{ kpis().lotesCriticos }} Críticos</span>
+          </div>
+        </div>
+
+        <!-- KPI 5: Compras y Cuentas por Pagar -->
+        <div class="kpi-card kpi-teal">
+          <div class="kpi-header">
+            <span class="material-symbols-outlined kpi-icon">shopping_bag</span>
+            <span class="kpi-badge">Compras / Pasivos</span>
+          </div>
+          <div class="kpi-value">{{ kpis().montoCompras | currency:'PEN':'symbol':'1.2-2' }}</div>
+          <div class="kpi-footer">
+            <span>Deuda pendiente: <strong style="color: #dc2626;">{{ kpis().cuentasPorPagar | currency:'PEN':'symbol':'1.2-2' }}</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Shortcuts -->
+      <div class="quick-actions-bar">
+        <span class="quick-actions-label">Accesos Directos Rápidos:</span>
+        <a routerLink="/ventas/nueva" class="btn btn-primary btn-sm">
+          <span class="material-symbols-outlined icon-inline">add_shopping_cart</span>
+          Nueva Venta POS
+        </a>
+        <a routerLink="/finanzas/sesiones/nueva" class="btn btn-secondary btn-sm">
+          <span class="material-symbols-outlined icon-inline">lock_open</span>
+          Apertura de Turno
+        </a>
+        <a routerLink="/produccion/nueva" class="btn btn-secondary btn-sm">
+          <span class="material-symbols-outlined icon-inline">add_circle</span>
+          Nueva Orden Planta
+        </a>
+        <a routerLink="/compras/nueva" class="btn btn-secondary btn-sm">
+          <span class="material-symbols-outlined icon-inline">post_add</span>
+          Nueva Compra Insumos
+        </a>
+        <a routerLink="/compras/proveedores/nuevo" class="btn btn-secondary btn-sm">
+          <span class="material-symbols-outlined icon-inline">person_add</span>
+          Alta Proveedor SUNAT
+        </a>
+      </div>
+    </div>
+  }
+
   <!-- Modules Grid: The 4 modules of the team -->
   <div class="section-header">
     <h2>Módulos de Negocio Integrados (4 Integrantes)</h2>
@@ -44,21 +165,15 @@
       </div>
       <h3 class="module-name">Gestión Financiera de Caja</h3>
       <p class="module-desc">
-        Apertura/cierre formal de turnos de caja chica, arqueo estricto (saldo teórico vs físico) y registro de movimientos de ingresos y egresos.
+        Apertura/cierre formal de turnos de caja chica, arqueo estricto BCRP (saldo teórico vs físico) y registro de movimientos de ingresos y egresos.
       </p>
       <div class="module-lead">
         <strong>Líder:</strong> Brandon Andree Ccalla Colquehuanca
       </div>
       <div class="module-actions">
-        @if (auth.tieneRol('ADMIN', 'SUPERVISOR')) {
-          <a routerLink="/finanzas/sesiones" class="btn btn-primary btn-sm">Sesiones de Caja</a>
-          <a routerLink="/finanzas/rendiciones" class="btn btn-secondary btn-sm">Rendiciones</a>
-        } @else {
-          <span style="font-size: 0.8rem; color: #64748b; font-style: italic;">
-            <span class="material-symbols-outlined icon-inline" style="font-size: 0.9rem;">lock</span>
-            Acceso exclusivo para Admin y Supervisor
-          </span>
-        }
+        <a routerLink="/finanzas/sesiones" class="btn btn-primary btn-sm">Sesiones de Caja</a>
+        <a routerLink="/finanzas/rendiciones" class="btn btn-secondary btn-sm">Rendiciones</a>
+        <a routerLink="/finanzas/reportes" class="btn btn-secondary btn-sm">Reportes / Arqueo</a>
       </div>
     </div>
 
@@ -78,6 +193,7 @@
       <div class="module-actions">
         <a routerLink="/ventas/reporte" class="btn btn-primary btn-sm">Historial Ventas</a>
         <a routerLink="/ventas/nueva" class="btn btn-secondary btn-sm">Nueva Venta POS</a>
+        <a routerLink="/ventas/delivery" class="btn btn-secondary btn-sm">Delivery GPS</a>
       </div>
     </div>
 
@@ -96,6 +212,7 @@
       </div>
       <div class="module-actions">
         <a routerLink="/produccion" class="btn btn-primary btn-sm">Órdenes Planta</a>
+        <a routerLink="/produccion/nueva" class="btn btn-secondary btn-sm">Nueva Orden</a>
         <a routerLink="/catalogo/productos" class="btn btn-secondary btn-sm">Productos S08</a>
       </div>
     </div>
@@ -108,7 +225,7 @@
       </div>
       <h3 class="module-name">Compras & Proveedores</h3>
       <p class="module-desc">
-        Adquisición de materias primas (quinua, cacao) y material de empaque, amortización de pagos a proveedores y control de cuentas por pagar.
+        Adquisición de materias primas (cacao, copra de coco) y material de empaque, amortización con validación de solvencia y consulta RUC SUNAT.
       </p>
       <div class="module-lead">
         <strong>Líder:</strong> Elisban Huaylla Nestor
@@ -116,6 +233,7 @@
       <div class="module-actions">
         <a routerLink="/compras/proveedores" class="btn btn-primary btn-sm">Proveedores</a>
         <a routerLink="/compras" class="btn btn-secondary btn-sm">Compras</a>
+        <a routerLink="/compras/nueva" class="btn btn-secondary btn-sm">Nueva Factura</a>
       </div>
     </div>
   </div>

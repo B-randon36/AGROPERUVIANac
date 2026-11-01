@@ -8,7 +8,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .page-header h1 {
@@ -16,13 +16,91 @@
   margin-top: 0.25rem;
 }
 
-.page-header .subtitle {
+.subtitle {
   color: var(--text-muted);
   font-size: 0.85rem;
 }
 
-.form-card {
-  max-width: 650px;
+.bom-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--text-primary, #1e293b);
+}
+
+.header-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .header-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.qty-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.qty-row .form-control {
+  flex: 1;
+}
+
+.bom-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.bom-table td {
+  vertical-align: middle;
+  padding: 0.55rem 0.5rem;
+}
+
+.form-control-sm {
+  padding: 0.4rem 0.55rem;
+  font-size: 0.85rem;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.btn-icon-danger {
+  background: transparent;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon-danger:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.btn-icon-danger:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .form-actions {

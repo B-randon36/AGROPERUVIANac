@@ -20,6 +20,10 @@ public class VentaRequest {
 
     private String clienteNombre;
 
+    private String clienteDocumento;
+
+    private Integer diasCredito;
+
     @NotEmpty(message = "La venta debe contener al menos un detalle de producto")
     @Valid
     private List<DetalleVentaRequest> detalles;

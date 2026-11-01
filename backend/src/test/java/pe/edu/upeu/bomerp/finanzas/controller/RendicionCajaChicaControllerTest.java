@@ -4,10 +4,13 @@ import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.servlet.OAuth2ResourceServerAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import pe.edu.upeu.bomerp.exception.GlobalExceptionHandler;
 import pe.edu.upeu.bomerp.exception.SolvenciaInsuficienteException;
 import pe.edu.upeu.bomerp.finanzas.dto.DetalleRendicionRequest;
 import pe.edu.upeu.bomerp.finanzas.dto.DetalleRendicionResponse;
@@ -27,10 +30,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.springframework.context.annotation.Import;
-import pe.edu.upeu.bomerp.exception.GlobalExceptionHandler;
-
-@WebMvcTest(RendicionCajaChicaController.class)
+@WebMvcTest(
+        controllers = RendicionCajaChicaController.class,
+        excludeAutoConfiguration = OAuth2ResourceServerAutoConfiguration.class
+)
 @Import(GlobalExceptionHandler.class)
 class RendicionCajaChicaControllerTest {
 
@@ -42,6 +45,9 @@ class RendicionCajaChicaControllerTest {
 
     @MockitoBean
     private RendicionCajaChicaService rendicionService;
+
+    @MockitoBean
+    private pe.edu.upeu.bomerp.finanzas.service.SesionCajaService sesionCajaService;
 
     @Test
     @DisplayName("POST /rendiciones responde 201 Created cuando la rendición cumple con RN-FIN-01")

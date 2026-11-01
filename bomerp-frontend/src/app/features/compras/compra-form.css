@@ -1,0 +1,97 @@
+.feature-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.25rem;
+}
+
+.page-header h1 {
+  font-size: 1.65rem;
+  margin-top: 0.25rem;
+}
+
+.page-header .subtitle {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.compra-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem 0;
+}
+
+.section-hint {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: -0.4rem 0 0 0;
+}
+
+.header-fields {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .header-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detalle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.totales-box {
+  margin-top: 1.25rem;
+  margin-left: auto;
+  max-width: 340px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.totales-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.totales-row.total-final {
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+  font-size: 1.05rem;
+  color: #0f766e;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+

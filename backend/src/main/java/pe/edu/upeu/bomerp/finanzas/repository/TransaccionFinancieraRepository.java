@@ -12,6 +12,7 @@ import java.util.Optional;
 @Repository
 public interface TransaccionFinancieraRepository extends JpaRepository<TransaccionFinanciera, Long> {
     Optional<TransaccionFinanciera> findByCodigo(String codigo);
+    Optional<TransaccionFinanciera> findFirstByNumeroComprobante(String numeroComprobante);
     boolean existsByCodigo(String codigo);
     boolean existsByCodigoAndIdNot(String codigo, Long id);
     List<TransaccionFinanciera> findByTipo(TipoFinanciero tipo);

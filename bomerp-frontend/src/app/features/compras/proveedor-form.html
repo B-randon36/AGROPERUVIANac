@@ -3,7 +3,7 @@
     <div>
       <div class="badge badge-success">MÓDULO 4 · COMPRAS (TABLA INDEPENDIENTE)</div>
       <h1>Registrar Nuevo Proveedor Agroindustrial</h1>
-      <p class="subtitle">Alta en el maestro de terceros y proveedores de insumos</p>
+      <p class="subtitle">Alta en el maestro de terceros y proveedores con validación oficial SUNAT (APIsPERU)</p>
     </div>
     <div class="header-actions">
       <a routerLink="/compras/proveedores" class="btn btn-secondary">← Volver al Directorio</a>
@@ -21,14 +21,44 @@
     <form [formGroup]="form" (ngSubmit)="guardar()">
       <div class="form-group">
         <label class="form-label" for="ruc">R.U.C. (11 dígitos) *</label>
-        <input
-          id="ruc"
-          type="text"
-          maxlength="11"
-          formControlName="ruc"
-          placeholder="Ej: 20601234567"
-          class="form-control"
-        />
+        <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+          <input
+            id="ruc"
+            type="text"
+            maxlength="11"
+            formControlName="ruc"
+            placeholder="Ej: 20601234567"
+            class="form-control"
+            style="flex: 1;"
+            (keyup.enter)="consultarRuc()"
+          />
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="consultarRuc()"
+            [disabled]="buscandoRuc() || form.controls.ruc.invalid"
+            title="Consultar datos fiscales en tiempo real con SUNAT"
+            style="white-space: nowrap; display: flex; align-items: center; gap: 0.35rem;"
+          >
+            @if (buscandoRuc()) {
+              <span class="material-symbols-outlined icon-inline spin">sync</span>
+              Consultando...
+            } @else {
+              <span class="material-symbols-outlined icon-inline">search</span>
+              Buscar SUNAT
+            }
+          </button>
+        </div>
+        @if (rucStatus(); as st) {
+          <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+            <span class="badge" [ngClass]="st.estado === 'ACTIVO' ? 'badge-success' : 'badge-danger'">
+              SUNAT: {{ st.estado }}
+            </span>
+            <span class="badge" [ngClass]="st.condicion === 'HABIDO' ? 'badge-info' : 'badge-warning'">
+              CONDICIÓN: {{ st.condicion }}
+            </span>
+          </div>
+        }
         @if (mensajeValidacion('ruc'); as msg) {
           <span class="form-error">{{ msg }}</span>
         }

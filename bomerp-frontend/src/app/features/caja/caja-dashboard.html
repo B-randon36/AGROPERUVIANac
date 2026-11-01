@@ -7,7 +7,10 @@
       <p class="subtitle">Responsable: Brandon Andree Ccalla Colquehuanca</p>
     </div>
     <div class="header-actions">
-      @if (sesionActiva()) {
+      @if (sesionActiva(); as sesion) {
+        <a [routerLink]="['/finanzas/sesiones', sesion.id]" class="btn btn-secondary">
+          <span class="material-symbols-outlined icon-inline">payments</span> Arqueo por Billetes BCRP
+        </a>
         <button class="btn btn-primary" (click)="modalMovimiento.set(true)">
           <span class="material-symbols-outlined icon-inline">add_circle</span> Registrar Movimiento
         </button>

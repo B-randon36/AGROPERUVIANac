@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, computed, inject, signal, ViewChild, ElementRef } from '@angular/core';
-import { CurrencyPipe, CommonModule, DatePipe } from '@angular/common';
+import { CurrencyPipe, CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -11,7 +11,7 @@ import { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser';
 import { ProductoService } from '../catalogo/producto/producto.service';
 import { Producto } from '../catalogo/producto/producto.model';
 import { VentaService } from './venta.service';
-import { VentaResponse, DetalleVentaResponse } from './venta.model';
+import { VentaResponse, DetalleVentaResponse, MetodoPagoPos } from './venta.model';
 
 @Component({
   selector: 'app-venta-form',
@@ -60,7 +60,9 @@ export class VentaForm implements OnInit, OnDestroy {
 
   protected readonly form = this.fb.nonNullable.group({
     clienteNombre: ['Mercado Mayorista de Frutas Lima', [Validators.maxLength(100)]],
-    metodoPago: ['EFECTIVO' as 'EFECTIVO' | 'YAPE' | 'PLIN' | 'TRANSFERENCIA'],
+    clienteDocumento: [''],
+    metodoPago: ['EFECTIVO' as MetodoPagoPos],
+    diasCredito: [30, [Validators.min(1), Validators.max(180)]],
     detalles: this.fb.array([this.crearLinea()], [Validators.minLength(1)]),
   });
 
@@ -99,6 +101,10 @@ export class VentaForm implements OnInit, OnDestroy {
   );
 
   ngOnInit(): void {
+    this.cargarProductos();
+  }
+
+  private cargarProductos(): void {
     this.productoService.listar().subscribe({
       next: (data) => this.productos.set(data),
       error: () => this.error.set('No se pudieron cargar los productos del catálogo.'),
@@ -118,6 +124,7 @@ export class VentaForm implements OnInit, OnDestroy {
         this.buscandoDni.set(false);
         const nombre = datos.nombreCompleto || `${datos.nombres ?? ''} ${datos.apellidoPaterno ?? ''} ${datos.apellidoMaterno ?? ''}`.trim();
         this.form.controls.clienteNombre.setValue(nombre);
+        this.form.controls.clienteDocumento.setValue(limpio);
       },
       error: (err) => {
         this.buscandoDni.set(false);
@@ -200,7 +207,11 @@ export class VentaForm implements OnInit, OnDestroy {
       return;
     }
     const cantidadLineas = this.lineasForm.length;
-    const resumen = `Vas a registrar una venta de ${cantidadLineas} línea(s) por un total de S/ ${this.total().toFixed(2)}. ¿Confirmar?`;
+    const esCred = this.form.controls.metodoPago.value === 'CREDITO';
+    const notaIntegracion = esCred
+      ? ` (Se generará Cuenta por Cobrar a ${this.form.controls.diasCredito.value} días + Despacho FEFO)`
+      : ' (Impactará Sesión de Caja activa + Despacho FEFO)';
+    const resumen = `Vas a registrar una venta de ${cantidadLineas} línea(s) por un total de S/ ${this.total().toFixed(2)}${notaIntegracion}. ¿Confirmar?`;
     if (!confirm(resumen)) return;
     this.guardar();
   }
@@ -216,6 +227,8 @@ export class VentaForm implements OnInit, OnDestroy {
     this.ventaService
       .crear({
         clienteNombre: rawVal.clienteNombre,
+        clienteDocumento: rawVal.clienteDocumento ? rawVal.clienteDocumento.trim() : undefined,
+        diasCredito: rawVal.metodoPago === 'CREDITO' ? Number(rawVal.diasCredito) : undefined,
         metodoPago: rawVal.metodoPago,
         detalles,
       })
@@ -225,6 +238,7 @@ export class VentaForm implements OnInit, OnDestroy {
           this.ventaGenerada.set(ventaCreada);
           this.esBorrador.set(false);
           this.mostrarModalTicket.set(true);
+          this.cargarProductos();
         },
         error: (err: HttpErrorResponse) => this.manejarErrorGuardado(err),
       });
@@ -248,7 +262,9 @@ export class VentaForm implements OnInit, OnDestroy {
     this.ventaGenerada.set(null);
     this.form.reset({
       clienteNombre: 'Cliente General',
+      clienteDocumento: '',
       metodoPago: 'EFECTIVO',
+      diasCredito: 30,
     });
     this.lineasForm.clear();
     this.agregarLinea();
@@ -278,7 +294,6 @@ export class VentaForm implements OnInit, OnDestroy {
         this.codeReader = new BrowserMultiFormatReader();
       }
 
-      // Enumerar cámaras físicas disponibles (Webcam laptop / cámaras móvil)
       const devices = await BrowserMultiFormatReader.listVideoInputDevices();
       this.camarasDisponibles.set(devices);
 
@@ -288,12 +303,10 @@ export class VentaForm implements OnInit, OnDestroy {
         return;
       }
 
-      // Si hay cámara trasera (celular), priorizarla; si es laptop, usar la primera (webcam integrada)
       const camaraTrasera = devices.find((d) => /back|rear|trasera|environment/i.test(d.label));
       const deviceId = camaraTrasera ? camaraTrasera.deviceId : devices[0].deviceId;
       this.camaraSeleccionadaId.set(deviceId);
 
-      // Esperar un ciclo para que el elemento <video> esté en el DOM del modal
       setTimeout(() => this.iniciarCaptura(deviceId), 150);
     } catch (err: unknown) {
       console.error('Error al inicializar cámara:', err);
@@ -349,7 +362,6 @@ export class VentaForm implements OnInit, OnDestroy {
     const codigo = (codigoRaw || '').trim();
     if (!codigo) return;
 
-    // Debouncing: evitar escaneos continuos en ráfaga del mismo código en menos de 1.8 segundos
     if (codigo === this.ultimoCodigoValor && ahora - this.ultimoCodigoTiempo < 1800) {
       return;
     }
@@ -357,18 +369,14 @@ export class VentaForm implements OnInit, OnDestroy {
     this.ultimoCodigoValor = codigo;
     this.ultimoEscaneado.set(codigo);
 
-    // Estrategia de Búsqueda de Producto:
-    // 1. Coincidencia exacta por ID de catálogo (ej. "1", "5", "13")
     const lista = this.productos();
     let producto = lista.find((p) => p.id === Number(codigo));
 
-    // 2. Coincidencia de código EAN-13 oficial de AgroPeruvianFoods (ej. "7751000000018")
     if (!producto && /^7751\d{8}\d$/.test(codigo)) {
       const idCalculado = parseInt(codigo.substring(4, 12), 10);
       producto = lista.find((p) => p.id === idCalculado);
     }
 
-    // 3. Coincidencia con prefijos SKU / PROD / ID (ej. "PROD-5", "ID: 3", "#12")
     if (!producto) {
       const matchPrefijo = codigo.match(/(?:PROD|ID|SKU|#)[-:\s]*(\d+)/i);
       if (matchPrefijo) {
@@ -377,7 +385,6 @@ export class VentaForm implements OnInit, OnDestroy {
       }
     }
 
-    // 4. Extracción de número simple si es menor a 1000
     if (!producto) {
       const num = parseInt(codigo, 10);
       if (!isNaN(num) && num > 0 && num <= 1000) {
@@ -385,7 +392,6 @@ export class VentaForm implements OnInit, OnDestroy {
       }
     }
 
-    // 5. Coincidencia por JSON en QR (ej. {"id": 1})
     if (!producto && codigo.startsWith('{') && codigo.endsWith('}')) {
       try {
         const obj = JSON.parse(codigo);
@@ -397,7 +403,6 @@ export class VentaForm implements OnInit, OnDestroy {
       }
     }
 
-    // 6. Coincidencia parcial por nombre del producto
     if (!producto) {
       const codLower = codigo.toLowerCase();
       producto = lista.find((p) => p.nombre.toLowerCase().includes(codLower));
@@ -419,19 +424,16 @@ export class VentaForm implements OnInit, OnDestroy {
   }
 
   private agregarProductoAlCarrito(producto: Producto): void {
-    // Buscar si ya existe una línea con este producto
     const indiceExistente = this.lineasForm.controls.findIndex(
       (l) => l.controls.productoId.value === producto.id,
     );
 
     if (indiceExistente >= 0) {
-      // Incrementar cantidad +1 en la línea existente
       const linea = this.lineasForm.at(indiceExistente);
       const cantActual = linea.controls.cantidad.value || 0;
       linea.controls.cantidad.setValue(cantActual + 1);
       linea.controls.cantidad.markAsDirty();
     } else {
-      // Si la primera línea está sin asignar (productoId = 0), reutilizarla
       const primeraLinea = this.lineasForm.at(0);
       if (
         this.lineasForm.length === 1 &&
@@ -443,7 +445,6 @@ export class VentaForm implements OnInit, OnDestroy {
           cantidad: 1,
         });
       } else {
-        // Agregar nueva fila al FormArray
         const nuevaLinea = this.fb.nonNullable.group({
           productoId: [producto.id, [Validators.min(1)]],
           busqueda: [producto.nombre],
@@ -468,7 +469,7 @@ export class VentaForm implements OnInit, OnDestroy {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(1760, ctx.currentTime); // 1760 Hz (Tono agudo de caja registradora)
+      osc.frequency.setValueAtTime(1760, ctx.currentTime);
       gain.gain.setValueAtTime(0.25, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
       osc.connect(gain);
@@ -476,7 +477,7 @@ export class VentaForm implements OnInit, OnDestroy {
       osc.start();
       osc.stop(ctx.currentTime + 0.12);
     } catch {
-      // Fallback silencioso si no se permite reproducción de audio
+      // Fallback silencioso
     }
   }
 
@@ -488,11 +489,10 @@ export class VentaForm implements OnInit, OnDestroy {
     } else if (err.status === 409) {
       this.error.set(mensaje || 'No hay stock suficiente para completar la venta.');
     } else if (err.status === 400) {
-      this.error.set('Los datos enviados no son válidos. Revisa las líneas de la venta.');
+      this.error.set(mensaje || 'Los datos enviados no son válidos. Revisa las líneas de la venta.');
     } else {
-      this.error.set('No se pudo registrar la venta.');
+      this.error.set(mensaje || 'No se pudo registrar la venta.');
     }
     this.loading.set(false);
   }
 }
-
