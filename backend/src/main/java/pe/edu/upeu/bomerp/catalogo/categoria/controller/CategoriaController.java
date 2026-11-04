@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,8 +15,10 @@ import pe.edu.upeu.bomerp.catalogo.categoria.entity.Categoria;
 import pe.edu.upeu.bomerp.catalogo.categoria.repository.CategoriaRepository;
 import pe.edu.upeu.bomerp.exception.ResourceNotFoundException;
 
+import java.time.Duration;
 import java.util.List;
 
+@Slf4j
 @Tag(name = "Catálogo - Categorías", description = "CRUD de categorías independientes de productos (S07 BomERP)")
 @RestController
 @RequestMapping("/api/v1/categorias")
@@ -23,13 +27,16 @@ public class CategoriaController {
 
     private final CategoriaRepository categoriaRepository;
 
-    @Operation(summary = "Listar todas las categorías")
+    @Operation(summary = "Listar todas las categorías con Cache-Control (S13)")
     @GetMapping
     public ResponseEntity<List<CategoriaResponse>> listar() {
+        log.info("Listando categorías - consulta real a la base de datos");
         List<CategoriaResponse> list = categoriaRepository.findAll().stream()
                 .map(c -> new CategoriaResponse(c.getId(), c.getNombre(), c.getDescripcion()))
                 .toList();
-        return ResponseEntity.ok(list);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(Duration.ofMinutes(5)).cachePublic())
+                .body(list);
     }
 
     @Operation(summary = "Obtener categoría por ID")

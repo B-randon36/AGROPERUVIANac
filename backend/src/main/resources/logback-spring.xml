@@ -22,6 +22,19 @@
         </rollingPolicy>
     </appender>
 
+    <!-- Logging para Desarrollo: Detallado (DEBUG) para trazabilidad en laboratorio -->
+    <springProfile name="dev">
+        <logger name="pe.edu.upeu.bomerp" level="DEBUG"/>
+        <logger name="org.hibernate.SQL" level="DEBUG"/>
+    </springProfile>
+
+    <!-- Logging para Producción: Sobrio (INFO) sin exponer SQL ni saturar discos -->
+    <springProfile name="prod">
+        <logger name="pe.edu.upeu.bomerp" level="INFO"/>
+        <logger name="org.hibernate.SQL" level="ERROR"/>
+        <logger name="org.springframework.web" level="WARN"/>
+    </springProfile>
+
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>

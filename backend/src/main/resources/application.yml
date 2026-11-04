@@ -21,3 +21,8 @@ apisperu:
   base-url: https://dniruc.apisperu.com/api/v1
   token: ${APISPERU_TOKEN:eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6Imxlb25hcmRvZ29keGQuMTdAZ21haWwuY29tIiwianRpIjoiYzcwODgyZmU3YTFlNTY5OSJ9.vxUHL6GXADATQ041Cxy-udmQuckkImli1MuoBxtg6bs}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
