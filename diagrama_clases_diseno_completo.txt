@@ -1,0 +1,335 @@
+classDiagram
+    direction TB
+
+    %% =========================================================================
+    %% PAQUETE: VENTAS Y TICKETS POS (Zaggy Morales)
+    %% =========================================================================
+    class VentaController {
+        -VentaService ventaService
+        +buscar(estado, desde, hasta, ordenarPor, direccion, jwt) ResponseEntity~List~VentaResponse~~
+        +obtener(id, jwt) ResponseEntity~VentaResponse~
+        +crear(request, jwt) ResponseEntity~VentaResponse~
+        +anular(id) ResponseEntity~VentaResponse~
+        +reporte(estado, desde, hasta) ResponseEntity~VentaReporte~
+    }
+
+    class VentaService {
+        <<interface>>
+        +buscar(estado, desde, hasta, ordenarPor, direccion, vendedorId) List~VentaResponse~
+        +obtener(id, vendedorId) VentaResponse
+        +crear(request, vendedorId) VentaResponse
+        +anular(id) VentaResponse
+        +reporte(estado, desde, hasta) VentaReporte
+        +eliminar(id) void
+    }
+
+    class VentaRequest {
+        -MetodoPagoVenta metodoPago
+        -String clienteNombre
+        -String clienteDocumento
+        -Integer diasCredito
+        -List~DetalleVentaRequest~ detalles
+    }
+
+    class DetalleVentaRequest {
+        -Long productoId
+        -Long loteId
+        -Integer cantidad
+    }
+
+    class VentaResponse {
+        -Long id
+        -String numeroTicket
+        -LocalDateTime fecha
+        -EstadoVenta estado
+        -MetodoPagoVenta metodoPago
+        -BigDecimal subtotal
+        -BigDecimal igv
+        -BigDecimal total
+        -String clienteNombre
+        -String vendedorId
+        -List~DetalleVentaResponse~ detalles
+    }
+
+    class DetalleVentaResponse {
+        -Long id
+        -Long productoId
+        -String productoNombre
+        -Long loteId
+        -String codigoLote
+        -Integer cantidad
+        -BigDecimal precioUnitario
+        -BigDecimal subtotal
+    }
+
+    class VentaReporte {
+        -Long totalVentas
+        -BigDecimal montoTotalVendido
+        -BigDecimal ticketPromedio
+        -BigDecimal igvTotalRecaudado
+        -Long ventasAnuladas
+    }
+
+    VentaController ..> VentaService : invoca
+    VentaController ..> VentaRequest : recibe
+    VentaController ..> VentaResponse : retorna
+    VentaService ..> VentaRequest : valida_y_procesa
+    VentaService ..> VentaResponse : produce
+    VentaService ..> VentaReporte : calcula
+    VentaRequest *-- DetalleVentaRequest : contiene
+    VentaResponse *-- DetalleVentaResponse : contiene
+
+
+    %% =========================================================================
+    %% PAQUETE: CAJA Y FINANZAS (Brandon Ccalla)
+    %% =========================================================================
+    class SesionCajaController {
+        -FinanzasService finanzasService
+        +obtenerSesionActiva() ResponseEntity~SesionCajaResponse~
+        +abrirSesion(request) ResponseEntity~SesionCajaResponse~
+        +cerrarSesion(id, request) ResponseEntity~SesionCajaResponse~
+        +registrarMovimiento(id, request) ResponseEntity~MovimientoCajaResponse~
+        +obtenerArqueo(id) ResponseEntity~ArqueoCajaResponse~
+    }
+
+    class TransaccionFinancieraController {
+        -FinanzasService finanzasService
+        +listar(tipo, estado, categoriaId) List~TransaccionFinancieraResponse~
+        +obtener(id) TransaccionFinancieraResponse
+        +crear(request) TransaccionFinancieraResponse
+        +actualizar(id, request) TransaccionFinancieraResponse
+        +cambiarEstado(id, estado) TransaccionFinancieraResponse
+        +eliminar(id) void
+        +obtenerResumenFlujoCaja() FlujoCajaResumenResponse
+    }
+
+    class FinanzasService {
+        <<interface>>
+        +abrirSesion(request) SesionCajaResponse
+        +cerrarSesion(id, request) SesionCajaResponse
+        +registrarMovimiento(id, request) MovimientoCajaResponse
+        +crearTransaccion(request) TransaccionFinancieraResponse
+        +listarTransacciones(tipo, estado) List~TransaccionFinancieraResponse~
+        +obtenerResumenFlujoCaja() FlujoCajaResumenResponse
+    }
+
+    class AperturaSesionRequest {
+        -String cajeroNombre
+        -BigDecimal montoApertura
+        -String observaciones
+    }
+
+    class CierreSesionRequest {
+        -BigDecimal saldoRealContado
+        -String observaciones
+    }
+
+    class SesionCajaResponse {
+        -Long id
+        -String cajeroNombre
+        -LocalDateTime fechaApertura
+        -LocalDateTime fechaCierre
+        -BigDecimal montoApertura
+        -BigDecimal saldoTeorico
+        -BigDecimal saldoReal
+        -BigDecimal diferencia
+        -EstadoCaja estado
+    }
+
+    class TransaccionFinancieraRequest {
+        -String codigo
+        -String concepto
+        -BigDecimal monto
+        -LocalDate fecha
+        -TipoFinanciero tipo
+        -EstadoFinanciero estado
+        -Long categoriaFinancieraId
+    }
+
+    class FlujoCajaResumenResponse {
+        -BigDecimal totalIngresos
+        -BigDecimal totalEgresos
+        -BigDecimal balanceNeto
+        -BigDecimal cuentasPorCobrar
+        -BigDecimal cuentasPorPagar
+        -Integer totalTransacciones
+    }
+
+    SesionCajaController ..> FinanzasService : invoca
+    TransaccionFinancieraController ..> FinanzasService : invoca
+    SesionCajaController ..> AperturaSesionRequest : recibe
+    SesionCajaController ..> CierreSesionRequest : recibe
+    SesionCajaController ..> SesionCajaResponse : retorna
+    TransaccionFinancieraController ..> TransaccionFinancieraRequest : recibe
+    TransaccionFinancieraController ..> FlujoCajaResumenResponse : retorna
+    FinanzasService ..> SesionCajaResponse : produce
+
+
+    %% =========================================================================
+    %% PAQUETE: PRODUCCION BOM Y LOTES (Isai Armuto)
+    %% =========================================================================
+    class ProduccionController {
+        -ProduccionService produccionService
+        +crearOrden(request) ResponseEntity~OrdenProduccionResponse~
+        +iniciarOrden(id) ResponseEntity~OrdenProduccionResponse~
+        +completarOrden(id, request) ResponseEntity~OrdenProduccionResponse~
+        +cancelarOrden(id) ResponseEntity~OrdenProduccionResponse~
+        +listarOrdenes(estado) ResponseEntity~List~OrdenProduccionResponse~~
+    }
+
+    class ProduccionService {
+        <<interface>>
+        +crearOrden(request) OrdenProduccionResponse
+        +iniciarOrden(id) OrdenProduccionResponse
+        +completarOrden(id, request) OrdenProduccionResponse
+        +cancelarOrden(id) OrdenProduccionResponse
+        +listarOrdenes(estado) List~OrdenProduccionResponse~
+    }
+
+    class OrdenProduccionRequest {
+        -String codigoOrden
+        -Long productoId
+        -Integer cantidadProgramada
+        -Long centroTrabajoId
+        -List~DetalleConsumoInsumoRequest~ insumos
+    }
+
+    class CompletarOrdenRequest {
+        -Integer cantidadProducida
+        -LocalDate fechaVencimiento
+        -String observaciones
+    }
+
+    class OrdenProduccionResponse {
+        -Long id
+        -String codigoOrden
+        -Long productoId
+        -String productoNombre
+        -Integer cantidadProgramada
+        -Integer cantidadProducida
+        -EstadoOrdenProduccion estado
+        -String codigoLoteGenerado
+        -List~DetalleConsumoInsumoResponse~ insumos
+    }
+
+    ProduccionController ..> ProduccionService : invoca
+    ProduccionController ..> OrdenProduccionRequest : recibe
+    ProduccionController ..> CompletarOrdenRequest : recibe
+    ProduccionController ..> OrdenProduccionResponse : retorna
+    ProduccionService ..> OrdenProduccionRequest : procesa
+    ProduccionService ..> OrdenProduccionResponse : produce
+
+
+    %% =========================================================================
+    %% PAQUETE: COMPRAS Y PROVEEDORES (Elisban Huaylla)
+    %% =========================================================================
+    class CompraController {
+        -CompraService compraService
+        +crearProveedor(request) ResponseEntity~ProveedorResponse~
+        +listarProveedores() ResponseEntity~List~ProveedorResponse~~
+        +registrarCompra(request) ResponseEntity~CompraResponse~
+        +amortizarPago(id, request) ResponseEntity~CompraResponse~
+        +anularCompra(id) ResponseEntity~CompraResponse~
+        +reporte(estado, desde, hasta) ResponseEntity~CompraReporte~
+    }
+
+    class CompraService {
+        <<interface>>
+        +crearProveedor(request) ProveedorResponse
+        +listarProveedores() List~ProveedorResponse~
+        +registrarCompra(request) CompraResponse
+        +amortizarPago(id, request) CompraResponse
+        +anularCompra(id) CompraResponse
+        +reporte(estado, desde, hasta) CompraReporte
+    }
+
+    class CompraRequest {
+        -String numeroComprobante
+        -Long proveedorId
+        -LocalDate fechaEmision
+        -List~DetalleCompraRequest~ detalles
+    }
+
+    class CompraResponse {
+        -Long id
+        -String numeroComprobante
+        -Long proveedorId
+        -String proveedorRazonSocial
+        -EstadoCompra estado
+        -BigDecimal total
+        -BigDecimal saldoPendiente
+        -List~DetalleCompraResponse~ detalles
+    }
+
+    class AmortizarPagoRequest {
+        -BigDecimal montoAbono
+        -String referencia
+    }
+
+    class ProveedorRequest {
+        -String ruc
+        -String razonSocial
+        -String telefono
+        -String email
+        -String direccion
+    }
+
+    class ProveedorResponse {
+        -Long id
+        -String ruc
+        -String razonSocial
+        -String email
+    }
+
+    CompraController ..> CompraService : invoca
+    CompraController ..> CompraRequest : recibe
+    CompraController ..> AmortizarPagoRequest : recibe
+    CompraController ..> CompraResponse : retorna
+    CompraService ..> CompraRequest : procesa
+    CompraService ..> CompraResponse : produce
+    CompraService ..> ProveedorResponse : gestiona
+
+
+    %% =========================================================================
+    %% PAQUETE: CATALOGO DE PRODUCTOS Y CATEGORIAS (Maestro)
+    %% =========================================================================
+    class ProductoController {
+        -ProductoService productoService
+        +listar(categoriaId) List~ProductoResponse~
+        +obtener(id) ProductoResponse
+        +crear(request) ProductoResponse
+        +actualizar(id, request) ProductoResponse
+        +eliminar(id) void
+    }
+
+    class ProductoService {
+        <<interface>>
+        +listar(categoriaId) List~ProductoResponse~
+        +obtener(id) ProductoResponse
+        +crear(request) ProductoResponse
+        +actualizar(id, request) ProductoResponse
+        +eliminar(id) void
+    }
+
+    class ProductoRequest {
+        -String nombre
+        -BigDecimal precio
+        -Integer stock
+        -Long categoriaId
+    }
+
+    class ProductoResponse {
+        -Long id
+        -String nombre
+        -BigDecimal precio
+        -Integer stock
+        -Long categoriaId
+        -String categoriaNombre
+    }
+
+    ProductoController ..> ProductoService : invoca
+    ProductoController ..> ProductoRequest : recibe
+    ProductoController ..> ProductoResponse : retorna
+    ProductoService ..> ProductoRequest : procesa
+    ProductoService ..> ProductoResponse : produce
+

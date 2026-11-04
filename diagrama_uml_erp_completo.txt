@@ -1,0 +1,169 @@
+erDiagram
+    %% ==========================================
+    %% 1. MODULO CATALOGO (MAESTRO)
+    %% ==========================================
+    CATEGORIA {
+        int idCategoria PK
+        string nombre
+        string descripcion
+    }
+
+    PRODUCTO {
+        int idProducto PK
+        string nombre
+        decimal precio
+        int stock
+        int idCategoria FK
+    }
+
+    %% ==========================================
+    %% 2. MODULO VENTAS POS (Zaggy Morales)
+    %% ==========================================
+    CLIENTE {
+        int idCliente PK
+        string dni
+        string nombreCompleto
+        string telefono
+        string direccion
+    }
+
+    VENTA {
+        int idVenta PK
+        string numeroTicket
+        datetime fecha
+        string estado
+        string metodoPago
+        decimal subtotal
+        decimal igv
+        decimal total
+        int idCliente FK
+        string vendedorSubUuid
+    }
+
+    DETALLE_VENTA {
+        int idDetalleVenta PK
+        int idVenta FK
+        int idProducto FK
+        int idLote FK
+        int cantidad
+        decimal precioUnitario
+        decimal subtotal
+    }
+
+    %% ==========================================
+    %% 3. MODULO CAJA Y FINANZAS (Brandon Ccalla)
+    %% ==========================================
+    SESION_CAJA {
+        int idSesionCaja PK
+        string cajeroNombre
+        datetime fechaApertura
+        datetime fechaCierre
+        decimal montoApertura
+        decimal saldoTeorico
+        decimal saldoReal
+        decimal diferencia
+        string estado
+    }
+
+    MOVIMIENTO_CAJA {
+        int idMovimiento PK
+        int idSesionCaja FK
+        string tipo
+        decimal monto
+        string concepto
+        string metodoPago
+        string referenciaTicket
+    }
+
+    %% ==========================================
+    %% 4. MODULO PRODUCCION Y LOTES FEFO (Isai Armuto)
+    %% ==========================================
+    ORDEN_PRODUCCION {
+        int idOrden PK
+        string codigoOrden
+        int idProducto FK
+        int cantidadProgramada
+        int cantidadProducida
+        string estado
+        datetime fechaInicio
+        datetime fechaFin
+    }
+
+    DETALLE_CONSUMO_INSUMO {
+        int idDetalleConsumo PK
+        int idOrden FK
+        int idInsumoProducto FK
+        decimal cantidadRequerida
+        decimal cantidadConsumida
+        string unidadMedida
+    }
+
+    LOTE_PRODUCTO {
+        int idLote PK
+        string codigoLote
+        int idProducto FK
+        int idOrden FK
+        int stockDisponible
+        date fechaProduccion
+        date fechaVencimiento
+    }
+
+    %% ==========================================
+    %% 5. MODULO COMPRAS Y PROVEEDORES (Elisban Huaylla)
+    %% ==========================================
+    PROVEEDOR {
+        int idProveedor PK
+        string ruc
+        string razonSocial
+        string telefono
+        string email
+    }
+
+    COMPRA {
+        int idCompra PK
+        string numeroComprobante
+        int idProveedor FK
+        date fechaEmision
+        string estado
+        decimal subtotal
+        decimal igv
+        decimal total
+        decimal saldoPendiente
+    }
+
+    DETALLE_COMPRA {
+        int idDetalleCompra PK
+        int idCompra FK
+        int idProductoInsumo FK
+        decimal cantidad
+        decimal precioUnitario
+        decimal subtotal
+    }
+
+    %% ==========================================
+    %% CARDINALIDADES Y RELACIONES
+    %% ==========================================
+    CATEGORIA ||--o{ PRODUCTO : clasifica
+
+    %% Ventas
+    CLIENTE ||--o{ VENTA : solicita
+    VENTA ||--|{ DETALLE_VENTA : contiene
+    PRODUCTO ||--o{ DETALLE_VENTA : es_vendido_en
+    LOTE_PRODUCTO ||--o{ DETALLE_VENTA : descuenta_fefo
+
+    %% Caja
+    SESION_CAJA ||--o{ MOVIMIENTO_CAJA : registra
+    VENTA ..o{ MOVIMIENTO_CAJA : genera_ingreso
+
+    %% Produccion
+    PRODUCTO ||--o{ ORDEN_PRODUCCION : se_fabrica_en
+    ORDEN_PRODUCCION ||--|{ DETALLE_CONSUMO_INSUMO : consume
+    PRODUCTO ||--o{ DETALLE_CONSUMO_INSUMO : es_insumo
+    ORDEN_PRODUCCION ||--o{ LOTE_PRODUCTO : genera_lote
+    PRODUCTO ||--o{ LOTE_PRODUCTO : pertenece_a
+
+    %% Compras
+    PROVEEDOR ||--o{ COMPRA : suministra
+    COMPRA ||--|{ DETALLE_COMPRA : contiene
+    PRODUCTO ||--o{ DETALLE_COMPRA : abastece_insumo
+

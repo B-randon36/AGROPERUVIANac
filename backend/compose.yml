@@ -1,0 +1,88 @@
+services:
+  oracle:
+    image: gvenzl/oracle-free:23
+    container_name: bomerp-oracle-prod
+    restart: unless-stopped
+    ports:
+      - "41521:1521"
+      - "45500:5500"
+    environment:
+      ORACLE_PASSWORD: 123456
+      APP_USER: BOMERP_APP
+      APP_USER_PASSWORD: 123456
+      TZ: America/Lima
+    volumes:
+      - oracle-data-prod:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  keycloak-db:
+    image: postgres:17-alpine
+    container_name: bomerp-keycloak-db-prod
+    restart: unless-stopped
+    ports:
+      - "45432:5432"
+    environment:
+      POSTGRES_DB: bomerp_keycloak
+      POSTGRES_USER: bomerp_keycloak
+      POSTGRES_PASSWORD: 123456
+    volumes:
+      - keycloak-db-data-prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bomerp_keycloak -d bomerp_keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.0
+    container_name: bomerp-keycloak-prod
+    restart: unless-stopped
+    command: start-dev --import-realm
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    ports:
+      - "48080:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin123
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/bomerp_keycloak
+      KC_DB_USERNAME: bomerp_keycloak
+      KC_DB_PASSWORD: 123456
+    volumes:
+      - keycloak-data-prod:/opt/keycloak/data
+      - ./keycloak-import:/opt/keycloak/data/import
+
+  bomerp-backend:
+    build: .
+    container_name: bomerp-backend-prod
+    restart: unless-stopped
+    depends_on:
+      oracle:
+        condition: service_healthy
+      keycloak-db:
+        condition: service_healthy
+    ports:
+      - "48088:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: oracle
+      DB_PORT: 1521
+      DB_NAME: FREEPDB1
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      KEYCLOAK_HOST: keycloak
+      KEYCLOAK_PORT: 8080
+
+volumes:
+  oracle-data-prod:
+  keycloak-data-prod:
+  keycloak-db-data-prod:
+

@@ -1,0 +1,32 @@
+server:
+  port: 48088
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:bomerp_prod_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=CREATE SCHEMA IF NOT EXISTS BOM_CATALOGO\;CREATE SCHEMA IF NOT EXISTS BOM_CAJA\;CREATE SCHEMA IF NOT EXISTS BOM_COMPRAS\;CREATE SCHEMA IF NOT EXISTS BOM_PRODUCCION\;CREATE SCHEMA IF NOT EXISTS BOM_VENTAS\;CREATE SCHEMA IF NOT EXISTS BOM_SEGURIDAD
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    defer-datasource-initialization: true
+    show-sql: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:38080/realms/bomerp
+
+bomerp:
+  cors:
+    allowed-origins: http://localhost:4300,http://localhost:4200
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
