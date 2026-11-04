@@ -238,6 +238,40 @@
   box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08);
 }
 
+/* Modern light dashboard, with BOMERP brand accents. */
+.home-container { gap: 1.5rem; }
+.hero-card {
+  background: linear-gradient(115deg, #fff 0%, #fff 60%, #e8f5ef 100%);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 12px rgb(27 49 73 / .045);
+  color: var(--text-main);
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+}
+.hero-badge { background: #e4f5ed; color: #07583c; backdrop-filter: none; }
+.hero-title { color: #172231; font-size: clamp(1.6rem, 2.6vw, 2.3rem); }
+.hero-subtitle { color: #526175; max-width: 640px; }
+.meta-tag { background: #f0f6f3; color: #07583c; border: 1px solid #d2e9dc; }
+.status-card, .status-card.online {
+  background: #fff;
+  border: 1px solid #d2e9dc;
+  box-shadow: 0 3px 14px rgb(27 49 73 / .05);
+}
+.status-sub { color: #64748b; }
+.dashboard-section { background: transparent; padding: 0; border: 0; }
+.kpi-grid { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.kpi-card { border-left: 1px solid var(--border); border-top: 3px solid var(--primary); border-radius: var(--radius-lg); box-shadow: 0 2px 10px rgb(27 49 73 / .04); }
+.kpi-blue { border-top-color: #0284c7; }
+.kpi-green { border-top-color: #059669; }
+.kpi-orange { border-top-color: #ea580c; }
+.kpi-purple { border-top-color: #7c3aed; }
+.kpi-teal { border-top-color: #0d9488; }
+.module-card { box-shadow: 0 2px 10px rgb(27 49 73 / .04); }
+.module-card:hover { transform: translateY(-2px); }
+@media (max-width: 860px) {
+  .hero-card { flex-direction: column; align-items: stretch; gap: 1.5rem; }
+  .hero-status { align-self: flex-start; }
+}
+
 .module-header {
   display: flex;
   justify-content: space-between;

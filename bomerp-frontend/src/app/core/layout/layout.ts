@@ -12,7 +12,16 @@ import { AuthService } from '../auth/auth-service';
 export class Layout implements OnInit, OnDestroy {
   protected readonly auth = inject(AuthService);
   protected readonly currentDateTime = signal(new Date());
+  protected readonly menuAbierto = signal(false);
   private clockInterval: any;
+
+  protected alternarMenu(): void {
+    this.menuAbierto.update(abierto => !abierto);
+  }
+
+  protected cerrarMenu(): void {
+    this.menuAbierto.set(false);
+  }
 
   ngOnInit(): void {
     this.clockInterval = setInterval(() => {

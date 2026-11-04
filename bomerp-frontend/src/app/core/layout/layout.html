@@ -1,4 +1,5 @@
-<div class="app-shell">
+<div class="app-shell" [class.sidebar-open]="menuAbierto()">
+  <button class="sidebar-backdrop" type="button" aria-label="Cerrar menú" (click)="cerrarMenu()"></button>
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
@@ -13,24 +14,24 @@
       </div>
     </div>
 
-    <nav class="sidebar-nav">
-      <div class="nav-section-title">PRINCIPAL</div>
+    <nav class="sidebar-nav" aria-label="Navegación principal" (click)="cerrarMenu()">
+      <div class="nav-section-title">GENERAL</div>
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-item">
         <span class="material-symbols-outlined nav-icon">dashboard</span>
-        <span>Dashboard General</span>
+        <span>Resumen</span>
       </a>
 
       @if (auth.autenticado()) {
         <!-- Módulo 1: Finanzas & Caja (Brandon Ccalla) - Solo ADMIN y SUPERVISOR -->
         @if (auth.tieneRol('ADMIN', 'SUPERVISOR')) {
-          <div class="nav-section-title">MÓDULO 1 · FINANZAS (BRANDON)</div>
+          <div class="nav-section-title">CAJA Y FINANZAS</div>
           <a routerLink="/finanzas/sesiones" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">point_of_sale</span>
             <span>Sesiones de Caja</span>
           </a>
           <a routerLink="/finanzas/rendiciones" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">receipt_long</span>
-            <span>Rendición Caja Chica</span>
+            <span>Caja chica</span>
           </a>
           <a routerLink="/finanzas/creditos" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">credit_card</span>
@@ -38,7 +39,7 @@
           </a>
           <a routerLink="/finanzas/reportes" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">analytics</span>
-            <span>Dashboard Financiero</span>
+            <span>Reportes financieros</span>
           </a>
           <a routerLink="/caja" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">account_balance</span>
@@ -47,24 +48,24 @@
         }
 
         <!-- Módulo 2: Ventas POS (Zaggy Morales) -->
-        <div class="nav-section-title">MÓDULO 2 · VENTAS POS (ZAGGY)</div>
+        <div class="nav-section-title">VENTAS</div>
         <a routerLink="/ventas/reporte" routerLinkActive="active" class="nav-item">
           <span class="material-symbols-outlined nav-icon">bar_chart</span>
-          <span>Reporte de Ventas</span>
+          <span>Reporte de ventas</span>
         </a>
         @if (auth.tieneRol('VENDEDOR', 'SUPERVISOR', 'ADMIN')) {
           <a routerLink="/ventas/nueva" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">shopping_cart_checkout</span>
-            <span>Nueva Venta (DNI + Ticket)</span>
+            <span>Nueva venta</span>
           </a>
         }
         <a routerLink="/ventas/delivery" routerLinkActive="active" class="nav-item">
           <span class="material-symbols-outlined nav-icon">local_shipping</span>
-          <span>Pedidos Delivery</span>
+          <span>Pedidos delivery</span>
         </a>
 
         <!-- Módulo Inventario & FEFO -->
-        <div class="nav-section-title">INVENTARIO & ALMACENES</div>
+        <div class="nav-section-title">INVENTARIO</div>
         <a routerLink="/inventario/lotes" routerLinkActive="active" class="nav-item">
           <span class="material-symbols-outlined nav-icon">inventory_2</span>
           <span>Lotes FEFO</span>
@@ -85,7 +86,7 @@
         }
 
         <!-- Módulo 3: Producción & BOM + Catálogo -->
-        <div class="nav-section-title">MÓDULO 3 · PRODUCCIÓN (ISAÍ)</div>
+        <div class="nav-section-title">PRODUCCIÓN</div>
         @if (auth.tieneRol('SUPERVISOR', 'ADMIN')) {
           <a routerLink="/produccion" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-item">
             <span class="material-symbols-outlined nav-icon">precision_manufacturing</span>
@@ -93,11 +94,11 @@
           </a>
           <a routerLink="/produccion/nueva" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">playlist_add</span>
-            <span>Planificar Orden BOM</span>
+            <span>Planificar orden</span>
           </a>
           <a routerLink="/produccion/recetas" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">receipt_long</span>
-            <span>Recetas Maestras BOM</span>
+            <span>Recetas BOM</span>
           </a>
           <a routerLink="/produccion/centros-trabajo" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">factory</span>
@@ -106,27 +107,27 @@
         }
         <a routerLink="/catalogo/categorias" routerLinkActive="active" class="nav-item">
           <span class="material-symbols-outlined nav-icon">category</span>
-          <span>Categorías (S07 Base)</span>
+          <span>Categorías</span>
         </a>
         <a routerLink="/catalogo/productos" routerLinkActive="active" class="nav-item">
           <span class="material-symbols-outlined nav-icon">inventory</span>
-          <span>Productos (S08 Dependiente)</span>
+          <span>Productos</span>
         </a>
 
         <!-- Módulo 4: Compras (SUPERVISOR, ADMIN) -->
         @if (auth.tieneRol('SUPERVISOR', 'ADMIN')) {
-          <div class="nav-section-title">MÓDULO 4 · COMPRAS</div>
+          <div class="nav-section-title">COMPRAS</div>
           <a routerLink="/compras" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-item">
             <span class="material-symbols-outlined nav-icon">shopping_bag</span>
             <span>Compras de Insumos</span>
           </a>
           <a routerLink="/compras/nueva" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">add_shopping_cart</span>
-            <span>Nueva Orden de Compra</span>
+            <span>Nueva compra</span>
           </a>
           <a routerLink="/compras/proveedores" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">store</span>
-            <span>Proveedores (Maestro)</span>
+            <span>Proveedores</span>
           </a>
         }
       }
@@ -148,6 +149,13 @@
     <!-- Top Header -->
     <header class="topbar">
       <div class="topbar-left">
+        <button class="menu-toggle" type="button" [attr.aria-expanded]="menuAbierto()" aria-label="Abrir navegación" (click)="alternarMenu()">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="topbar-heading">
+          <span class="topbar-eyebrow">BOMERP · PANEL DE GESTIÓN</span>
+          <strong>Espacio de trabajo</strong>
+        </div>
         <div class="clock-box">
           <span class="material-symbols-outlined icon-inline" style="font-size: 1.05rem;">schedule</span>
           {{ currentDateTime() | date:'dd/MM/yyyy HH:mm:ss' }}
@@ -155,6 +163,12 @@
       </div>
 
       <div class="topbar-right">
+        @if (auth.autenticado() && auth.tieneRol('VENDEDOR', 'SUPERVISOR', 'ADMIN')) {
+          <a routerLink="/ventas/nueva" class="topbar-primary-action">
+            <span class="material-symbols-outlined">add</span>
+            <span>Nueva venta</span>
+          </a>
+        }
         @if (auth.autenticado()) {
           <div class="user-profile" title="Sesión activa Keycloak">
             <div class="user-avatar">{{ (auth.usuario()?.nombre || 'US').substring(0,2).toUpperCase() }}</div>
