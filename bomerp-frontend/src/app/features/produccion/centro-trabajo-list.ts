@@ -12,7 +12,7 @@ import { CentroTrabajo, CentroTrabajoRequest } from './produccion.model';
     <div class="feature-container">
       <div class="page-header">
         <div>
-          <div class="badge badge-warning">MÓDULO 3 · PRODUCCIÓN Y PLANTA</div>
+          <div class="badge badge-warning">PRODUCCIÓN & PLANTA</div>
           <h1>Centros de Trabajo & Líneas Operativas</h1>
           <p class="subtitle">Capacidades nominales, tarifas operativas por hora y monitoreo de líneas de procesamiento</p>
         </div>

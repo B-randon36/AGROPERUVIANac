@@ -72,7 +72,7 @@ export class SesionCajaForm implements OnInit {
   // Formulario Apertura
   protected readonly formApertura = this.fb.nonNullable.group({
     usuarioId: [1, [Validators.required]],
-    cajero: ['Brandon Ccalla', [Validators.required, Validators.maxLength(120)]],
+    cajero: ['Cajero de Turno', [Validators.required, Validators.maxLength(120)]],
     cajeroRol: ['ADMIN, CAJERO', [Validators.maxLength(80)]],
     saldoInicial: [300, [Validators.required, Validators.min(0)]],
     codigoSesion: [''],
@@ -445,7 +445,7 @@ export class SesionCajaForm implements OnInit {
       const rolStr = rolesRelevantes.length > 0 ? rolesRelevantes.join(', ') : 'ADMIN, CAJERO';
       this.formApertura.reset({
         usuarioId: 1,
-        cajero: this.authService.usuario()?.nombre || 'Brandon Ccalla',
+        cajero: this.authService.usuario()?.nombre || 'Cajero de Turno',
         cajeroRol: rolStr,
         saldoInicial: 300,
         codigoSesion: `SES-${hoyStr}-${horaStr}`,

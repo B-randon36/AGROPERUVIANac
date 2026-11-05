@@ -17,14 +17,14 @@ export const routes: Routes = [
         loadComponent: () => import('./core/home/home').then((m) => m.Home),
         title: 'Dashboard · ERP Agro Peruvian Foods',
       },
-      // Módulo 1: Finanzas & Caja (Brandon Ccalla)
+      // Gestión Financiera y Caja Diaria
       {
         path: 'caja',
         canActivate: [authGuard, rolGuard('SUPERVISOR', 'ADMIN')],
         loadComponent: () => import('./features/caja/caja-dashboard').then((m) => m.CajaDashboard),
         title: 'Caja & Movimientos · ERP Agro Peruvian Foods',
       },
-      // --- Finanzas: Transacciones, Rendiciones, Sesiones y Créditos (Brandon Ccalla) ---
+      // --- Gestión Financiera: Transacciones, Rendiciones, Sesiones y Créditos ---
       {
         path: 'finanzas/transacciones',
         canActivate: [authGuard, rolGuard('ADMIN', 'SUPERVISOR')],
@@ -182,28 +182,28 @@ export const routes: Routes = [
           import('./features/ventas/delivery/delivery-list').then((m) => m.DeliveryList),
         title: 'Despachos y Pedidos Delivery · ERP Agro Peruvian Foods',
       },
-      // Módulo 2: Ventas POS (Zaggy Morales) - S09
+      // Ventas y Punto de Venta (POS)
       {
         path: 'ventas',
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/ventas/venta-reporte').then((m) => m.VentaReporteComponent),
-        title: 'Reporte de Ventas POS (S09) · ERP Agro Peruvian Foods',
+        title: 'Reporte de Ventas POS  · ERP Agro Peruvian Foods',
       },
       {
         path: 'ventas/reporte',
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/ventas/venta-reporte').then((m) => m.VentaReporteComponent),
-        title: 'Reporte de Ventas POS (S09) · ERP Agro Peruvian Foods',
+        title: 'Reporte de Ventas POS  · ERP Agro Peruvian Foods',
       },
       {
         path: 'ventas/nueva',
         canActivate: [authGuard, rolGuard('ADMIN', 'VENDEDOR', 'SUPERVISOR')],
         loadComponent: () => import('./features/ventas/venta-form').then((m) => m.VentaForm),
-        title: 'Nueva Venta POS (S09) · ERP Agro Peruvian Foods',
+        title: 'Nueva Venta POS  · ERP Agro Peruvian Foods',
       },
-      // Módulo 3: Producción & BOM (Isaí Armuto) + Catálogo S07 & S08
+      // Producción & BOM + Catálogo
       {
         path: 'produccion',
         canActivate: [authGuard, rolGuard('SUPERVISOR', 'ADMIN')],
@@ -230,13 +230,13 @@ export const routes: Routes = [
           import('./features/produccion/centro-trabajo-list').then((m) => m.CentroTrabajoList),
         title: 'Centros de Trabajo de Planta · ERP Agro Peruvian Foods',
       },
-      // Catálogo S07 (Categorías)
+      // Catálogo: Categorías
       {
         path: 'catalogo/categorias',
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/catalogo/categoria/categoria-list').then((m) => m.CategoriaList),
-        title: 'Categorías (S07) · ERP Agro Peruvian Foods',
+        title: 'Categorías  · ERP Agro Peruvian Foods',
       },
       {
         path: 'catalogo/categorias/nueva',
@@ -252,36 +252,36 @@ export const routes: Routes = [
           import('./features/catalogo/categoria/categoria-form').then((m) => m.CategoriaForm),
         title: 'Editar Categoría · ERP Agro Peruvian Foods',
       },
-      // Catálogo S08 (Productos)
+      // Catálogo: Productos
       {
         path: 'catalogo/productos',
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/catalogo/producto/producto-list').then((m) => m.ProductoList),
-        title: 'Catálogo de Productos (S08) · ERP Agro Peruvian Foods',
+        title: 'Catálogo de Productos  · ERP Agro Peruvian Foods',
       },
       {
         path: 'catalogo/productos/nuevo',
         canActivate: [authGuard, rolGuard('ADMIN')],
         loadComponent: () =>
           import('./features/catalogo/producto/producto-form').then((m) => m.ProductoForm),
-        title: 'Nuevo Producto (S08) · ERP Agro Peruvian Foods',
+        title: 'Nuevo Producto  · ERP Agro Peruvian Foods',
       },
       {
         path: 'catalogo/productos/:id/editar',
         canActivate: [authGuard, rolGuard('ADMIN')],
         loadComponent: () =>
           import('./features/catalogo/producto/producto-form').then((m) => m.ProductoForm),
-        title: 'Editar Producto (S08) · ERP Agro Peruvian Foods',
+        title: 'Editar Producto  · ERP Agro Peruvian Foods',
       },
       {
         path: 'catalogo/productos/:id',
         canActivate: [authGuard, rolGuard('ADMIN')],
         loadComponent: () =>
           import('./features/catalogo/producto/producto-form').then((m) => m.ProductoForm),
-        title: 'Ver/Editar Producto (S08) · ERP Agro Peruvian Foods',
+        title: 'Ver/Editar Producto  · ERP Agro Peruvian Foods',
       },
-      // Módulo 4: Compras & Insumos (Elisban Huaylla)
+      // Compras y Abastecimiento
       {
         path: 'compras',
         canActivate: [authGuard, rolGuard('SUPERVISOR', 'ADMIN')],
@@ -307,6 +307,38 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/compras/proveedor-form').then((m) => m.ProveedorForm),
         title: 'Registrar Proveedor · ERP Agro Peruvian Foods',
+      },
+      // Directorio Comercial: Clientes y Proveedores (Terceros)
+      {
+        path: 'terceros',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/terceros/terceros-list').then((m) => m.TercerosList),
+        title: 'Directorio de Clientes y Proveedores · ERP Agro Peruvian Foods',
+      },
+      {
+        path: 'terceros/nuevo',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/terceros/terceros-form').then((m) => m.TercerosForm),
+        title: 'Registrar Cliente o Proveedor · ERP Agro Peruvian Foods',
+      },
+      {
+        path: 'terceros/:id/editar',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/terceros/terceros-form').then((m) => m.TercerosForm),
+        title: 'Editar Tercero Comercial · ERP Agro Peruvian Foods',
+      },
+      {
+        path: 'clientes',
+        redirectTo: 'terceros',
+        pathMatch: 'full',
+      },
+      {
+        path: 'proveedores',
+        redirectTo: 'terceros',
+        pathMatch: 'full',
       },
       {
         path: 'sin-permiso',

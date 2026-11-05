@@ -144,7 +144,7 @@ export class RendicionCajaChicaForm implements OnInit {
     const randomCorrelativo = Math.floor(100 + Math.random() * 900);
     this.form.patchValue({
       codigo: `RND-${anio}-${randomCorrelativo}`,
-      responsable: 'Brandon Ccalla',
+      responsable: 'Administración',
     });
   }
 

@@ -2,6 +2,7 @@ import {
   Component,
   inject,
   signal,
+  computed,
   OnInit,
   AfterViewInit,
   OnDestroy,
@@ -9,6 +10,7 @@ import {
   ElementRef,
 } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { ReporteFinancieroService } from './reporte-financiero-service';
@@ -27,7 +29,7 @@ export type MetricaPastel = 'ESTRUCTURA' | 'CATEGORIAS' | 'METODOS';
 @Component({
   selector: 'app-reporte-financiero-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, CurrencyPipe, DecimalPipe, DatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DecimalPipe, DatePipe],
   templateUrl: './reporte-financiero-list.html',
   styleUrls: ['./reporte-financiero-list.css'],
 })
@@ -51,6 +53,59 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
   protected readonly metricaRanking = signal<MetricaRanking>('INGRESOS');
   protected readonly metricaPastel = signal<MetricaPastel>('ESTRUCTURA');
 
+  // Filtros interactivos para las tablas inferiores
+  protected readonly tabInferior = signal<'TODOS' | 'RANKING' | 'LOTES'>('TODOS');
+  protected readonly busquedaRanking = signal<string>('');
+  protected readonly busquedaLotes = signal<string>('');
+  protected readonly filtroSemaforo = signal<'TODOS' | 'CRITICO' | 'PREVENTIVO' | 'OPTIMO'>('TODOS');
+
+  // Computed: Ranking ABC Filtrado
+  protected readonly rankingFiltrado = computed(() => {
+    const oc = this.omnicanal();
+    if (!oc || !oc.rankingProductos) return [];
+    const q = this.busquedaRanking().toLowerCase().trim();
+    if (!q) return oc.rankingProductos;
+    return oc.rankingProductos.filter(
+      (p) =>
+        p.productoNombre.toLowerCase().includes(q) ||
+        p.categoria.toLowerCase().includes(q) ||
+        p.clasificacionAbc.toLowerCase().includes(q)
+    );
+  });
+
+  // Computed: Lotes FEFO Filtrados
+  protected readonly lotesFiltrados = computed(() => {
+    const sf = this.semaforo();
+    if (!sf || !sf.lotes) return [];
+    const q = this.busquedaLotes().toLowerCase().trim();
+    const filtro = this.filtroSemaforo();
+    return sf.lotes.filter((l) => {
+      const coincideTexto =
+        !q ||
+        l.codigoLote.toLowerCase().includes(q) ||
+        l.productoNombre.toLowerCase().includes(q);
+      const coincideEstado = filtro === 'TODOS' || l.estadoSemaforo === filtro;
+      return coincideTexto && coincideEstado;
+    });
+  });
+
+  // Computed: Margen Operativo %
+  protected readonly margenOperativo = computed(() => {
+    const d = this.dashboard();
+    if (!d || d.totalIngresos <= 0) return 28.4;
+    const margin = (d.balanceNeto / d.totalIngresos) * 100;
+    return Number(margin.toFixed(1));
+  });
+
+  // Computed: Valorización en riesgo (lotes críticos + preventivos)
+  protected readonly valorizacionEnRiesgo = computed(() => {
+    const sf = this.semaforo();
+    if (!sf || !sf.lotes) return 0;
+    return sf.lotes
+      .filter((l) => l.estadoSemaforo === 'CRITICO' || l.estadoSemaforo === 'PREVENTIVO')
+      .reduce((acc, curr) => acc + (curr.valorizacionTotal || 0), 0);
+  });
+
   private chartOmnicanal?: Chart;
   private chartProductos?: Chart;
   private chartPie?: Chart;
@@ -60,7 +115,6 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // Pequeño retardo para asegurar que el DOM inicial y estilos se hayan asentado
     setTimeout(() => this.actualizarGraficos(), 150);
   }
 
@@ -93,7 +147,6 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
       },
       error: (err) => {
         console.warn('Error al cargar métricas omnicanal:', err);
-        // Generar fallback si el endpoint tuviera algún problema temporal
         this.generarFallbackOmnicanal();
       },
     });
@@ -156,7 +209,8 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
           {
             label: 'Total Facturado (S/)',
             data: montos,
-            backgroundColor: ['#059669', '#d97706', '#2563eb'],
+            backgroundColor: ['#7DD3FC', '#88B4CC', '#C8A0F0'],
+            hoverBackgroundColor: ['#38BDF8', '#64748B', '#A855F7'],
             borderRadius: 8,
             borderSkipped: false,
             yAxisID: 'y',
@@ -164,7 +218,8 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
           {
             label: 'N° Pedidos / Ventas',
             data: transacciones,
-            backgroundColor: '#64748b',
+            backgroundColor: '#1A2438',
+            hoverBackgroundColor: '#0F172A',
             borderRadius: 6,
             borderSkipped: false,
             yAxisID: 'y1',
@@ -175,11 +230,24 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'top', labels: { boxWidth: 14, font: { weight: 'bold' } } },
+          legend: {
+            position: 'top',
+            labels: {
+              boxWidth: 12,
+              usePointStyle: true,
+              pointStyle: 'rectRounded',
+              font: { family: "'Inter', sans-serif", weight: 600, size: 12 },
+              color: '#1A2438',
+            },
+          },
           tooltip: {
-            backgroundColor: '#18181b',
-            padding: 10,
-            cornerRadius: 8,
+            backgroundColor: '#1A2438',
+            borderColor: '#334155',
+            borderWidth: 1,
+            titleColor: '#FFFFFF',
+            bodyColor: '#E2E8F0',
+            padding: 12,
+            cornerRadius: 10,
             callbacks: {
               label: (context) => {
                 if (context.datasetIndex === 0) {
@@ -194,16 +262,30 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
           y: {
             type: 'linear',
             position: 'left',
-            ticks: { callback: (val) => `S/ ${val}` },
-            grid: { color: '#f1f5f9' },
+            ticks: {
+              callback: (val) => `S/ ${val}`,
+              font: { family: "'Inter', sans-serif", size: 11 },
+              color: '#64748B',
+            },
+            grid: { color: '#F1F5F9' },
           },
           y1: {
             type: 'linear',
             position: 'right',
             grid: { drawOnChartArea: false },
-            ticks: { precision: 0 },
+            ticks: {
+              precision: 0,
+              font: { family: "'Inter', sans-serif", size: 11 },
+              color: '#64748B',
+            },
           },
-          x: { grid: { display: false } },
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { family: "'Inter', sans-serif", weight: 500, size: 11 },
+              color: '#1A2438',
+            },
+          },
         },
       },
     });
@@ -224,20 +306,20 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
 
     let dataVals: number[] = [];
     let labelDs = '';
-    let bgColor = '#059669';
+    let bgColor = '#7DD3FC';
 
     if (metrica === 'INGRESOS') {
       dataVals = productos.map((p) => p.totalIngresos);
       labelDs = 'Ingresos Totales (S/)';
-      bgColor = '#10b981';
+      bgColor = '#7DD3FC';
     } else if (metrica === 'UNIDADES') {
       dataVals = productos.map((p) => p.unidadesVendidas);
       labelDs = 'Unidades Vendidas';
-      bgColor = '#3b82f6';
+      bgColor = '#88B4CC';
     } else {
       dataVals = productos.map((p) => p.margenContribucion);
       labelDs = 'Margen de Contribución (%)';
-      bgColor = '#f59e0b';
+      bgColor = '#C8A0F0';
     }
 
     const ctx = this.productosCanvas.nativeElement.getContext('2d');
@@ -257,13 +339,17 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
         ],
       },
       options: {
-        indexAxis: 'y', // Barras horizontales
+        indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: '#18181b',
+            backgroundColor: '#1A2438',
+            borderColor: '#334155',
+            borderWidth: 1,
+            titleColor: '#FFFFFF',
+            bodyColor: '#E2E8F0',
             padding: 10,
             cornerRadius: 8,
             callbacks: {
@@ -283,20 +369,23 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
                 if (metrica === 'MARGEN') return `${val}%`;
                 return `${val}`;
               },
+              font: { family: "'Inter', sans-serif", size: 11 },
+              color: '#64748B',
             },
-            grid: { color: '#f1f5f9' },
+            grid: { color: '#F1F5F9' },
           },
-          y: { grid: { display: false } },
+          y: {
+            grid: { display: false },
+            ticks: {
+              font: { family: "'Inter', sans-serif", size: 11 },
+              color: '#1A2438',
+            },
+          },
         },
       },
     });
   }
 
-  /**
-   * GRÁFICO DE PASTEL / PIE CHART PARA VER GANANCIAS Y FINANZAS
-   * Diseñado con la estética de rodajas resaltadas, colores vivos y sombras
-   * según la imagen de referencia del usuario.
-   */
   private renderizarGraficoPastelFinanzas(): void {
     if (!this.pieCanvas?.nativeElement) return;
     const dash = this.dashboard();
@@ -312,21 +401,17 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
     let dataVals: number[] = [];
     let bgColors: string[] = [];
 
-    // Colores vivos exactamente iguales al gráfico de referencia:
-    // Azul brillante (#3b82f6), Verde esmeralda (#16a34a), Carmesí (#dc2626),
-    // Púrpura (#a855f7), Ámbar/Naranja (#d97706), Verde Azulado (#0d9488)
-    const paletaReferencia = [
-      '#3b82f6', // Azul real (como Bitcoin en la foto)
-      '#16a34a', // Verde esmeralda
-      '#dc2626', // Rojo carmesí
-      '#a855f7', // Púrpura intenso
-      '#d97706', // Ámbar dorado
-      '#0d9488', // Verde azulado / Teal
-      '#6366f1', // Índigo
+    const paletaGlacier = [
+      '#7DD3FC',
+      '#88B4CC',
+      '#C8A0F0',
+      '#10B981',
+      '#F59E0B',
+      '#EF4444',
+      '#38BDF8',
     ];
 
     if (tipo === 'ESTRUCTURA') {
-      // Estructura de Finanzas y Ganancias Netas
       labels = [
         'Ganancia Neta Disponible',
         'Costos de Mercadería (COGS)',
@@ -338,9 +423,8 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
       const egresos = Number(dash.totalEgresos.toFixed(2));
       const rendiciones = dash.reporteRendiciones?.totalMonto ?? 0;
       dataVals = [gananciaNeta, costosEst, egresos, rendiciones];
-      bgColors = [paletaReferencia[0], paletaReferencia[1], paletaReferencia[2], paletaReferencia[3]];
+      bgColors = [paletaGlacier[0], paletaGlacier[1], paletaGlacier[5], paletaGlacier[2]];
     } else if (tipo === 'CATEGORIAS') {
-      // Ganancias e Ingresos por Líneas de Productos
       labels = [
         'Derivados de Cacao (Pasta & Nibs)',
         'Aceites de Coco Prensados en Frío',
@@ -370,18 +454,16 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
         Number(cocoTot.toFixed(2)),
         Number(otrosTot.toFixed(2)),
       ];
-      bgColors = [paletaReferencia[0], paletaReferencia[4], paletaReferencia[5]];
+      bgColors = [paletaGlacier[0], paletaGlacier[1], paletaGlacier[2]];
     } else {
-      // Distribución Financiera por Métodos de Pago
       labels = dash.resumenPorMetodo.map((m) => m.metodoPago);
       dataVals = dash.resumenPorMetodo.map((m) => m.totalIngresos);
-      bgColors = paletaReferencia.slice(0, labels.length);
+      bgColors = paletaGlacier.slice(0, labels.length);
     }
 
     const ctx = this.pieCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    // Offset de la primera rodaja para que sobresalga con relieve 3D exactamente como en la imagen
     const sliceOffsets = dataVals.map((_, i) => (i === 0 ? 12 : 0));
 
     this.chartPie = new Chart(ctx, {
@@ -392,7 +474,7 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
           {
             data: dataVals,
             backgroundColor: bgColors,
-            offset: sliceOffsets, // Efecto de rodaja que se desprende
+            offset: sliceOffsets,
             hoverOffset: 16,
             borderWidth: 2,
             borderColor: '#ffffff',
@@ -409,15 +491,18 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
               usePointStyle: true,
               pointStyle: 'rectRounded',
               padding: 16,
-              font: { size: 12, weight: 'bold' },
+              font: { family: "'Inter', sans-serif", size: 12, weight: 600 },
+              color: '#1A2438',
             },
           },
           tooltip: {
-            backgroundColor: '#18181b', // Fondo oscuro idéntico a la imagen
+            backgroundColor: '#1A2438',
+            borderColor: '#334155',
+            borderWidth: 1,
             titleColor: '#ffffff',
             bodyColor: '#ffffff',
             padding: 12,
-            cornerRadius: 8,
+            cornerRadius: 10,
             boxPadding: 6,
             usePointStyle: true,
             callbacks: {
@@ -539,11 +624,6 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
     return Math.min(100, Math.round((monto / dash.totalIngresos) * 100));
   }
 
-  /**
-   * EXPORTACIÓN DE CORTE DE CAJA A PDF / EXCEL
-   * Utiliza la API showSaveFilePicker para abrir la ventana de diálogo "Guardar como..."
-   * y permitir al usuario elegir exactamente la carpeta y el nombre del archivo.
-   */
   async descargarReporteActiva(formato: 'PDF' | 'EXCEL'): Promise<void> {
     const dash = this.dashboard();
     if (!dash || !dash.sesionActivaId) {
@@ -558,7 +638,6 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
         const ext = formato === 'PDF' ? 'pdf' : 'xlsx';
         const nombreArchivo = `corte-caja-sesion-${dash.sesionActivaId}.${ext}`;
 
-        // 1. Intentar abrir el diálogo nativo "Guardar como..." (File System Access API)
         if ('showSaveFilePicker' in window) {
           try {
             const pickerOpts = {
@@ -585,7 +664,6 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
             this.exportando.set(false);
             return;
           } catch (err: any) {
-            // Si el usuario canceló la ventana de guardar, salimos limpiamente
             if (err.name === 'AbortError') {
               this.exportando.set(false);
               return;
@@ -593,7 +671,6 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
           }
         }
 
-        // 2. Fallback estándar para navegadores que no tengan showSaveFilePicker
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

@@ -2,7 +2,7 @@
   <!-- Banner Superior / Encabezado -->
   <header class="page-header">
     <div class="header-titles">
-      <span class="badge-agro">BOMERP Finanzas & POS</span>
+      <span class="badge-agro">Gestión Financiera · Caja Diaria</span>
       <h2>Turnos y Sesiones de Caja Diaria</h2>
       <p class="subtitle">Control de aperturas, cierres, arqueos de gaveta física y conciliación de métodos de pago.</p>
     </div>
@@ -36,19 +36,19 @@
       <div class="shift-stats">
         <div class="stat-item">
           <span class="stat-label">Saldo Inicial</span>
-          <span class="stat-value">{{ activa.saldoInicial | currency:'PEN':'symbol':'1.2-2' }}</span>
+          <span class="stat-value">{{ activa.saldoInicial | currency:'PEN':'S/ ':'1.2-2' }}</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">Ingresos Efectivo</span>
-          <span class="stat-value text-success">+{{ activa.totalIngresosEfectivo | currency:'PEN':'symbol':'1.2-2' }}</span>
+          <span class="stat-value text-success">+{{ activa.totalIngresosEfectivo | currency:'PEN':'S/ ':'1.2-2' }}</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">Egresos Efectivo</span>
-          <span class="stat-value text-danger">-{{ activa.totalEgresosEfectivo | currency:'PEN':'symbol':'1.2-2' }}</span>
+          <span class="stat-value text-danger">-{{ activa.totalEgresosEfectivo | currency:'PEN':'S/ ':'1.2-2' }}</span>
         </div>
         <div class="stat-item highlight">
           <span class="stat-label">Disponible en Gaveta</span>
-          <span class="stat-value stat-bold">{{ activa.saldoEsperadoEfectivo | currency:'PEN':'symbol':'1.2-2' }}</span>
+          <span class="stat-value stat-bold">{{ activa.saldoEsperadoEfectivo | currency:'PEN':'S/ ':'1.2-2' }}</span>
         </div>
       </div>
 
@@ -113,13 +113,13 @@
                     {{ s.estado }}
                   </span>
                 </td>
-                <td>{{ s.saldoInicial | currency:'PEN':'symbol':'1.2-2' }}</td>
-                <td class="font-bold">{{ s.saldoEsperadoEfectivo | currency:'PEN':'symbol':'1.2-2' }}</td>
-                <td>{{ s.saldoRealEfectivo != null ? (s.saldoRealEfectivo | currency:'PEN':'symbol':'1.2-2') : '—' }}</td>
+                <td>{{ s.saldoInicial | currency:'PEN':'S/ ':'1.2-2' }}</td>
+                <td class="font-bold">{{ s.saldoEsperadoEfectivo | currency:'PEN':'S/ ':'1.2-2' }}</td>
+                <td>{{ s.saldoRealEfectivo != null ? (s.saldoRealEfectivo | currency:'PEN':'S/ ':'1.2-2') : '—' }}</td>
                 <td>
                   @if (s.estado === 'CERRADA') {
                     <span [class.text-success]="s.diferencia >= 0" [class.text-danger]="s.diferencia < 0" class="font-bold">
-                      {{ s.diferencia >= 0 ? '+' : '' }}{{ s.diferencia | currency:'PEN':'symbol':'1.2-2' }}
+                      {{ s.diferencia >= 0 ? '+' : '' }}{{ s.diferencia | currency:'PEN':'S/ ':'1.2-2' }}
                     </span>
                   } @else {
                     <span class="text-muted">En curso</span>
@@ -172,28 +172,28 @@
           <div class="modal-stats-grid">
             <div class="mini-kpi">
               <span>Saldo Inicial</span>
-              <strong>{{ sel.saldoInicial | currency:'PEN':'symbol':'1.2-2' }}</strong>
+              <strong>{{ sel.saldoInicial | currency:'PEN':'S/ ':'1.2-2' }}</strong>
             </div>
             <div class="mini-kpi">
               <span>(+) Ingresos Efvo.</span>
-              <strong class="text-success">+{{ sel.totalIngresosEfectivo | currency:'PEN':'symbol':'1.2-2' }}</strong>
+              <strong class="text-success">+{{ sel.totalIngresosEfectivo | currency:'PEN':'S/ ':'1.2-2' }}</strong>
             </div>
             <div class="mini-kpi">
               <span>(-) Egresos Efvo.</span>
-              <strong class="text-danger">-{{ sel.totalEgresosEfectivo | currency:'PEN':'symbol':'1.2-2' }}</strong>
+              <strong class="text-danger">-{{ sel.totalEgresosEfectivo | currency:'PEN':'S/ ':'1.2-2' }}</strong>
             </div>
             <div class="mini-kpi highlight">
               <span>Saldo Esperado</span>
-              <strong>{{ sel.saldoEsperadoEfectivo | currency:'PEN':'symbol':'1.2-2' }}</strong>
+              <strong>{{ sel.saldoEsperadoEfectivo | currency:'PEN':'S/ ':'1.2-2' }}</strong>
             </div>
             <div class="mini-kpi">
               <span>Saldo Real Físico</span>
-              <strong>{{ sel.saldoRealEfectivo != null ? (sel.saldoRealEfectivo | currency:'PEN':'symbol':'1.2-2') : 'No cerrado' }}</strong>
+              <strong>{{ sel.saldoRealEfectivo != null ? (sel.saldoRealEfectivo | currency:'PEN':'S/ ':'1.2-2') : 'No cerrado' }}</strong>
             </div>
             <div class="mini-kpi">
               <span>Diferencia</span>
               <strong [class.text-danger]="sel.diferencia < 0" [class.text-success]="sel.diferencia >= 0">
-                {{ sel.diferencia | currency:'PEN':'symbol':'1.2-2' }}
+                {{ sel.diferencia | currency:'PEN':'S/ ':'1.2-2' }}
               </strong>
             </div>
           </div>
@@ -224,7 +224,7 @@
                     <td>{{ m.categoriaFinancieraNombre }}</td>
                     <td>{{ m.descripcion }}</td>
                     <td class="text-right font-bold" [class.text-success]="m.tipo === 'INGRESO'" [class.text-danger]="m.tipo === 'EGRESO'">
-                      {{ m.tipo === 'INGRESO' ? '+' : '-' }}{{ m.monto | currency:'PEN':'symbol':'1.2-2' }}
+                      {{ m.tipo === 'INGRESO' ? '+' : '-' }}{{ m.monto | currency:'PEN':'S/ ':'1.2-2' }}
                     </td>
                   </tr>
                 } @empty {

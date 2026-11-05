@@ -61,7 +61,7 @@ export interface ProduccionReporte {
   ordenes?: OrdenProduccion[];
 }
 
-// Modelos para Centros de Trabajo (Isaí Armuto)
+// Modelos para Centros de Trabajo
 export interface CentroTrabajo {
   id: number;
   codigo: string;
@@ -84,7 +84,7 @@ export interface CentroTrabajoRequest {
   activo?: boolean;
 }
 
-// Modelos para Recetas Maestras BOM / Listas de Materiales (Isaí Armuto)
+// Modelos para Recetas Maestras BOM / Listas de Materiales
 export interface DetalleListaMateriales {
   id?: number;
   insumoId: number;

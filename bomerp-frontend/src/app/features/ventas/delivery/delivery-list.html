@@ -1,355 +1,606 @@
-<div class="delivery-container">
-  
-  <!-- Barra de Encabezado Superior -->
-  <div class="header-action">
+<div class="logistics-dashboard">
+  <!-- Cabecera Superior -->
+  <header class="logistics-header">
     <div>
-      <h2>Control Logístico &bull; Despachos y Delivery</h2>
-      <p class="subtitle">Monitoreo de rutas, asignación de unidades motorizadas y seguimiento satelital</p>
+      <h2 class="header-title">Gestión de Despachos & Logística Delivery</h2>
+      <p class="header-subtitle">Monitoreo satelital de rutas, asignación de unidades motorizadas y control de liquidación en caja</p>
     </div>
-    <button type="button" class="btn btn-primary" (click)="abrirModalNuevo()">
-      + Programar Envío a Domicilio
-    </button>
-  </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary" (click)="abrirModalNuevo()">
+        <span class="material-symbols-outlined icon-inline" style="font-size: 1.05rem;">add_location_alt</span>
+        + Programar Envío
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="cargarPedidos()" title="Actualizar">
+        <span class="material-symbols-outlined icon-inline" style="font-size: 1.05rem;">refresh</span>
+      </button>
+    </div>
+  </header>
 
+  <!-- Notificaciones -->
   @if (exito()) {
     <div class="alert alert-success">{{ exito() }}</div>
   }
-
   @if (error()) {
     <div class="alert alert-danger">{{ error() }}</div>
   }
 
-  <!-- Tarjeta Principal de Seguimiento (Idéntica al mockup requerido) -->
-  <div class="tracking-card">
-    
-    <!-- Fila Superior: Título y Selector de Vista -->
-    <div class="tracking-card-header">
-      <div class="tracking-title-wrap">
-        <h3 class="tracking-title">
-          Seguimiento de Despachos &amp; Rutas 
-          <span class="count-subtle">({{ pedidos().length }} pedidos)</span>
-        </h3>
+  <!-- 1. Fila Superior de KPIs (3 Cards en Grid - Estilo TailAdmin Logistics) -->
+  <section class="kpi-three-grid">
+    <!-- Card 1: Total Pedidos -->
+    <div class="card kpi-logistics-card">
+      <div class="kpi-icon-box" style="background: var(--neutral-dark); color: var(--primary);">
+        <span class="material-symbols-outlined">inventory_2</span>
       </div>
-
-      <div class="view-switch-group">
-        <button
-          type="button"
-          class="btn-view-toggle"
-          [class.active]="vistaActual() === 'tarjetas'"
-          (click)="cambiarVista('tarjetas')"
-        >
-          <svg class="toggle-svg" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
-          </svg>
-          <span>Vista Tarjetas</span>
-        </button>
-
-        <button
-          type="button"
-          class="btn-view-toggle btn-map-toggle"
-          [class.active]="vistaActual() === 'mapa'"
-          (click)="cambiarVista('mapa')"
-        >
-          <svg class="toggle-svg" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M12 1.586l-4 4v12.828l4-4V1.586zM3.707 3.293A1 1 0 002 4v10a1 1 0 00.293.707L6 18.414V5.586L3.707 3.293zM14 5.586v12.828l3.707-3.707A1 1 0 0018 14V4a1 1 0 00-.293-.707L14 5.586z" clip-rule="evenodd"/>
-          </svg>
-          <span>Mapa de Rutas (Google Maps)</span>
-        </button>
+      <div class="kpi-info-box">
+        <span class="kpi-small-label">Total Pedidos del Día</span>
+        <div class="kpi-main-number">
+          <span>{{ totalPedidosHoy() }}</span>
+          <span class="kpi-badge-pill badge-pill-success">+100% Hoy</span>
+        </div>
+        <span class="kpi-sub-label">{{ pedidos().length }} registrados en sistema</span>
       </div>
     </div>
 
-    <!-- Barra de Leyenda de Estados -->
-    <div class="tracking-legend-bar">
-      <div class="legend-badges">
-        <div class="legend-badge">
-          <span class="dot-indicator dot-origin"></span>
-          <span>Planta San Isidro</span>
-        </div>
-        <div class="legend-badge">
-          <span class="dot-indicator dot-pending"></span>
-          <span>Registrados ({{ pedidosPorEstado('PENDIENTE').length }})</span>
-        </div>
-        <div class="legend-badge">
-          <span class="dot-indicator dot-route"></span>
-          <span>En Ruta ({{ pedidosPorEstado('EN_RUTA').length }})</span>
-        </div>
-        <div class="legend-badge">
-          <span class="dot-indicator dot-delivered"></span>
-          <span>Entregados ({{ pedidosPorEstado('ENTREGADO').length }})</span>
-        </div>
+    <!-- Card 2: Despachos En Ruta -->
+    <div class="card kpi-logistics-card">
+      <div class="kpi-icon-box" style="background: var(--primary-light); color: var(--primary-dark);">
+        <span class="material-symbols-outlined">two_wheeler</span>
       </div>
-
-      <div class="legend-instruction">
-        Haz clic en cualquier marcador para ver detalles y gestionar el estado del pedido
+      <div class="kpi-info-box">
+        <span class="kpi-small-label">Despachos En Ruta</span>
+        <div class="kpi-main-number">
+          <span>{{ enRutaCount() }}</span>
+          <span class="kpi-badge-pill badge-pill-primary">En Tránsito</span>
+        </div>
+        <span class="kpi-sub-label">Unidades activas en Lima</span>
       </div>
     </div>
 
-    <!-- CONTENIDO: VISTA MAPA -->
-    @if (vistaActual() === 'mapa') {
-      <div id="mapaContainer" class="map-view-wrapper">
+    <!-- Card 3: Entregados y Liquidados -->
+    <div class="card kpi-logistics-card">
+      <div class="kpi-icon-box" style="background: var(--success-bg); color: var(--success);">
+        <span class="material-symbols-outlined">task_alt</span>
+      </div>
+      <div class="kpi-info-box">
+        <span class="kpi-small-label">Entregados & Liquidados</span>
+        <div class="kpi-main-number">
+          <span>{{ entregadosCount() }}</span>
+          <span class="kpi-badge-pill badge-pill-success">{{ totalTarifasEnvio() | currency:'PEN':'S/ ':'1.2-2' }}</span>
+        </div>
+        <span class="kpi-sub-label">Tarifas recaudadas en caja</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Sección Central Dividida (Grid 12 cols: 8 Izquierda / 4 Derecha) -->
+  <section class="middle-split-grid">
+    <!-- Columna Izquierda (8 cols): Mapa Interactivo + Sub-tarjetas -->
+    <div class="left-col-wrapper">
+      <!-- Mapa Card -->
+      <div class="card map-card-container" id="mapaContainer">
+        <!-- Barra Superior de Controles de Mapa -->
+        <div class="map-top-bar">
+          <div class="map-filter-pills">
+            <button
+              type="button"
+              class="map-pill-btn"
+              [class.active]="filtroMapa() === 'TODOS'"
+              (click)="filtrarPorMapa('TODOS')"
+            >
+              Todos ({{ pedidos().length }})
+            </button>
+            <button
+              type="button"
+              class="map-pill-btn"
+              [class.active]="filtroMapa() === 'EN_RUTA'"
+              (click)="filtrarPorMapa('EN_RUTA')"
+            >
+              En Ruta ({{ enRutaCount() }})
+            </button>
+            <button
+              type="button"
+              class="map-pill-btn"
+              [class.active]="filtroMapa() === 'ENTREGADO'"
+              (click)="filtrarPorMapa('ENTREGADO')"
+            >
+              Entregados ({{ entregadosCount() }})
+            </button>
+            <button
+              type="button"
+              class="map-pill-btn"
+              [class.active]="filtroMapa() === 'PLANTA'"
+              (click)="filtrarPorMapa('PLANTA')"
+            >
+              Planta Central
+            </button>
+          </div>
+
+          <div class="map-layer-switch">
+            <button
+              type="button"
+              class="layer-toggle-btn"
+              [class.active]="tipoCapa() === 'mapa'"
+              (click)="cambiarCapa('mapa')"
+            >
+              Mapa
+            </button>
+            <button
+              type="button"
+              class="layer-toggle-btn"
+              [class.active]="tipoCapa() === 'satelite'"
+              (click)="cambiarCapa('satelite')"
+            >
+              Satélite
+            </button>
+            <button
+              type="button"
+              class="layer-toggle-btn"
+              (click)="toggleFullscreen()"
+              title="Pantalla Completa"
+            >
+              <span class="material-symbols-outlined" style="font-size: 1rem;">fullscreen</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Canvas del Mapa Leaflet -->
         <div id="mapaRutas" class="leaflet-map-canvas"></div>
+      </div>
 
-        <!-- Controles estilo Google Maps -->
-        <div class="google-type-controls">
-          <button
-            type="button"
-            class="type-btn"
-            [class.active]="tipoCapa() === 'mapa'"
-            (click)="cambiarCapa('mapa')"
-          >
-            Mapa
-          </button>
-          <button
-            type="button"
-            class="type-btn"
-            [class.active]="tipoCapa() === 'satelite'"
-            (click)="cambiarCapa('satelite')"
-          >
-            Satélite
-          </button>
-        </div>
-
-        <div class="google-top-right-controls">
-          <button type="button" class="ctrl-icon-btn" (click)="toggleFullscreen()" title="Pantalla completa">
-            <svg class="ctrl-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
-            </svg>
-          </button>
-        </div>
-
-        <div class="google-bottom-right-controls">
-          <div class="zoom-btn-group">
-            <button type="button" class="zoom-btn" (click)="zoomIn()" title="Acercar">+</button>
-            <div class="zoom-divider"></div>
-            <button type="button" class="zoom-btn" (click)="zoomOut()" title="Alejar">&minus;</button>
+      <!-- Sub-tarjetas inferiores (2 cols) -->
+      <div class="subcards-grid">
+        <!-- Sub-card 1: Ingresos por Delivery -->
+        <div class="card subcard-item">
+          <div class="subcard-header">
+            <span class="subcard-title">Ingresos por Delivery</span>
+            <span class="material-symbols-outlined" style="color: var(--primary-dark);">payments</span>
           </div>
-          
-          <div class="pegman-box" title="Vista a nivel de calle (Street View)">
-            <svg class="pegman-svg" viewBox="0 0 24 24" fill="#f59e0b">
-              <circle cx="12" cy="4" r="3"/>
-              <path d="M12 8c-3 0-5 2-5 5v6h3v-4h4v4h3v-6c0-3-2-5-5-5z"/>
-            </svg>
+          <div class="subcard-amount">{{ totalTarifasEnvio() | currency:'PEN':'S/ ':'1.2-2' }}</div>
+          <div class="subcard-meta">
+            <span>Volumen ventas entregadas: <strong>{{ totalMontoVentas() | currency:'PEN':'S/ ':'1.2-2' }}</strong></span>
           </div>
         </div>
 
-        <!-- Marca de agua Google -->
-        <div class="google-watermark">
-          <span class="google-logo-text">Google</span>
+        <!-- Sub-card 2: Unidades / Motorizados en Ruta -->
+        <div class="card subcard-item">
+          <div class="subcard-header">
+            <span class="subcard-title">Unidades Activas en Ruta</span>
+            <span class="material-symbols-outlined" style="color: var(--success);">moped</span>
+          </div>
+          <div class="subcard-amount">
+            {{ motorizadosActivosCount() }}
+            <span class="subcard-subtext">motorizados</span>
+          </div>
+          <div class="subcard-meta">
+            <span class="badge badge-success" style="font-size: 0.68rem;">🟢 En Operación</span>
+            <span>Rutas asignadas en Lima Metropolitana</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna Derecha (4 cols): Panel "Tracking Delivery en Vivo" -->
+    <div class="right-col-wrapper">
+      <div class="card tracking-panel-card">
+        <div class="tracking-panel-header">
+          <div>
+            <h3 class="tracking-header-title">Tracking Delivery</h3>
+            <span class="tracking-header-sub">Monitoreo del pedido en tiempo real</span>
+          </div>
+          <span class="material-symbols-outlined" style="color: var(--text-muted);">more_horiz</span>
         </div>
 
-        <div class="google-map-attribution">
-          <span>Combinaciones de teclas</span> &bull; 
-          <span>Datos del mapa &copy;2026 Google</span> &bull; 
-          <span>Términos</span>
-        </div>
-
-        <!-- Panel flotante de detalle si se hace clic en un marcador -->
-        @if (pedidoDetalleMapa(); as sel) {
-          <div class="floating-delivery-drawer">
-            <div class="drawer-header">
-              <div>
-                <span class="drawer-code">{{ sel.codigoPedido }}</span>
-                <span class="drawer-status" [ngClass]="'status-' + sel.estadoDelivery.toLowerCase()">
-                  {{ sel.estadoDelivery }}
-                </span>
-              </div>
-              <button type="button" class="btn-close-drawer" (click)="pedidoDetalleMapa.set(null)">&times;</button>
+        @if (pedidoEnfocado(); as pedido) {
+          <!-- Código y Estado Badge -->
+          <div class="tracking-id-row">
+            <div class="tracking-id-wrap">
+              <span class="tracking-id-label">Tracking ID</span>
+              <h4 class="tracking-id-code">#{{ pedido.codigoPedido }}</h4>
             </div>
+            <span
+              class="status-pill"
+              [class.status-pill-pending]="pedido.estadoDelivery === 'PENDIENTE'"
+              [class.status-pill-route]="pedido.estadoDelivery === 'EN_RUTA'"
+              [class.status-pill-delivered]="pedido.estadoDelivery === 'ENTREGADO'"
+            >
+              {{ pedido.estadoDelivery === 'PENDIENTE' ? 'Registrado' : (pedido.estadoDelivery === 'EN_RUTA' ? 'En Ruta' : 'Entregado') }}
+            </span>
+          </div>
 
-            <h4 class="drawer-client">{{ sel.clienteNombre }}</h4>
-            <div class="drawer-meta-list">
-              <div class="drawer-meta-item">
-                <span class="meta-label">Dirección:</span>
-                <span class="meta-val">{{ sel.direccionEntrega }}</span>
+          <!-- Stepper / Timeline Vertical (3 Estados de Regla de Negocio) -->
+          <div class="vertical-stepper">
+            <!-- Paso 1: Pedido Registrado -->
+            <div class="step-item step-completed">
+              <div class="step-marker">
+                <span class="material-symbols-outlined step-icon">receipt_long</span>
               </div>
-              @if (sel.referencia) {
-                <div class="drawer-meta-item">
-                  <span class="meta-label">Referencia:</span>
-                  <span class="meta-val">{{ sel.referencia }}</span>
-                </div>
-              }
-              <div class="drawer-meta-item">
-                <span class="meta-label">Teléfono:</span>
-                <span class="meta-val">{{ sel.clienteTelefono || 'No registrado' }}</span>
-              </div>
-              <div class="drawer-meta-item">
-                <span class="meta-label">Monto total:</span>
-                <span class="meta-val">S/ {{ sel.montoTotal | number:'1.2-2' }}</span>
-              </div>
-              <div class="drawer-meta-item">
-                <span class="meta-label">Repartidor:</span>
-                <span class="meta-val">{{ sel.repartidorNombre || 'Pendiente de asignar' }}</span>
+              <div class="step-content">
+                <h5 class="step-title">1. Pedido Registrado</h5>
+                <p class="step-desc">Ticket emitido en POS · Despacho asignado</p>
               </div>
             </div>
 
-            <div class="drawer-actions">
-              @if (sel.estadoDelivery === 'PENDIENTE') {
-                <button type="button" class="btn btn-sm btn-info" (click)="marcarEnRuta(sel)">
+            <!-- Paso 2: En Ruta -->
+            <div
+              class="step-item"
+              [class.step-completed]="pedido.estadoDelivery === 'EN_RUTA' || pedido.estadoDelivery === 'ENTREGADO'"
+              [class.step-active]="pedido.estadoDelivery === 'EN_RUTA'"
+            >
+              <div class="step-marker">
+                <span class="material-symbols-outlined step-icon">two_wheeler</span>
+              </div>
+              <div class="step-content">
+                <h5 class="step-title">2. En Ruta de Reparto</h5>
+                <p class="step-desc">Motorizado en camino hacia destino</p>
+              </div>
+            </div>
+
+            <!-- Paso 3: Entregado & Liquidado -->
+            <div
+              class="step-item"
+              [class.step-completed]="pedido.estadoDelivery === 'ENTREGADO'"
+              [class.step-active]="pedido.estadoDelivery === 'ENTREGADO'"
+            >
+              <div class="step-marker">
+                <span class="material-symbols-outlined step-icon">task_alt</span>
+              </div>
+              <div class="step-content">
+                <h5 class="step-title">3. Entregado & Liquidado</h5>
+                <p class="step-desc">Conformidad de entrega y cierre en caja</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tarjeta de Repartidor & Cliente -->
+          <div class="courier-card">
+            <div class="courier-profile-row">
+              <div class="courier-avatar">
+                {{ (pedido.repartidorNombre || 'RT').substring(0,2).toUpperCase() }}
+              </div>
+              <div class="courier-info">
+                <span class="courier-role">Repartidor Oficial</span>
+                <h5 class="courier-name">{{ pedido.repartidorNombre || 'Sin asignar' }}</h5>
+              </div>
+            </div>
+
+            <div class="client-detail-box">
+              <div class="c-row">
+                <span class="c-label">Cliente:</span>
+                <span class="c-val font-semibold">{{ pedido.clienteNombre }}</span>
+              </div>
+              <div class="c-row">
+                <span class="c-label">Teléfono:</span>
+                <span class="c-val">{{ pedido.clienteTelefono || 'No registrado' }}</span>
+              </div>
+              <div class="c-row">
+                <span class="c-label">Dirección:</span>
+                <span class="c-val address-val">{{ pedido.direccionEntrega }}</span>
+              </div>
+              <div class="c-row total-highlight">
+                <span class="c-label">Total a Cobrar:</span>
+                <span class="c-val total-val text-success font-bold">{{ (pedido.montoTotal || 0) | currency:'PEN':'S/ ':'1.2-2' }}</span>
+              </div>
+            </div>
+
+            <!-- Acciones de Estado -->
+            <div class="courier-actions">
+              @if (pedido.estadoDelivery === 'PENDIENTE') {
+                <button
+                  type="button"
+                  class="btn btn-primary btn-block"
+                  (click)="marcarEnRuta(pedido)"
+                >
+                  <span class="material-symbols-outlined icon-inline">two_wheeler</span>
                   Despachar a Ruta
                 </button>
-              }
-              @if (sel.estadoDelivery === 'EN_RUTA') {
-                <button type="button" class="btn btn-sm btn-success" (click)="marcarEntregado(sel)">
-                  Confirmar Entrega
+              } @else if (pedido.estadoDelivery === 'EN_RUTA') {
+                <button
+                  type="button"
+                  class="btn btn-success btn-block"
+                  (click)="marcarEntregado(pedido)"
+                >
+                  <span class="material-symbols-outlined icon-inline">check_circle</span>
+                  Confirmar Entrega & Liquidar
                 </button>
+              } @else {
+                <div class="delivered-badge-block">
+                  <span class="material-symbols-outlined icon-inline text-success">verified</span>
+                  Liquidado en Turno Activo
+                </div>
               }
             </div>
+          </div>
+        } @else {
+          <div class="empty-selection-box">
+            <span class="material-symbols-outlined" style="font-size: 2.5rem; color: #cbd5e1;">touch_app</span>
+            <p>Selecciona un pedido del mapa o tabla para ver su seguimiento.</p>
           </div>
         }
       </div>
-    }
+    </div>
+  </section>
 
-    <!-- CONTENIDO: VISTA TARJETAS (Kanban) -->
-    @if (vistaActual() === 'tarjetas') {
-      <div class="kanban-wrapper">
-        <div class="kanban-board">
-          <!-- Columna: PENDIENTES -->
-          <div class="kanban-column column-pendiente">
-            <div class="column-header">
-              <span class="column-dot dot-yellow"></span>
-              <h3>Pendientes en Almacén</h3>
-              <span class="count-badge">{{ pedidosPorEstado('PENDIENTE').length }}</span>
-            </div>
-            <div class="cards-list">
-              @for (p of pedidosPorEstado('PENDIENTE'); track p.id) {
-                <div class="delivery-card">
-                  <div class="card-top">
-                    <span class="delivery-code">{{ p.codigoPedido }}</span>
-                    <span class="shipping-fee">+ S/ {{ p.costoEnvio | number:'1.2-2' }} envío</span>
-                  </div>
-                  <h4 class="client-name">{{ p.clienteNombre }}</h4>
-                  <p class="client-phone">Tel: {{ p.clienteTelefono || 'Sin teléfono' }}</p>
-                  <p class="client-address">{{ p.direccionEntrega }}</p>
-                  @if (p.referencia) {
-                    <p class="client-ref">Ref: {{ p.referencia }}</p>
-                  }
-                  <div class="card-total">
-                    Monto total: <strong>S/ {{ p.montoTotal | number:'1.2-2' }}</strong>
-                  </div>
-                  <div class="card-actions">
-                    <button type="button" class="btn btn-sm btn-info" (click)="marcarEnRuta(p)">
-                      Despachar a Ruta
-                    </button>
-                  </div>
-                </div>
-              } @empty {
-                <div class="empty-column">No hay pedidos pendientes de despacho.</div>
-              }
-            </div>
-          </div>
+  <!-- 3. Sección Inferior (Tabla "Actividades y Despachos de Delivery") -->
+  <section class="card table-activities-card">
+    <div class="table-activities-header">
+      <div class="activities-title-wrap">
+        <h3>Actividades y Despachos de Delivery</h3>
+        <p>Listado operacional completo de envíos programados y completados</p>
+      </div>
 
-          <!-- Columna: EN RUTA -->
-          <div class="kanban-column column-enruta">
-            <div class="column-header">
-              <span class="column-dot dot-blue"></span>
-              <h3>En Ruta de Despacho</h3>
-              <span class="count-badge">{{ pedidosPorEstado('EN_RUTA').length }}</span>
-            </div>
-            <div class="cards-list">
-              @for (p of pedidosPorEstado('EN_RUTA'); track p.id) {
-                <div class="delivery-card card-en-ruta">
-                  <div class="card-top">
-                    <span class="delivery-code">{{ p.codigoPedido }}</span>
-                    <span class="badge-repartidor">{{ p.repartidorNombre || 'Motorizado' }}</span>
-                  </div>
-                  <h4 class="client-name">{{ p.clienteNombre }}</h4>
-                  <p class="client-phone">Tel: {{ p.clienteTelefono }}</p>
-                  <p class="client-address">{{ p.direccionEntrega }}</p>
-                  <div class="card-total">
-                    Cobro pendiente: <strong>S/ {{ p.montoTotal | number:'1.2-2' }}</strong>
-                  </div>
-                  <div class="card-actions">
-                    <button type="button" class="btn btn-sm btn-success" (click)="marcarEntregado(p)">
-                      Confirmar Entrega
-                    </button>
-                  </div>
-                </div>
-              } @empty {
-                <div class="empty-column">No hay pedidos actualmente en ruta.</div>
-              }
-            </div>
-          </div>
+      <!-- Filtros por pestaña estilo TailAdmin -->
+      <div class="activities-controls">
+        <div class="tabs-pill-group">
+          <button
+            type="button"
+            class="tab-pill"
+            [class.active]="filtroTabla() === 'TODOS'"
+            (click)="filtroTabla.set('TODOS')"
+          >
+            Todos ({{ pedidos().length }})
+          </button>
+          <button
+            type="button"
+            class="tab-pill"
+            [class.active]="filtroTabla() === 'EN_RUTA'"
+            (click)="filtroTabla.set('EN_RUTA')"
+          >
+            En Ruta ({{ enRutaCount() }})
+          </button>
+          <button
+            type="button"
+            class="tab-pill"
+            [class.active]="filtroTabla() === 'ENTREGADO'"
+            (click)="filtroTabla.set('ENTREGADO')"
+          >
+            Entregados ({{ entregadosCount() }})
+          </button>
+          <button
+            type="button"
+            class="tab-pill"
+            [class.active]="filtroTabla() === 'PENDIENTE'"
+            (click)="filtroTabla.set('PENDIENTE')"
+          >
+            Registrados ({{ pendientesCount() }})
+          </button>
+        </div>
 
-          <!-- Columna: ENTREGADOS -->
-          <div class="kanban-column column-entregado">
-            <div class="column-header">
-              <span class="column-dot dot-green"></span>
-              <h3>Entregados con Éxito</h3>
-              <span class="count-badge">{{ pedidosPorEstado('ENTREGADO').length }}</span>
-            </div>
-            <div class="cards-list">
-              @for (p of pedidosPorEstado('ENTREGADO'); track p.id) {
-                <div class="delivery-card card-entregado">
-                  <div class="card-top">
-                    <span class="delivery-code">{{ p.codigoPedido }}</span>
-                    <span class="badge-status-ok">Completado</span>
-                  </div>
-                  <h4 class="client-name">{{ p.clienteNombre }}</h4>
-                  <p class="client-address">{{ p.direccionEntrega }}</p>
-                  <p class="delivery-note">{{ p.observaciones || 'Entregado a conformidad' }}</p>
-                  <div class="card-total">
-                    Liquidado: <strong>S/ {{ p.montoTotal | number:'1.2-2' }}</strong>
-                  </div>
-                </div>
-              } @empty {
-                <div class="empty-column">Aún no se han completado entregas hoy.</div>
-              }
-            </div>
-          </div>
+        <div class="search-input-wrap">
+          <span class="material-symbols-outlined search-icon">search</span>
+          <input
+            type="text"
+            placeholder="Buscar por código, cliente o dirección..."
+            [ngModel]="terminoBusqueda()"
+            (ngModelChange)="terminoBusqueda.set($event)"
+            class="search-input"
+          />
         </div>
       </div>
-    }
+    </div>
 
-  </div>
+    <!-- Tabla de Envíos -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Código Pedido</th>
+            <th>Cliente & Contacto</th>
+            <th>Dirección / Ruta</th>
+            <th>Repartidor</th>
+            <th class="text-right">Tarifa Envío</th>
+            <th class="text-right">Total Venta</th>
+            <th class="text-center">Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of pedidosFiltrados(); track p.id) {
+            <tr
+              [class.row-selected]="pedidoEnfocado()?.id === p.id"
+              (click)="seleccionarPedido(p)"
+              style="cursor: pointer;"
+            >
+              <td class="font-bold text-primary">#{{ p.codigoPedido }}</td>
+              <td>
+                <div class="client-cell">
+                  <strong>{{ p.clienteNombre }}</strong>
+                  <small>{{ p.clienteTelefono || 'Sin teléfono' }}</small>
+                </div>
+              </td>
+              <td>
+                <span class="address-text" title="{{ p.direccionEntrega }}">{{ p.direccionEntrega }}</span>
+              </td>
+              <td>
+                <span class="courier-tag">{{ p.repartidorNombre || 'Sin asignar' }}</span>
+              </td>
+              <td class="text-right font-semibold">{{ (p.costoEnvio || 0) | currency:'PEN':'S/ ':'1.2-2' }}</td>
+              <td class="text-right font-bold">{{ (p.montoTotal || 0) | currency:'PEN':'S/ ':'1.2-2' }}</td>
+              <td class="text-center">
+                <span
+                  class="status-pill"
+                  [class.status-pill-pending]="p.estadoDelivery === 'PENDIENTE'"
+                  [class.status-pill-route]="p.estadoDelivery === 'EN_RUTA'"
+                  [class.status-pill-delivered]="p.estadoDelivery === 'ENTREGADO'"
+                >
+                  {{ p.estadoDelivery === 'PENDIENTE' ? 'Registrado' : (p.estadoDelivery === 'EN_RUTA' ? 'En Ruta' : 'Entregado') }}
+                </span>
+              </td>
+              <td class="text-center" (click)="$event.stopPropagation()">
+                <div class="table-actions-cell">
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    (click)="seleccionarPedido(p)"
+                    title="Ver en Tracking y centrar en Mapa"
+                  >
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">pin_drop</span>
+                  </button>
 
-  <!-- Modal Nuevo Delivery -->
+                  @if (p.estadoDelivery === 'PENDIENTE') {
+                    <button
+                      type="button"
+                      class="btn btn-primary btn-sm"
+                      (click)="marcarEnRuta(p)"
+                      title="Despachar a Ruta"
+                    >
+                      A Ruta
+                    </button>
+                  } @else if (p.estadoDelivery === 'EN_RUTA') {
+                    <button
+                      type="button"
+                      class="btn btn-success btn-sm"
+                      (click)="marcarEntregado(p)"
+                      title="Confirmar Entrega"
+                    >
+                      Entregar
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="text-center" style="padding: 2.5rem; color: var(--text-muted);">
+                No se encontraron pedidos de delivery con los filtros seleccionados.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- MODAL: NUEVO DELIVERY CON MAPA INTERACTIVO Y REPARTIDOR COMBO -->
   @if (mostrarModalNuevo) {
-    <div class="modal-backdrop">
-      <div class="modal-dialog">
+    <div class="modal-backdrop" (click)="cerrarModalNuevo()">
+      <div class="modal-card modal-card-large" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h3>Programar Envío a Domicilio</h3>
+          <div>
+            <h3>Programar Nuevo Envío a Domicilio</h3>
+            <p>Registro logístico con geolocalización, punto en el mapa y cálculo de flete</p>
+          </div>
           <button type="button" class="btn-close" (click)="cerrarModalNuevo()">&times;</button>
         </div>
 
         <div class="modal-body">
+          <!-- 1. MAPA INTERACTIVO PARA FIJAR PUNTO DE ENTREGA -->
+          <div class="map-picker-box">
+            <div class="map-picker-header">
+              <div class="picker-label">
+                <span class="material-symbols-outlined icon-inline text-sky-600">location_on</span>
+                <strong>Fijar Punto de Entrega en el Mapa</strong>
+              </div>
+              @if (geocodificando()) {
+                <span class="geocodificando-badge">
+                  <span class="spinner-micro"></span> Obteniendo dirección...
+                </span>
+              }
+            </div>
+
+            <div id="mapaPicker" class="mapa-picker-container"></div>
+
+            <div class="map-picker-tips">
+              <span class="material-symbols-outlined tip-icon">touch_app</span>
+              <span>Haz clic en el mapa para marcar el punto y la dirección se completará sola, o también puedes escribirla a mano abajo.</span>
+            </div>
+          </div>
+
+          <!-- 2. DATOS DEL CLIENTE -->
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Cliente / Razón Social *</label>
+              <input type="text" [(ngModel)]="nuevoClienteNombre" class="form-control" placeholder="Ej: Juan Pérez" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Teléfono de Contacto</label>
+              <input type="text" [(ngModel)]="nuevoClienteTelefono" class="form-control" placeholder="Ej: 987654321" />
+            </div>
+          </div>
+
+          <!-- 3. DIRECCIÓN CON ACCIÓN DE UBICAR -->
           <div class="form-group">
-            <label>Nombre del Cliente *</label>
-            <input type="text" [(ngModel)]="nuevoClienteNombre" class="form-control" placeholder="Ej: Patricia Morales" />
+            <div class="form-label-row">
+              <label class="form-label">Dirección de Entrega (Distrito en Lima) *</label>
+              <span class="label-action-hint">Clic en mapa o escribe a mano</span>
+            </div>
+            <div class="input-with-action">
+              <input
+                type="text"
+                [(ngModel)]="nuevaDireccion"
+                (blur)="buscarDireccionEnMapa()"
+                (keyup.enter)="buscarDireccionEnMapa()"
+                class="form-control"
+                placeholder="Ej: Av. Pardo 450, Miraflores (o haz clic en el mapa de arriba)"
+              />
+              <button
+                type="button"
+                class="btn-pin-locate"
+                (click)="buscarDireccionEnMapa()"
+                title="Ubicar punto en el mapa a partir del texto escrito"
+              >
+                <span class="material-symbols-outlined icon-inline" style="font-size: 1.05rem;">pin_drop</span>
+                Ubicar
+              </button>
+            </div>
           </div>
 
           <div class="form-group">
-            <label>Teléfono de Contacto</label>
-            <input type="text" [(ngModel)]="nuevoClienteTelefono" class="form-control" placeholder="Ej: 991827364" />
+            <label class="form-label">Referencia del Inmueble</label>
+            <input type="text" [(ngModel)]="nuevaReferencia" class="form-control" placeholder="Ej: Altura cuadra 4, timbre 201" />
           </div>
 
-          <div class="form-group">
-            <label>Dirección de Entrega *</label>
-            <input type="text" [(ngModel)]="nuevaDireccion" class="form-control" placeholder="Ej: Av. Primavera 1234, Santiago de Surco" />
-          </div>
-
-          <div class="form-group">
-            <label>Referencia de Llegada</label>
-            <input type="text" [(ngModel)]="nuevaReferencia" class="form-control" placeholder="Ej: Altura puente Primavera, portón marrón" />
-          </div>
-
-          <div class="form-row">
-            <div class="form-group col-half">
-              <label>Costo de Envío (S/)</label>
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label">Tarifa Envío (S/) *</label>
               <input type="number" [(ngModel)]="nuevoCostoEnvio" class="form-control" />
             </div>
-            <div class="form-group col-half">
-              <label>Monto Total del Pedido (S/)</label>
+
+            <div class="form-group">
+              <label class="form-label">Total Pedido (S/) *</label>
               <input type="number" [(ngModel)]="nuevoMontoTotal" class="form-control" />
+            </div>
+
+            <!-- 4. UNIDAD / REPARTIDOR COMBO: ESCRIBIR O SELECCIONAR -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label class="form-label">Unidad / Repartidor</label>
+                <span class="label-action-hint">Escribe o selecciona</span>
+              </div>
+              <div class="courier-combo-wrap">
+                <input
+                  type="text"
+                  list="listaRepartidores"
+                  [(ngModel)]="nuevoRepartidor"
+                  class="form-control"
+                  placeholder="Escribe o selecciona un repartidor..."
+                />
+                <datalist id="listaRepartidores">
+                  @for (rep of repartidoresDisponibles(); track rep) {
+                    <option [value]="rep">{{ rep }}</option>
+                  }
+                </datalist>
+              </div>
+
+              <!-- Quick chips sugeridos -->
+              <div class="courier-quick-chips">
+                <span class="text-xs text-muted">Frecuentes:</span>
+                @for (rep of repartidoresDisponibles().slice(0, 3); track rep) {
+                  <button
+                    type="button"
+                    class="courier-chip-pill"
+                    [class.active]="nuevoRepartidor === rep"
+                    (click)="nuevoRepartidor = rep"
+                  >
+                    {{ rep.split('(')[0].trim() }}
+                  </button>
+                }
+              </div>
             </div>
           </div>
 
           <div class="form-group">
-            <label>Repartidor Asignado</label>
-            <input type="text" [(ngModel)]="nuevoRepartidor" class="form-control" />
-          </div>
-
-          <div class="form-group">
-            <label>Observaciones</label>
+            <label class="form-label">Observaciones</label>
             <textarea [(ngModel)]="nuevasObservaciones" class="form-control" rows="2" placeholder="Instrucciones especiales para el motorizado..."></textarea>
           </div>
         </div>
@@ -361,5 +612,4 @@
       </div>
     </div>
   }
-
 </div>

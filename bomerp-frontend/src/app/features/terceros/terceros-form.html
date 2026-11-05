@@ -1,134 +1,161 @@
 <div class="form-container">
   <div class="header-action">
     <div>
-      <h2>Registrar Cliente o Proveedor</h2>
-      <p class="subtitle">Alta de persona natural o jurídica en el directorio de terceros</p>
+      <div class="badge-module">
+        <span class="material-symbols-outlined icon-mini">groups</span>
+        DIRECTORIO COMERCIAL
+      </div>
+      <h2>{{ esEdicion() ? 'Editar Tercero Comercial' : 'Registrar Cliente o Proveedor' }}</h2>
+      <p class="subtitle">
+        {{ esEdicion() ? 'Actualización de datos fiscales y contactos del cliente o proveedor' : 'Alta de persona natural o jurídica en el directorio de terceros' }}
+      </p>
     </div>
     <a routerLink="/terceros" class="btn btn-secondary">
+      <span class="material-symbols-outlined icon-inline">arrow_back</span>
       Volver al Directorio
     </a>
   </div>
 
   @if (error()) {
-    <div class="alert alert-danger">{{ error() }}</div>
+    <div class="alert alert-danger">
+      <span class="material-symbols-outlined alert-icon">error</span>
+      <div>{{ error() }}</div>
+    </div>
   }
 
   @if (resultadoSunat()) {
     <div class="alert alert-success">
-      <div class="sunat-success-header">
-        <strong>Datos validados con éxito:</strong>
-        <span class="badge-status badge-activo">{{ resultadoSunat()?.estado || 'ACTIVO' }}</span>
-        <span class="badge-status badge-habido">{{ resultadoSunat()?.condicion || 'HABIDO' }}</span>
-      </div>
-      <div class="sunat-success-meta">
-        <span>{{ resultadoSunat()?.razonSocial }}</span>
-        @if (resultadoSunat()?.distrito) {
-          <span> &bull; {{ resultadoSunat()?.distrito }}, {{ resultadoSunat()?.provincia }}</span>
-        }
+      <span class="material-symbols-outlined alert-icon">verified</span>
+      <div>
+        <div class="sunat-success-header">
+          <strong>Datos validados con éxito ante SUNAT:</strong>
+          <span class="badge-status badge-activo">{{ resultadoSunat()?.estado || 'ACTIVO' }}</span>
+          <span class="badge-status badge-habido">{{ resultadoSunat()?.condicion || 'HABIDO' }}</span>
+        </div>
+        <div class="sunat-success-meta">
+          <span>{{ resultadoSunat()?.razonSocial }}</span>
+          @if (resultadoSunat()?.distrito) {
+            <span> &bull; {{ resultadoSunat()?.distrito }}, {{ resultadoSunat()?.provincia }}</span>
+          }
+        </div>
       </div>
     </div>
   }
 
-  <div class="card form-card">
-    <form [formGroup]="form" (ngSubmit)="guardar()">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="tipoDocumento">Tipo de Documento *</label>
-          <select id="tipoDocumento" formControlName="tipoDocumento" class="form-control">
-            <option value="RUC">RUC (Empresas / Jurídicas)</option>
-            <option value="DNI">DNI (Persona Natural)</option>
-            <option value="CE">Carnet de Extranjería</option>
-          </select>
-        </div>
+  @if (cargando()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando información del tercero...</p>
+    </div>
+  } @else {
+    <div class="card form-card">
+      <form [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="tipoDocumento">Tipo de Documento *</label>
+            <select id="tipoDocumento" formControlName="tipoDocumento" class="form-control">
+              <option value="RUC">RUC (Empresas / Jurídicas)</option>
+              <option value="DNI">DNI (Persona Natural)</option>
+              <option value="CE">Carnet de Extranjería</option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label for="numeroDocumento">Número de Documento *</label>
-          <div class="input-with-action">
+          <div class="form-group">
+            <label for="numeroDocumento">Número de Documento *</label>
+            <div class="input-with-action">
+              <input
+                id="numeroDocumento"
+                type="text"
+                formControlName="numeroDocumento"
+                class="form-control"
+                placeholder="Ej: 20100070970 o 46781234"
+                (keydown.enter)="$event.preventDefault(); consultarDocumento()"
+              />
+              <button
+                type="button"
+                class="btn-query-sunat"
+                (click)="consultarDocumento()"
+                [disabled]="consultando()"
+                title="Consultar datos oficiales en SUNAT o RENIEC"
+              >
+                @if (consultando()) {
+                  <span class="btn-spinner"></span>
+                  <span>Buscando...</span>
+                } @else {
+                  <span class="material-symbols-outlined btn-icon">manage_search</span>
+                  <span>Consultar SUNAT</span>
+                }
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="razonSocial">Razón Social o Nombre Completo *</label>
             <input
-              id="numeroDocumento"
+              id="razonSocial"
               type="text"
-              formControlName="numeroDocumento"
+              formControlName="razonSocial"
               class="form-control"
-              placeholder="Ej: 20100070970 o 46781234"
-              (keydown.enter)="$event.preventDefault(); consultarDocumento()"
+              placeholder="Ej: Agroindustrias San Martín S.A.C."
             />
-            <button
-              type="button"
-              class="btn-query-sunat"
-              (click)="consultarDocumento()"
-              [disabled]="consultando()"
-              title="Consultar datos oficiales en SUNAT o RENIEC"
-            >
-              @if (consultando()) {
-                <span class="btn-spinner"></span>
-                <span>Buscando...</span>
-              } @else {
-                <span>Consultar SUNAT</span>
-              }
-            </button>
+          </div>
+
+          <div class="form-group">
+            <label for="tipoTercero">Clasificación de Tercero *</label>
+            <select id="tipoTercero" formControlName="tipoTercero" class="form-control">
+              <option value="PROVEEDOR">Proveedor (Insumos y Servicios)</option>
+              <option value="CLIENTE">Cliente (Comprador de Productos)</option>
+              <option value="AMBOS">Ambos (Cliente y Proveedor)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="telefono">Teléfono / Celular de Contacto</label>
+            <input
+              id="telefono"
+              type="text"
+              formControlName="telefono"
+              class="form-control"
+              placeholder="Ej: 987654321 o 01-4458920"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label for="direccion">Dirección Fiscal / Entrega</label>
+            <input
+              id="direccion"
+              type="text"
+              formControlName="direccion"
+              class="form-control"
+              placeholder="Ej: Av. Industrial 450, Ate, Lima"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label for="correo">Correo Electrónico de Facturación o Contacto</label>
+            <input
+              id="correo"
+              type="email"
+              formControlName="correo"
+              class="form-control"
+              placeholder="Ej: cobranzas@empresa.com.pe"
+            />
           </div>
         </div>
 
-        <div class="form-group full-width">
-          <label for="razonSocial">Razón Social o Nombre Completo *</label>
-          <input
-            id="razonSocial"
-            type="text"
-            formControlName="razonSocial"
-            class="form-control"
-            placeholder="Ej: Agroindustrias San Martín S.A.C."
-          />
+        <div class="form-actions">
+          <a routerLink="/terceros" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-primary" [disabled]="guardando() || consultando()">
+            @if (guardando()) {
+              <span class="btn-spinner-dark"></span>
+              <span>Guardando...</span>
+            } @else {
+              <span class="material-symbols-outlined btn-icon">save</span>
+              <span>{{ esEdicion() ? 'Actualizar Tercero' : 'Guardar Tercero' }}</span>
+            }
+          </button>
         </div>
-
-        <div class="form-group">
-          <label for="tipoTercero">Clasificación de Tercero *</label>
-          <select id="tipoTercero" formControlName="tipoTercero" class="form-control">
-            <option value="PROVEEDOR">Proveedor (Insumos y Servicios)</option>
-            <option value="CLIENTE">Cliente (Comprador de Productos)</option>
-            <option value="AMBOS">Ambos (Cliente y Proveedor)</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="telefono">Teléfono / Contacto</label>
-          <input
-            id="telefono"
-            type="text"
-            formControlName="telefono"
-            class="form-control"
-            placeholder="Ej: 987654321 o 01-4458920"
-          />
-        </div>
-
-        <div class="form-group full-width">
-          <label for="direccion">Dirección Fiscal / Entrega</label>
-          <input
-            id="direccion"
-            type="text"
-            formControlName="direccion"
-            class="form-control"
-            placeholder="Ej: Av. Industrial 450, Ate, Lima"
-          />
-        </div>
-
-        <div class="form-group full-width">
-          <label for="correo">Correo Electrónico</label>
-          <input
-            id="correo"
-            type="email"
-            formControlName="correo"
-            class="form-control"
-            placeholder="Ej: ventas@empresa.com.pe"
-          />
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <a routerLink="/terceros" class="btn btn-secondary">Cancelar</a>
-        <button type="submit" class="btn btn-primary" [disabled]="guardando() || consultando()">
-          @if (guardando()) { Guardando... } @else { Guardar Tercero }
-        </button>
-      </div>
-    </form>
-  </div>
+      </form>
+    </div>
+  }
 </div>

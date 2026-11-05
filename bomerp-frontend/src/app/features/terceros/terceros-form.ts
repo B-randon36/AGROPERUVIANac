@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TercerosService } from './terceros-service';
 import { SunatApiService, ConsultaDocumentoResponse } from '../../core/services/sunat-api.service';
@@ -15,13 +15,17 @@ import { SunatApiService, ConsultaDocumentoResponse } from '../../core/services/
 export class TercerosForm implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly tercerosService = inject(TercerosService);
   private readonly sunatService = inject(SunatApiService);
 
   readonly guardando = signal<boolean>(false);
   readonly consultando = signal<boolean>(false);
+  readonly cargando = signal<boolean>(false);
   readonly error = signal<string | null>(null);
   readonly resultadoSunat = signal<ConsultaDocumentoResponse | null>(null);
+  readonly esEdicion = signal<boolean>(false);
+  readonly terceroId = signal<number | null>(null);
 
   form: FormGroup = this.fb.group({
     tipoDocumento: ['RUC', [Validators.required]],
@@ -33,7 +37,39 @@ export class TercerosForm implements OnInit {
     correo: ['', [Validators.email]],
   });
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      const id = parseInt(idParam, 10);
+      if (!isNaN(id)) {
+        this.esEdicion.set(true);
+        this.terceroId.set(id);
+        this.cargarTercero(id);
+      }
+    }
+  }
+
+  cargarTercero(id: number): void {
+    this.cargando.set(true);
+    this.tercerosService.obtenerPorId(id).subscribe({
+      next: (t) => {
+        this.form.patchValue({
+          tipoDocumento: t.tipoDocumento,
+          numeroDocumento: t.numeroDocumento,
+          razonSocial: t.razonSocial,
+          tipoTercero: t.tipoTercero,
+          telefono: t.telefono || '',
+          direccion: t.direccion || '',
+          correo: t.correo || '',
+        });
+        this.cargando.set(false);
+      },
+      error: (err) => {
+        this.error.set('No se pudo cargar la información del tercero: ' + (err.error?.message || err.message));
+        this.cargando.set(false);
+      },
+    });
+  }
 
   consultarDocumento(): void {
     const tipo = this.form.get('tipoDocumento')?.value;
@@ -77,13 +113,18 @@ export class TercerosForm implements OnInit {
     this.guardando.set(true);
     this.error.set(null);
 
-    this.tercerosService.crear(this.form.value).subscribe({
+    const data = this.form.value;
+    const req$ = this.esEdicion() && this.terceroId()
+      ? this.tercerosService.actualizar(this.terceroId()!, data)
+      : this.tercerosService.crear(data);
+
+    req$.subscribe({
       next: () => {
         this.guardando.set(false);
         this.router.navigate(['/terceros']);
       },
       error: (err) => {
-        this.error.set(err.error?.message || err.message || 'Error al registrar tercero');
+        this.error.set(err.error?.message || err.message || 'Error al procesar el tercero comercial');
         this.guardando.set(false);
       },
     });

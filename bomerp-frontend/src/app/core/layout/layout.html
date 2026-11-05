@@ -1,15 +1,13 @@
 <div class="app-shell">
-  <!-- Sidebar -->
+  <!-- Sidebar Glacier -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-logo">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-        </svg>
+      <div class="brand-logo-container">
+        <img src="assets/logo.png" alt="Agro Peruvian Foods" class="brand-logo-img" />
       </div>
       <div class="brand-text">
-        <h2>AGRO PERUVIAN</h2>
-        <span>FOODS S.A.C. · ERP</span>
+        <h2>Agro Peruvian Foods</h2>
+        <span>Sistema de Gestión ERP</span>
       </div>
     </div>
 
@@ -21,9 +19,9 @@
       </a>
 
       @if (auth.autenticado()) {
-        <!-- Módulo 1: Finanzas & Caja (Brandon Ccalla) - Solo ADMIN y SUPERVISOR -->
+        <!-- Gestión Financiera & Caja -->
         @if (auth.tieneRol('ADMIN', 'SUPERVISOR')) {
-          <div class="nav-section-title">MÓDULO 1 · FINANZAS (BRANDON)</div>
+          <div class="nav-section-title">GESTIÓN FINANCIERA & CAJA</div>
           <a routerLink="/finanzas/sesiones" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">point_of_sale</span>
             <span>Sesiones de Caja</span>
@@ -46,8 +44,8 @@
           </a>
         }
 
-        <!-- Módulo 2: Ventas POS (Zaggy Morales) -->
-        <div class="nav-section-title">MÓDULO 2 · VENTAS POS (ZAGGY)</div>
+        <!-- Ventas & Comercial -->
+        <div class="nav-section-title">VENTAS & COMERCIAL</div>
         <a routerLink="/ventas/reporte" routerLinkActive="active" class="nav-item">
           <span class="material-symbols-outlined nav-icon">bar_chart</span>
           <span>Reporte de Ventas</span>
@@ -55,7 +53,7 @@
         @if (auth.tieneRol('VENDEDOR', 'SUPERVISOR', 'ADMIN')) {
           <a routerLink="/ventas/nueva" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">shopping_cart_checkout</span>
-            <span>Nueva Venta (DNI + Ticket)</span>
+            <span>Punto de Venta (POS)</span>
           </a>
         }
         <a routerLink="/ventas/delivery" routerLinkActive="active" class="nav-item">
@@ -63,7 +61,7 @@
           <span>Pedidos Delivery</span>
         </a>
 
-        <!-- Módulo Inventario & FEFO -->
+        <!-- Inventario & Almacenes -->
         <div class="nav-section-title">INVENTARIO & ALMACENES</div>
         <a routerLink="/inventario/lotes" routerLinkActive="active" class="nav-item">
           <span class="material-symbols-outlined nav-icon">inventory_2</span>
@@ -84,16 +82,16 @@
           </a>
         }
 
-        <!-- Módulo 3: Producción & BOM + Catálogo -->
-        <div class="nav-section-title">MÓDULO 3 · PRODUCCIÓN (ISAÍ)</div>
+        <!-- Producción & Planta -->
         @if (auth.tieneRol('SUPERVISOR', 'ADMIN')) {
+          <div class="nav-section-title">PRODUCCIÓN & PLANTA</div>
           <a routerLink="/produccion" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-item">
             <span class="material-symbols-outlined nav-icon">precision_manufacturing</span>
             <span>Órdenes de Planta</span>
           </a>
           <a routerLink="/produccion/nueva" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">playlist_add</span>
-            <span>Planificar Orden BOM</span>
+            <span>Planificar Orden (BOM)</span>
           </a>
           <a routerLink="/produccion/recetas" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">receipt_long</span>
@@ -104,18 +102,21 @@
             <span>Centros de Trabajo</span>
           </a>
         }
+
+        <!-- Catálogo de Productos -->
+        <div class="nav-section-title">CATÁLOGO DE PRODUCTOS</div>
         <a routerLink="/catalogo/categorias" routerLinkActive="active" class="nav-item">
           <span class="material-symbols-outlined nav-icon">category</span>
-          <span>Categorías (S07 Base)</span>
+          <span>Categorías de Artículos</span>
         </a>
         <a routerLink="/catalogo/productos" routerLinkActive="active" class="nav-item">
           <span class="material-symbols-outlined nav-icon">inventory</span>
-          <span>Productos (S08 Dependiente)</span>
+          <span>Catálogo de Productos</span>
         </a>
 
-        <!-- Módulo 4: Compras (SUPERVISOR, ADMIN) -->
+        <!-- Compras & Proveedores -->
         @if (auth.tieneRol('SUPERVISOR', 'ADMIN')) {
-          <div class="nav-section-title">MÓDULO 4 · COMPRAS</div>
+          <div class="nav-section-title">COMPRAS & PROVEEDORES</div>
           <a routerLink="/compras" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-item">
             <span class="material-symbols-outlined nav-icon">shopping_bag</span>
             <span>Compras de Insumos</span>
@@ -126,18 +127,26 @@
           </a>
           <a routerLink="/compras/proveedores" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">store</span>
-            <span>Proveedores (Maestro)</span>
+            <span>Directorio de Proveedores</span>
           </a>
         }
+
+        <!-- Directorio de Terceros -->
+        <div class="nav-section-title">DIRECTORIO COMERCIAL</div>
+        <a routerLink="/terceros" routerLinkActive="active" class="nav-item">
+          <span class="material-symbols-outlined nav-icon">groups</span>
+          <span>Clientes y Proveedores</span>
+        </a>
       }
     </nav>
 
+    <!-- Sidebar Footer Profesional -->
     <div class="sidebar-footer">
-      <div class="team-badge">
-        <div class="team-dot"></div>
+      <div class="company-badge">
+        <div class="status-dot"></div>
         <div>
-          <div class="team-name">Los Hijos del Backend</div>
-          <div class="team-course">LP2 · BD2 · ADS (G2G3)</div>
+          <div class="company-name">Agro Peruvian Foods S.A.C.</div>
+          <div class="company-sub">Planta Lurigancho · RUC 20608974512</div>
         </div>
       </div>
     </div>
@@ -148,29 +157,33 @@
     <!-- Top Header -->
     <header class="topbar">
       <div class="topbar-left">
+        <div class="topbar-pill">
+          <span class="pulse-dot"></span>
+          <span class="topbar-pill-text">Sistema Conectado</span>
+        </div>
         <div class="clock-box">
-          <span class="material-symbols-outlined icon-inline" style="font-size: 1.05rem;">schedule</span>
+          <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">schedule</span>
           {{ currentDateTime() | date:'dd/MM/yyyy HH:mm:ss' }}
         </div>
       </div>
 
       <div class="topbar-right">
         @if (auth.autenticado()) {
-          <div class="user-profile" title="Sesión activa Keycloak">
-            <div class="user-avatar">{{ (auth.usuario()?.nombre || 'US').substring(0,2).toUpperCase() }}</div>
+          <div class="user-profile" title="Sesión activa">
+            <div class="user-avatar">{{ (auth.usuario()?.nombre || 'AP').substring(0,2).toUpperCase() }}</div>
             <div class="user-info">
               <span class="user-name">{{ auth.usuario()?.nombre }}</span>
-              <span class="user-role">{{ auth.roles().join(', ') }}</span>
+              <span class="user-role-badge">{{ rolHumano() }}</span>
             </div>
-            <button type="button" class="btn-auth-logout" (click)="auth.cerrarSesion()" title="Cerrar sesión en Keycloak">
+            <button type="button" class="btn-auth-logout" (click)="auth.cerrarSesion()" title="Cerrar sesión">
               <span class="material-symbols-outlined icon-inline" style="font-size: 0.95rem;">logout</span>
-              Cerrar sesión
+              Salir
             </button>
           </div>
         } @else {
-          <button type="button" class="btn-auth-login" (click)="auth.iniciarLogin()" title="Iniciar sesión con Keycloak">
+          <button type="button" class="btn-auth-login" (click)="auth.iniciarLogin()" title="Iniciar sesión">
             <span class="material-symbols-outlined icon-inline" style="font-size: 1.05rem;">lock</span>
-            Iniciar sesión
+            Iniciar Sesión
           </button>
         }
       </div>

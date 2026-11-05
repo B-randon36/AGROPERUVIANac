@@ -1,6 +1,6 @@
 .sesiones-container {
-  padding: 1.5rem;
-  max-width: 1300px;
+  padding: 0;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -15,68 +15,79 @@
 
 .header-titles h2 {
   margin: 0.25rem 0;
-  font-size: 1.75rem;
-  color: #1e293b;
-  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--neutral-dark);
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
-  color: #64748b;
+  color: var(--text-muted);
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
 }
 
 .badge-agro {
-  background: #eaf3ed;
-  color: #1e5a32;
-  font-size: 0.75rem;
+  background: var(--neutral-dark);
+  color: var(--primary);
+  font-size: 0.7rem;
   font-weight: 700;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  display: inline-block;
 }
 
+/* =========================================================================
+   ACTIVE SHIFT CARD GLACIER (Reemplaza el verde oscuro antiguo)
+   ========================================================================= */
 .active-shift-card {
-  background: linear-gradient(135deg, #1e3a29 0%, #295c3e 100%);
-  color: #ffffff;
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--neutral-dark) 0%, var(--neutral-deep) 100%);
+  color: #FFFFFF;
+  border-radius: var(--radius-xl);
+  padding: 1.75rem 2rem;
   margin-bottom: 2rem;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  box-shadow: 0 10px 25px -5px rgba(30, 58, 41, 0.3);
+  border: 1px solid var(--neutral-border);
+  border-left: 5px solid var(--primary);
+  box-shadow: 0 10px 25px -5px rgba(26, 36, 56, 0.25);
 }
 
 .shift-badge-active {
-  background: #22c55e;
-  color: #ffffff;
-  font-size: 0.7rem;
+  background: var(--primary);
+  color: var(--primary-contrast);
+  font-size: 0.68rem;
   font-weight: 800;
-  padding: 0.25rem 0.6rem;
-  border-radius: 20px;
-  letter-spacing: 0.05em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  letter-spacing: 0.06em;
   display: inline-block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.45rem;
+  box-shadow: 0 2px 6px rgba(125, 211, 252, 0.35);
 }
 
 .shift-info h3 {
   margin: 0 0 0.25rem 0;
   font-size: 1.35rem;
+  font-weight: 700;
+  color: #FFFFFF;
 }
 
 .shift-info p {
   margin: 0;
-  opacity: 0.85;
-  font-size: 0.85rem;
+  color: #94A3B8;
+  font-size: 0.825rem;
 }
 
 .shift-stats {
   display: flex;
-  gap: 1.5rem;
+  gap: 2rem;
   flex-wrap: wrap;
 }
 
@@ -86,53 +97,65 @@
 }
 
 .stat-label {
-  font-size: 0.75rem;
-  opacity: 0.8;
+  font-size: 0.72rem;
+  color: #94A3B8;
   text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.15rem;
 }
 
 .stat-value {
   font-size: 1.25rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #FFFFFF;
 }
 
 .stat-item.highlight .stat-value {
-  font-size: 1.5rem;
-  color: #86efac;
+  font-size: 1.6rem;
+  color: #10B981;
 }
 
 .btn {
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--radius);
   font-weight: 600;
   cursor: pointer;
   border: none;
   transition: all 0.2s ease;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
 }
 
 .btn-primary {
-  background: #1e5a32;
-  color: white;
+  background: var(--primary);
+  color: var(--primary-contrast);
 }
 
 .btn-primary:hover {
-  background: #143d22;
+  background: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
 .btn-success {
-  background: #16a34a;
-  color: white;
+  background: var(--success);
+  color: #FFFFFF;
 }
 
 .btn-outline {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: white;
+  background: var(--primary);
+  color: var(--primary-contrast);
+  font-weight: 700;
+  border: 1px solid rgba(125, 211, 252, 0.4);
+  padding: 0.65rem 1.4rem;
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(125, 211, 252, 0.3);
 }
 
 .btn-outline:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.45);
 }
 
 .pulse-btn {
@@ -142,31 +165,31 @@
 }
 
 .live-indicator {
-  width: 10px;
-  height: 10px;
-  background-color: #22c55e;
+  width: 9px;
+  height: 9px;
+  background-color: var(--success);
   border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-  animation: pulse 1.6s infinite;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse-live 1.6s infinite;
 }
 
-@keyframes pulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+@keyframes pulse-live {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
 .table-card {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 
 .table-header {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 1.15rem 1.5rem;
+  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -175,16 +198,17 @@
 .table-header h3 {
   margin: 0;
   font-size: 1.1rem;
-  color: #1e293b;
+  color: var(--neutral-dark);
 }
 
 .count-badge {
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--bg-main);
+  color: var(--text-muted);
   font-size: 0.75rem;
   font-weight: 600;
-  padding: 0.25rem 0.6rem;
-  border-radius: 20px;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
 }
 
 .table-responsive {
@@ -195,84 +219,93 @@
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
 }
 
 .data-table th {
-  background: #f8fafc;
-  color: #475569;
+  background: #F8FAFC;
+  color: var(--text-muted);
   font-weight: 600;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.725rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .data-table td {
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-main);
+  vertical-align: middle;
 }
 
 .data-table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: #F8FAFC;
 }
 
 .status-badge {
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.55rem;
   border-radius: 6px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
+  text-transform: uppercase;
 }
 
 .status-open {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--success-bg);
+  color: var(--success-text);
+  border: 1px solid var(--success-border);
 }
 
 .status-closed {
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--bg-main);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
 }
 
 .btn-action {
   padding: 0.35rem 0.65rem;
   border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #334155;
+  border: 1px solid var(--border);
+  background: #FFFFFF;
+  color: var(--neutral-dark);
   cursor: pointer;
   font-size: 0.75rem;
   font-weight: 600;
   margin-left: 0.35rem;
+  transition: all 0.15s ease;
 }
 
 .btn-action:hover {
-  background: #f1f5f9;
+  background: var(--bg-main);
+  border-color: #CBD5E1;
 }
 
 .btn-pdf {
-  border-color: #fca5a5;
-  color: #dc2626;
-  background: #fef2f2;
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+  background: var(--danger-bg);
 }
 
 .btn-pdf:hover {
-  background: #fee2e2;
+  background: #FECACA;
 }
 
 .btn-excel {
-  border-color: #86efac;
-  color: #16a34a;
-  background: #f0fdf4;
+  border-color: var(--success-border);
+  color: var(--success-text);
+  background: var(--success-bg);
 }
 
 .btn-excel:hover {
-  background: #dcfce7;
+  background: #BBF7D0;
 }
 
-.text-success { color: #16a34a; }
-.text-danger { color: #dc2626; }
+.text-success { color: var(--success); }
+.text-danger { color: var(--danger); }
 .font-bold { font-weight: 700; }
-.font-mono { font-family: monospace; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
 .text-right { text-align: right; }
 .text-center { text-align: center; }
 
@@ -310,7 +343,7 @@
 .modal-header h3 {
   margin: 0;
   font-size: 1.25rem;
-  color: #1e293b;
+  color: var(--neutral-dark);
 }
 
 .btn-close {
@@ -350,11 +383,12 @@
 .mini-kpi strong {
   font-size: 1.05rem;
   margin-top: 0.25rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .mini-kpi.highlight {
-  background: #ecfdf5;
-  border-color: #a7f3d0;
+  background: var(--success-bg);
+  border-color: var(--success-border);
 }
 
 .modal-footer {
@@ -372,8 +406,8 @@
   font-weight: 700;
 }
 
-.badge-in { background: #dcfce7; color: #16a34a; }
-.badge-out { background: #fee2e2; color: #dc2626; }
+.badge-in { background: var(--success-bg); color: var(--success-text); }
+.badge-out { background: var(--danger-bg); color: var(--danger-text); }
 .badge-payment {
   background: #e2e8f0;
   color: #334155;
@@ -383,41 +417,37 @@
   font-weight: 600;
 }
 
-/* ========================================================================== */
-/* Roles de Cajero y Responsable (Finanzas / Arqueo)                          */
-/* ========================================================================== */
 .badge-role-chip {
   display: inline-flex;
   align-items: center;
-  background: #e0e7ff;
-  color: #3730a3;
+  background: var(--primary-light);
+  color: var(--primary-dark);
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.2rem 0.65rem;
   border-radius: 20px;
   letter-spacing: 0.04em;
   margin: 0 0.5rem;
-  border: 1px solid #c7d2fe;
+  border: 1px solid var(--primary);
   vertical-align: middle;
 }
 
 .badge-role-chip.badge-admin {
-  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-  color: #5b21b6;
-  border-color: #c4b5fd;
-  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.15);
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border-color: var(--primary);
 }
 
 .badge-role-chip-card {
   display: inline-block;
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  font-size: 0.75rem;
+  background: rgba(125, 211, 252, 0.2);
+  color: var(--primary);
+  font-size: 0.72rem;
   font-weight: 700;
   padding: 0.2rem 0.6rem;
   border-radius: 20px;
   margin-left: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(125, 211, 252, 0.4);
   letter-spacing: 0.03em;
   vertical-align: middle;
 }
@@ -431,7 +461,7 @@
 
 .cashier-name {
   font-weight: 600;
-  color: #1e293b;
+  color: var(--neutral-dark);
 }
 
 .badge-role-table {
@@ -440,20 +470,14 @@
   font-weight: 700;
   padding: 0.125rem 0.45rem;
   border-radius: 12px;
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border: 1px solid var(--primary);
   letter-spacing: 0.02em;
 }
 
-.badge-role-table.badge-admin-subtle {
-  background: #ede9fe;
-  color: #6d28d9;
-  border-color: #ddd6fe;
-}
-
 .badge-state-mini {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
@@ -461,11 +485,13 @@
 }
 
 .badge-state-mini.state-open {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--success-bg);
+  color: var(--success-text);
+  border: 1px solid var(--success-border);
 }
 
 .badge-state-mini.state-closed {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-main);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
 }

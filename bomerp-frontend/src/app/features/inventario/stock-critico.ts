@@ -14,7 +14,7 @@ import { StockCritico } from './inventario.model';
         <div>
           <div class="badge badge-danger">CONTROL SANITARIO & REABASTECIMIENTO</div>
           <h1>Reporte de Stock Crítico & Semáforo de Ruptura</h1>
-          <p class="subtitle">Monitoreo preventivo de existencias mínimas para órdenes de compra y producción (Isaí Armuto)</p>
+          <p class="subtitle">Monitoreo preventivo de existencias mínimas y puntos de reorden para planta</p>
         </div>
         <div class="header-actions">
           <a routerLink="/produccion/nueva" class="btn btn-primary">

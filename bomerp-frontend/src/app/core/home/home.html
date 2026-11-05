@@ -1,240 +1,546 @@
 <div class="home-container">
-  <!-- Hero Section -->
-  <div class="hero-card">
-    <div class="hero-content">
-      <div class="hero-badge">ARQUITECTURA INTEGRADA · SEGUNDO CORTE (4 MÓDULOS)</div>
-      <h1 class="hero-title">ERP Agro Peruvian Foods S.A.C.</h1>
-      <p class="hero-subtitle">
-        Plataforma empresarial para el control de turnos y arqueos de caja, punto de venta (POS), 
-        planificación de producción por recetas BOM y gestión de compras de insumos agroindustriales.
-      </p>
-      <div class="hero-meta">
-        <span class="meta-tag">Angular Standalone</span>
-        <span class="meta-tag">Spring Boot 4 (Spring Modulith)</span>
-        <span class="meta-tag">Keycloak v26 (PKCE S256)</span>
-        <span class="meta-tag">SUNAT & RENIEC en Vivo</span>
-      </div>
+  <!-- Page Header Compacto de Una Sola Línea (Estilo TailAdmin) -->
+  <header class="page-top-header">
+    <div class="header-greeting">
+      <h1 class="greeting-title">
+        Hola, {{ auth.usuario()?.nombre || 'Equipo Agro Peruvian' }} <span class="wave-hand">👋</span>
+      </h1>
+      <p class="greeting-subtitle">Resumen ejecutivo y monitoreo operacional en tiempo real de Agro Peruvian Foods S.A.C.</p>
     </div>
-    <div class="hero-status">
-      <div class="status-card" [class.online]="apiOnline()">
-        <div class="status-icon">
-          <span class="material-symbols-outlined" [style.color]="apiOnline() ? '#10b981' : '#f59e0b'">
-            {{ apiOnline() ? 'check_circle' : 'pending' }}
-          </span>
-        </div>
-        <div>
-          <div class="status-title">{{ apiOnline() ? 'API REST En Línea' : 'API Standby / Local' }}</div>
-          <div class="status-sub">http://localhost:8080/api/v1</div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- KPI Executive Dashboard (Prioridad 3) -->
-  @if (auth.autenticado()) {
-    <div class="dashboard-section">
-      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-        <div>
-          <h2>Panel Ejecutivo de Indicadores en Tiempo Real (KPIs)</h2>
-          <p>Métricas operativas sincronizadas entre Caja, Ventas, Planta, Almacén y Compras</p>
-        </div>
-        <button
-          class="btn btn-secondary btn-sm"
-          (click)="cargarMetricasEjecutivas()"
-          [disabled]="loadingKpis()"
-          style="display: flex; align-items: center; gap: 0.35rem;"
-        >
-          <span class="material-symbols-outlined icon-inline" [class.spin]="loadingKpis()">sync</span>
-          {{ loadingKpis() ? 'Sincronizando...' : 'Actualizar KPIs' }}
-        </button>
-      </div>
-
-      <div class="kpi-grid">
-        <!-- KPI 1: Ventas del Día -->
-        <div class="kpi-card kpi-blue">
-          <div class="kpi-header">
-            <span class="material-symbols-outlined kpi-icon">point_of_sale</span>
-            <span class="kpi-badge">Ventas POS</span>
-          </div>
-          <div class="kpi-value">{{ kpis().montoVentas | currency:'PEN':'symbol':'1.2-2' }}</div>
-          <div class="kpi-footer">
-            <span><strong>{{ kpis().cantidadVentas }}</strong> tickets emitidos</span>
-            <span>Ticket prom: <strong>{{ kpis().ticketPromedio | currency:'PEN':'symbol':'1.2-2' }}</strong></span>
-          </div>
-        </div>
-
-        <!-- KPI 2: Caja Operativa Activa -->
-        <div class="kpi-card kpi-green">
-          <div class="kpi-header">
-            <span class="material-symbols-outlined kpi-icon">account_balance_wallet</span>
-            <span class="kpi-badge">Caja Diaria</span>
-          </div>
-          <div class="kpi-value">{{ kpis().saldoCajaActiva | currency:'PEN':'symbol':'1.2-2' }}</div>
-          <div class="kpi-footer">
-            @if (kpis().codigoSesionActiva) {
-              <span>Turno: <strong>{{ kpis().codigoSesionActiva }}</strong></span>
-              <span>Cajero: <strong>{{ kpis().cajeroActivo || 'Brandon Ccalla' }}</strong></span>
-            } @else {
-              <span class="text-muted">Sin turno de caja abierto hoy</span>
-            }
-          </div>
-        </div>
-
-        <!-- KPI 3: Producción en Planta -->
-        <div class="kpi-card kpi-orange">
-          <div class="kpi-header">
-            <span class="material-symbols-outlined kpi-icon">precision_manufacturing</span>
-            <span class="kpi-badge">Planta BOM</span>
-          </div>
-          <div class="kpi-value">
-            {{ kpis().ordenesEnProceso }}
-            <span class="kpi-subtext">en proceso</span>
-          </div>
-          <div class="kpi-footer">
-            <span><strong>{{ kpis().ordenesPlanificadas }}</strong> planificadas</span>
-            <span><strong>{{ kpis().ordenesCompletadas }}</strong> completadas</span>
-          </div>
-        </div>
-
-        <!-- KPI 4: Almacén y Semáforo FEFO -->
-        <div class="kpi-card kpi-purple">
-          <div class="kpi-header">
-            <span class="material-symbols-outlined kpi-icon">inventory</span>
-            <span class="kpi-badge">Semáforo FEFO</span>
-          </div>
-          <div class="kpi-value">{{ kpis().valorInventario | currency:'PEN':'symbol':'1.2-2' }}</div>
-          <div class="kpi-footer">
-            <span class="badge badge-success" title="Lotes con caducidad lejana (>60 días)">🟢 {{ kpis().lotesOptimos }} Óptimos</span>
-            <span class="badge badge-warning" title="Lotes próximos a vencer (30-60 días)">🟡 {{ kpis().lotesPreventivos }} Alerta</span>
-            <span class="badge badge-danger" title="Lotes críticos (<30 días)">🔴 {{ kpis().lotesCriticos }} Críticos</span>
-          </div>
-        </div>
-
-        <!-- KPI 5: Compras y Cuentas por Pagar -->
-        <div class="kpi-card kpi-teal">
-          <div class="kpi-header">
-            <span class="material-symbols-outlined kpi-icon">shopping_bag</span>
-            <span class="kpi-badge">Compras / Pasivos</span>
-          </div>
-          <div class="kpi-value">{{ kpis().montoCompras | currency:'PEN':'symbol':'1.2-2' }}</div>
-          <div class="kpi-footer">
-            <span>Deuda pendiente: <strong style="color: #dc2626;">{{ kpis().cuentasPorPagar | currency:'PEN':'symbol':'1.2-2' }}</strong></span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Action Shortcuts -->
-      <div class="quick-actions-bar">
-        <span class="quick-actions-label">Accesos Directos Rápidos:</span>
-        <a routerLink="/ventas/nueva" class="btn btn-primary btn-sm">
-          <span class="material-symbols-outlined icon-inline">add_shopping_cart</span>
-          Nueva Venta POS
-        </a>
+    <div class="header-quick-actions">
+      <a routerLink="/ventas/nueva" class="btn btn-primary btn-sm">
+        <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">add_shopping_cart</span>
+        + Nueva Venta POS
+      </a>
+      @if (auth.tieneRol('ADMIN', 'SUPERVISOR')) {
         <a routerLink="/finanzas/sesiones/nueva" class="btn btn-secondary btn-sm">
-          <span class="material-symbols-outlined icon-inline">lock_open</span>
+          <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">lock_open</span>
           Apertura de Turno
         </a>
         <a routerLink="/produccion/nueva" class="btn btn-secondary btn-sm">
-          <span class="material-symbols-outlined icon-inline">add_circle</span>
+          <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">precision_manufacturing</span>
           Nueva Orden Planta
         </a>
-        <a routerLink="/compras/nueva" class="btn btn-secondary btn-sm">
-          <span class="material-symbols-outlined icon-inline">post_add</span>
-          Nueva Compra Insumos
+      }
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm"
+        (click)="cargarMetricasEjecutivas()"
+        [disabled]="loadingKpis()"
+        title="Actualizar datos en vivo"
+      >
+        <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;" [class.spin]="loadingKpis()">sync</span>
+        {{ loadingKpis() ? 'Sincronizando...' : 'Actualizar' }}
+      </button>
+    </div>
+  </header>
+
+  <!-- Fila de 5 Tarjetas de KPIs Clickeables (Color Unificado #0F172A) -->
+  <section class="kpi-section">
+    <div class="kpi-grid">
+      <!-- KPI 1: Ventas Comerciales -->
+      <a routerLink="/ventas/reporte" class="kpi-card kpi-primary" title="Ver reporte comercial detallado">
+        <div class="kpi-header">
+          <span class="material-symbols-outlined kpi-icon">point_of_sale</span>
+          <span class="kpi-badge">Ventas Comerciales</span>
+        </div>
+        <div class="kpi-value tabular-nums">{{ kpis().montoVentas | currency:'PEN':'S/ ':'1.2-2' }}</div>
+        <div class="kpi-footer">
+          <span><strong>{{ kpis().cantidadVentas }}</strong> comprobantes emitidos</span>
+          <span>Ticket prom: <strong>{{ kpis().ticketPromedio | currency:'PEN':'S/ ':'1.2-2' }}</strong></span>
+        </div>
+      </a>
+
+      <!-- KPI 2: Caja Operativa (Monto unificado en #0F172A) -->
+      <a routerLink="/finanzas/sesiones" class="kpi-card kpi-success" title="Ver historial y control de sesiones">
+        <div class="kpi-header">
+          <span class="material-symbols-outlined kpi-icon">account_balance_wallet</span>
+          <span class="kpi-badge">Caja Operativa</span>
+        </div>
+        <div class="kpi-value tabular-nums">{{ kpis().saldoCajaActiva | currency:'PEN':'S/ ':'1.2-2' }}</div>
+        <div class="kpi-footer">
+          @if (kpis().codigoSesionActiva) {
+            <span>Turno: <strong class="text-success">{{ kpis().codigoSesionActiva }}</strong></span>
+            <span class="text-truncate">Operador: <strong>{{ kpis().cajeroActivo || auth.usuario()?.nombre || 'Cajero' }}</strong></span>
+          } @else {
+            <span class="text-amber-600">🟡 Sin turno abierto hoy</span>
+          }
+        </div>
+      </a>
+
+      <!-- KPI 3: Planta de Producción -->
+      <a routerLink="/produccion" class="kpi-card kpi-tertiary" title="Ir a órdenes de producción BOM">
+        <div class="kpi-header">
+          <span class="material-symbols-outlined kpi-icon">precision_manufacturing</span>
+          <span class="kpi-badge">Planta de Producción</span>
+        </div>
+        <div class="kpi-value tabular-nums">
+          {{ kpis().ordenesEnProceso }}
+          <span class="kpi-subtext">en formulación</span>
+        </div>
+        <div class="kpi-footer">
+          <span><strong>{{ kpis().ordenesPlanificadas }}</strong> planificadas</span>
+          <span><strong>{{ kpis().ordenesCompletadas }}</strong> completadas</span>
+        </div>
+      </a>
+
+      <!-- KPI 4: Semáforo FEFO -->
+      <a routerLink="/inventario/lotes" class="kpi-card kpi-secondary" title="Auditar lotes y caducidad FEFO">
+        <div class="kpi-header">
+          <span class="material-symbols-outlined kpi-icon">inventory</span>
+          <span class="kpi-badge">Semáforo FEFO</span>
+        </div>
+        <div class="kpi-value tabular-nums">{{ kpis().valorInventario | currency:'PEN':'S/ ':'1.2-2' }}</div>
+        <div class="kpi-footer">
+          <div class="fefo-chips-row">
+            <span class="badge badge-success" title=">60 días">🟢 {{ kpis().lotesOptimos }}</span>
+            <span class="badge badge-warning" title="30-60 días">🟡 {{ kpis().lotesPreventivos }}</span>
+            <span class="badge badge-danger" title="<30 días">🔴 {{ kpis().lotesCriticos }}</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- KPI 5: Compras / Pasivos -->
+      <a routerLink="/compras" class="kpi-card kpi-neutral" title="Ver compras y proveedores">
+        <div class="kpi-header">
+          <span class="material-symbols-outlined kpi-icon">shopping_bag</span>
+          <span class="kpi-badge">Compras / Pasivos</span>
+        </div>
+        <div class="kpi-value tabular-nums">{{ kpis().montoCompras | currency:'PEN':'S/ ':'1.2-2' }}</div>
+        <div class="kpi-footer">
+          <span>Deuda por liquidar: <strong class="text-danger tabular-nums">{{ kpis().cuentasPorPagar | currency:'PEN':'S/ ':'1.2-2' }}</strong></span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Grid Operativo de 2 Columnas (Estilo TailAdmin Bento Grid) -->
+  <section class="operations-grid">
+    <!-- Columna Izquierda: Pulso de Tesorería & Turno Activo (Sin repetir compras) -->
+    <div class="card operation-card">
+      <div class="operation-card-header">
+        <div class="card-title-group">
+          <div class="card-icon-bubble" style="background: var(--primary-light); color: var(--primary-dark);">
+            <span class="material-symbols-outlined">payments</span>
+          </div>
+          <div>
+            <h3>Pulso de Tesorería & Turno Activo</h3>
+            <p>Control de gaveta física, conciliación por métodos de pago y obligaciones</p>
+          </div>
+        </div>
+        @if (kpis().codigoSesionActiva) {
+          <span class="badge badge-success">
+            <span class="live-dot"></span> TURNO ABIERTO
+          </span>
+        } @else {
+          <span class="badge badge-warning">SIN TURNO ABIERTO</span>
+        }
+      </div>
+
+      <div class="operation-card-body">
+        <!-- Barra de Datos del Turno Activo -->
+        <div class="metric-highlight-box">
+          <div class="metric-highlight-item">
+            <span class="m-label">Turno Activo</span>
+            <span class="m-val">{{ kpis().codigoSesionActiva || 'SES-20261018-001' }}</span>
+          </div>
+          <div class="metric-highlight-item">
+            <span class="m-label">Cajero Responsable</span>
+            <span class="m-val text-truncate" [title]="kpis().cajeroActivo || auth.usuario()?.nombre || 'Cajero de Turno'">
+              {{ kpis().cajeroActivo || auth.usuario()?.nombre || 'Cajero de Turno' }}
+            </span>
+          </div>
+          <div class="metric-highlight-item">
+            <span class="m-label">Disponible en Gaveta</span>
+            <span class="m-val text-success tabular-nums" style="font-size: 1.35rem;">
+              {{ kpis().saldoCajaActiva | currency:'PEN':'S/ ':'1.2-2' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Desglose por Método de Pago (Conciliación Hoy) -->
+        <div class="payment-methods-box">
+          <div class="box-eyebrow">
+            <span class="material-symbols-outlined icon-inline text-muted" style="font-size: 0.95rem;">credit_score</span>
+            <span>Desglose por Método de Pago (Conciliación Hoy)</span>
+          </div>
+          <div class="payment-methods-grid">
+            <div class="pay-method-item">
+              <div class="pay-method-header">
+                <span class="pay-icon">💵</span>
+                <span class="pay-name">Efectivo Físico</span>
+              </div>
+              <strong class="pay-amount text-slate-800 tabular-nums">
+                {{ kpis().montoEfectivo | currency:'PEN':'S/ ':'1.2-2' }}
+              </strong>
+              <span class="pay-tag tag-cash">En Gaveta</span>
+            </div>
+
+            <div class="pay-method-item">
+              <div class="pay-method-header">
+                <span class="pay-icon">📱</span>
+                <span class="pay-name">Yape / Plin</span>
+              </div>
+              <strong class="pay-amount text-slate-800 tabular-nums">
+                {{ kpis().montoYapePlin | currency:'PEN':'S/ ':'1.2-2' }}
+              </strong>
+              <span class="pay-tag tag-digital">Digital QR</span>
+            </div>
+
+            <div class="pay-method-item">
+              <div class="pay-method-header">
+                <span class="pay-icon">🏦</span>
+                <span class="pay-name">Tarjetas / Transf.</span>
+              </div>
+              <strong class="pay-amount text-slate-800 tabular-nums">
+                {{ kpis().montoTransferenciaTarjeta | currency:'PEN':'S/ ':'1.2-2' }}
+              </strong>
+              <span class="pay-tag tag-bank">Bancos</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen de Obligaciones (Cuentas por Cobrar vs Cuentas por Pagar) -->
+        <div class="obligations-box">
+          <div class="box-eyebrow">
+            <span class="material-symbols-outlined icon-inline text-muted" style="font-size: 0.95rem;">account_balance</span>
+            <span>Balance de Obligaciones & Créditos</span>
+          </div>
+
+          <div class="obligations-rows">
+            <div class="obligation-row">
+              <div class="ob-info">
+                <span class="ob-dot dot-cobrar"></span>
+                <span class="ob-title">Cuentas por Cobrar (Créditos Clientes):</span>
+              </div>
+              <strong class="ob-amount text-success tabular-nums">
+                {{ kpis().cuentasPorCobrar | currency:'PEN':'S/ ':'1.2-2' }}
+              </strong>
+            </div>
+
+            <div class="obligation-row">
+              <div class="ob-info">
+                <span class="ob-dot dot-pagar"></span>
+                <span class="ob-title">Cuentas por Pagar a Proveedores:</span>
+              </div>
+              <strong class="ob-amount text-danger tabular-nums">
+                {{ kpis().cuentasPorPagar | currency:'PEN':'S/ ':'1.2-2' }}
+              </strong>
+            </div>
+          </div>
+
+          <div class="ob-coverage-bar">
+            <div
+              class="ob-bar-fill fill-cobrar"
+              [style.width.%]="kpis().cuentasPorCobrar + kpis().cuentasPorPagar > 0 ? (kpis().cuentasPorCobrar / (kpis().cuentasPorCobrar + kpis().cuentasPorPagar) * 100) : 60"
+              title="Cuentas por Cobrar"
+            ></div>
+            <div
+              class="ob-bar-fill fill-pagar"
+              [style.width.%]="kpis().cuentasPorCobrar + kpis().cuentasPorPagar > 0 ? (kpis().cuentasPorPagar / (kpis().cuentasPorCobrar + kpis().cuentasPorPagar) * 100) : 40"
+              title="Cuentas por Pagar"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="operation-card-footer">
+        <a routerLink="/caja" class="btn btn-glacier-soft btn-sm">
+          <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">account_balance</span>
+          Ir a Arqueo / Movimientos
         </a>
-        <a routerLink="/compras/proveedores/nuevo" class="btn btn-secondary btn-sm">
-          <span class="material-symbols-outlined icon-inline">person_add</span>
-          Alta Proveedor SUNAT
+        <a routerLink="/finanzas/sesiones" class="btn btn-secondary btn-sm">
+          <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">history</span>
+          Historial de Sesiones
         </a>
       </div>
     </div>
-  }
 
-  <!-- Modules Grid: The 4 modules of the team -->
-  <div class="section-header">
-    <h2>Módulos de Negocio Integrados (4 Integrantes)</h2>
-    <p>Cada miembro del equipo lidera un componente transaccional Full-Stack.</p>
-  </div>
+    <!-- Columna Derecha: Radar de Trazabilidad FEFO & Planta BOM -->
+    <div class="card operation-card">
+      <div class="operation-card-header">
+        <div class="card-title-group">
+          <div class="card-icon-bubble" style="background: var(--tertiary-light); color: var(--tertiary-dark);">
+            <span class="material-symbols-outlined">factory</span>
+          </div>
+          <div>
+            <h3>Radar de Trazabilidad FEFO & Planta BOM</h3>
+            <p>Monitoreo preventivo de vida útil y avance de formulaciones industriales</p>
+          </div>
+        </div>
+        <span class="badge badge-tertiary">FEFO HACCP</span>
+      </div>
 
-  <div class="modules-grid">
-    <!-- Módulo 1: Caja -->
-    <div class="module-card">
-      <div class="module-header">
-        <span class="material-symbols-outlined" style="font-size: 2.2rem; color: #059669;">point_of_sale</span>
-        <span class="badge badge-success">Módulo 1</span>
+      <div class="operation-card-body">
+        <!-- Resumen de Lotes con barra tricolor segmentada -->
+        <div class="fefo-health-box">
+          <div class="fefo-stat-row">
+            <div class="fefo-stat-item">
+              <span class="fefo-stat-num text-success tabular-nums">{{ kpis().lotesOptimos }}</span>
+              <span class="fefo-stat-desc">Óptimos (>60d)</span>
+            </div>
+            <div class="fefo-stat-item">
+              <span class="fefo-stat-num text-warning tabular-nums">{{ kpis().lotesPreventivos }}</span>
+              <span class="fefo-stat-desc">Alerta (30-60d)</span>
+            </div>
+            <div class="fefo-stat-item">
+              <span class="fefo-stat-num text-danger tabular-nums">{{ kpis().lotesCriticos }}</span>
+              <span class="fefo-stat-desc">Críticos (&lt;30d)</span>
+            </div>
+          </div>
+
+          <!-- Barra de Proporción Tricolor Segmentada -->
+          <div class="fefo-progress-bar">
+            <div
+              class="fefo-seg fefo-seg-success"
+              [style.width.%]="kpis().lotesOptimos + kpis().lotesPreventivos + kpis().lotesCriticos > 0 ? (kpis().lotesOptimos / (kpis().lotesOptimos + kpis().lotesPreventivos + kpis().lotesCriticos) * 100) : 100"
+              title="Lotes Óptimos"
+            ></div>
+            <div
+              class="fefo-seg fefo-seg-warning"
+              [style.width.%]="kpis().lotesOptimos + kpis().lotesPreventivos + kpis().lotesCriticos > 0 ? (kpis().lotesPreventivos / (kpis().lotesOptimos + kpis().lotesPreventivos + kpis().lotesCriticos) * 100) : 0"
+              title="Lotes en Alerta"
+            ></div>
+            <div
+              class="fefo-seg fefo-seg-danger"
+              [style.width.%]="kpis().lotesOptimos + kpis().lotesPreventivos + kpis().lotesCriticos > 0 ? (kpis().lotesCriticos / (kpis().lotesOptimos + kpis().lotesPreventivos + kpis().lotesCriticos) * 100) : 0"
+              title="Lotes Críticos"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Lista Rápida de Atención Prioritaria (FEFO & Planta) -->
+        <div class="fefo-priority-list-box">
+          <div class="box-eyebrow">
+            <span class="material-symbols-outlined icon-inline text-muted" style="font-size: 0.95rem;">assignment_late</span>
+            <span>Lista Rápida de Atención Prioritaria</span>
+          </div>
+
+          <div class="priority-rows">
+            <!-- Fila 1: Lotes Críticos -->
+            <div class="priority-row-item row-alert-danger">
+              <div class="priority-row-left">
+                <span class="priority-dot dot-red"></span>
+                <div>
+                  <span class="priority-title">Lotes Críticos (&le; 30 días):</span>
+                  <span class="priority-subtitle">Derivados con caducidad próxima</span>
+                </div>
+              </div>
+              <div class="priority-row-action">
+                <span class="priority-action-badge badge-red">Priorizar salida POS</span>
+              </div>
+            </div>
+
+            <!-- Fila 2: Lotes Preventivos -->
+            <div class="priority-row-item row-alert-warning">
+              <div class="priority-row-left">
+                <span class="priority-dot dot-amber"></span>
+                <div>
+                  <span class="priority-title">Lotes Preventivos (31 - 60 días):</span>
+                  <span class="priority-subtitle">Aceites prensados y pasta de cacao</span>
+                </div>
+              </div>
+              <div class="priority-row-action">
+                <span class="priority-action-badge badge-amber">Impulsar Delivery</span>
+              </div>
+            </div>
+
+            <!-- Fila 3: Órdenes de Planta BOM -->
+            <div class="priority-row-item row-alert-blue">
+              <div class="priority-row-left">
+                <span class="priority-dot dot-blue"></span>
+                <div>
+                  <span class="priority-title">Órdenes BOM en Proceso:</span>
+                  <span class="priority-subtitle">Lote Cacao 500g & Coco Virgen</span>
+                </div>
+              </div>
+              <div class="priority-row-action">
+                <span class="priority-action-badge badge-blue">85% Avance Planta</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <h3 class="module-name">Gestión Financiera de Caja</h3>
-      <p class="module-desc">
-        Apertura/cierre formal de turnos de caja chica, arqueo estricto BCRP (saldo teórico vs físico) y registro de movimientos de ingresos y egresos.
-      </p>
-      <div class="module-lead">
-        <strong>Líder:</strong> Brandon Andree Ccalla Colquehuanca
-      </div>
-      <div class="module-actions">
-        <a routerLink="/finanzas/sesiones" class="btn btn-primary btn-sm">Sesiones de Caja</a>
-        <a routerLink="/finanzas/rendiciones" class="btn btn-secondary btn-sm">Rendiciones</a>
-        <a routerLink="/finanzas/reportes" class="btn btn-secondary btn-sm">Reportes / Arqueo</a>
+
+      <div class="operation-card-footer">
+        <a routerLink="/inventario/lotes" class="btn btn-glacier-soft btn-sm">
+          <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">inventory_2</span>
+          Ver Lotes FEFO
+        </a>
+        <a routerLink="/produccion/nueva" class="btn btn-secondary btn-sm">
+          <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">add_circle</span>
+          Planificar Producción
+        </a>
       </div>
     </div>
+  </section>
 
-    <!-- Módulo 2: Ventas -->
-    <div class="module-card">
-      <div class="module-header">
-        <span class="material-symbols-outlined" style="font-size: 2.2rem; color: #0284c7;">shopping_cart_checkout</span>
-        <span class="badge badge-info">Módulo 2</span>
+  <!-- 3RA FILA INFERIOR: 3 WIDGETS OPERATIVOS COMPACTOS (BENTO GRID 3 COLUMNAS) -->
+  <section class="bottom-widgets-section">
+    <div class="bottom-widgets-grid">
+      <!-- Widget 1: Canales de Venta Omnicanal -->
+      <div class="widget-card">
+        <div class="widget-card-header">
+          <div class="widget-title-group">
+            <div class="widget-icon-box box-sky">
+              <span class="material-symbols-outlined text-sky-600">storefront</span>
+            </div>
+            <div>
+              <h4 class="widget-title">Canales de Venta Omnicanal</h4>
+              <p class="widget-subtitle">Participación y volumen transaccionado</p>
+            </div>
+          </div>
+          <span class="widget-pill pill-sky">Facturación Hoy</span>
+        </div>
+
+        <div class="widget-card-body">
+          <div class="omnicanal-mini-list">
+            <div class="omni-item">
+              <div class="omni-item-top">
+                <span class="omni-name">🏪 Tienda Física (Mostrador)</span>
+                <span class="omni-pct font-bold">55%</span>
+              </div>
+              <div class="omni-bar-bg">
+                <div class="omni-bar-fill fill-sky" style="width: 55%;"></div>
+              </div>
+              <span class="omni-amount tabular-nums">{{ kpis().ventasTiendaFisica | currency:'PEN':'S/ ':'1.2-2' }}</span>
+            </div>
+
+            <div class="omni-item">
+              <div class="omni-item-top">
+                <span class="omni-name">🎪 Ferias / Eventos Comerciales</span>
+                <span class="omni-pct font-bold">30%</span>
+              </div>
+              <div class="omni-bar-bg">
+                <div class="omni-bar-fill fill-steel" style="width: 30%;"></div>
+              </div>
+              <span class="omni-amount tabular-nums">{{ kpis().ventasFerias | currency:'PEN':'S/ ':'1.2-2' }}</span>
+            </div>
+
+            <div class="omni-item">
+              <div class="omni-item-top">
+                <span class="omni-name">🛵 Envíos / Pedidos Delivery</span>
+                <span class="omni-pct font-bold">15%</span>
+              </div>
+              <div class="omni-bar-bg">
+                <div class="omni-bar-fill fill-lavender" style="width: 15%;"></div>
+              </div>
+              <span class="omni-amount tabular-nums">{{ kpis().ventasDelivery | currency:'PEN':'S/ ':'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget-card-footer">
+          <a routerLink="/ventas/reporte" class="widget-link">
+            Ver Reporte de Ventas &rarr;
+          </a>
+        </div>
       </div>
-      <h3 class="module-name">Ventas y Tickets POS</h3>
-      <p class="module-desc">
-        Transacciones comerciales en mostrador, integración DNI con RENIEC vía APIsPERU, emisión de tickets 80mm ESC/POS y reposición atómica de inventario.
-      </p>
-      <div class="module-lead">
-        <strong>Líder:</strong> Zaggy Leonardo Morales Auquipata
+
+      <!-- Widget 2: Logística & Despachos Delivery -->
+      <div class="widget-card">
+        <div class="widget-card-header">
+          <div class="widget-title-group">
+            <div class="widget-icon-box box-steel">
+              <span class="material-symbols-outlined text-slate-700">local_shipping</span>
+            </div>
+            <div>
+              <h4 class="widget-title">Logística & Despachos Delivery</h4>
+              <p class="widget-subtitle">Monitoreo de entregas y repartos urbanos</p>
+            </div>
+          </div>
+          <span class="widget-pill pill-steel">Monitoreo GPS</span>
+        </div>
+
+        <div class="widget-card-body">
+          <div class="delivery-metrics-grid">
+            <div class="delivery-metric-box">
+              <span class="del-lbl">En Tránsito / Ruta:</span>
+              <div class="del-num-row">
+                <strong class="del-num text-primary tabular-nums">{{ kpis().pedidosEnRuta }}</strong>
+                <span class="badge badge-success text-xs">En Ruta</span>
+              </div>
+              <span class="del-sub">Unidades activas</span>
+            </div>
+
+            <div class="delivery-metric-box">
+              <span class="del-lbl">Entregados Hoy:</span>
+              <div class="del-num-row">
+                <strong class="del-num text-success tabular-nums">{{ kpis().pedidosEntregadosHoy }}</strong>
+                <span class="badge badge-secondary text-xs">Liquidados</span>
+              </div>
+              <span class="del-sub">Sin incidencias</span>
+            </div>
+          </div>
+
+          <div class="delivery-route-preview">
+            <span class="material-symbols-outlined icon-inline text-sky-600" style="font-size: 1rem;">pin_drop</span>
+            <span class="text-xs text-muted">Radio de Cobertura: <strong>Lima Metropolitana & Callao</strong> con flete inteligente.</span>
+          </div>
+        </div>
+
+        <div class="widget-card-footer">
+          <a routerLink="/ventas/delivery" class="widget-link">
+            Ver Mapa en Vivo &rarr;
+          </a>
+        </div>
       </div>
-      <div class="module-actions">
-        <a routerLink="/ventas/reporte" class="btn btn-primary btn-sm">Historial Ventas</a>
-        <a routerLink="/ventas/nueva" class="btn btn-secondary btn-sm">Nueva Venta POS</a>
-        <a routerLink="/ventas/delivery" class="btn btn-secondary btn-sm">Delivery GPS</a>
+
+      <!-- Widget 3: Abastecimiento & Stock Crítico -->
+      <div class="widget-card">
+        <div class="widget-card-header">
+          <div class="widget-title-group">
+            <div class="widget-icon-box box-lavender">
+              <span class="material-symbols-outlined text-purple-600">inventory_2</span>
+            </div>
+            <div>
+              <h4 class="widget-title">Abastecimiento & Stock Crítico</h4>
+              <p class="widget-subtitle">Insumos de planta y materias primas</p>
+            </div>
+          </div>
+          <span class="widget-pill pill-lavender">Insumos Planta</span>
+        </div>
+
+        <div class="widget-card-body">
+          <div class="stock-items-list">
+            <div class="stock-item-row">
+              <div class="stock-item-info">
+                <span class="stock-icon">🍫</span>
+                <span class="stock-name">Granos Cacao Criollo</span>
+              </div>
+              <span class="stock-status status-optimo">1,200 kg (Óptimo)</span>
+            </div>
+
+            <div class="stock-item-row">
+              <div class="stock-item-info">
+                <span class="stock-icon">🥥</span>
+                <span class="stock-name">Copra de Coco Fresco</span>
+              </div>
+              <span class="stock-status status-alerta">350 kg (Alerta)</span>
+            </div>
+
+            <div class="stock-item-row">
+              <div class="stock-item-info">
+                <span class="stock-icon">🫙</span>
+                <span class="stock-name">Frascos Vidrio 250ml</span>
+              </div>
+              <span class="stock-status status-critico">85 unid. (Reorden)</span>
+            </div>
+          </div>
+
+          <div class="provider-debt-summary">
+            <span class="text-xs text-muted">Pasivos con Proveedores:</span>
+            <strong class="text-danger text-sm tabular-nums">{{ kpis().cuentasPorPagar | currency:'PEN':'S/ ':'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="widget-card-footer">
+          <a routerLink="/compras" class="widget-link">
+            Control de Stock & Compras &rarr;
+          </a>
+        </div>
       </div>
     </div>
-
-    <!-- Módulo 3: Producción -->
-    <div class="module-card">
-      <div class="module-header">
-        <span class="material-symbols-outlined" style="font-size: 2.2rem; color: #ea580c;">precision_manufacturing</span>
-        <span class="badge badge-warning">Módulo 3</span>
-      </div>
-      <h3 class="module-name">Producción y Envasado BOM</h3>
-      <p class="module-desc">
-        Planificación en planta para derivados de cacao y aceite de coco, deducción de insumos por receta (BOM) y generación de lotes con criterio FEFO.
-      </p>
-      <div class="module-lead">
-        <strong>Líder:</strong> Isaí Armuto Uñapilco
-      </div>
-      <div class="module-actions">
-        <a routerLink="/produccion" class="btn btn-primary btn-sm">Órdenes Planta</a>
-        <a routerLink="/produccion/nueva" class="btn btn-secondary btn-sm">Nueva Orden</a>
-        <a routerLink="/catalogo/productos" class="btn btn-secondary btn-sm">Productos S08</a>
-      </div>
-    </div>
-
-    <!-- Módulo 4: Compras -->
-    <div class="module-card">
-      <div class="module-header">
-        <span class="material-symbols-outlined" style="font-size: 2.2rem; color: #059669;">inventory_2</span>
-        <span class="badge badge-success">Módulo 4</span>
-      </div>
-      <h3 class="module-name">Compras & Proveedores</h3>
-      <p class="module-desc">
-        Adquisición de materias primas (cacao, copra de coco) y material de empaque, amortización con validación de solvencia y consulta RUC SUNAT.
-      </p>
-      <div class="module-lead">
-        <strong>Líder:</strong> Elisban Huaylla Nestor
-      </div>
-      <div class="module-actions">
-        <a routerLink="/compras/proveedores" class="btn btn-primary btn-sm">Proveedores</a>
-        <a routerLink="/compras" class="btn btn-secondary btn-sm">Compras</a>
-        <a routerLink="/compras/nueva" class="btn btn-secondary btn-sm">Nueva Factura</a>
-      </div>
-    </div>
-  </div>
+  </section>
 </div>

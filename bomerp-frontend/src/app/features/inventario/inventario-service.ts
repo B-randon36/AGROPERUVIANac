@@ -53,7 +53,7 @@ export class InventarioService {
     return this.http.post<void>(this.api.buildUrl('/api/v1/inventario/evaluar-vencimientos'), {});
   }
 
-  // --- Almacenes Físicos (Isaí Armuto) ---
+  // --- Almacenes Físicos ---
   listarAlmacenes(): Observable<Almacen[]> {
     return this.http.get<Almacen[]>(this.api.buildUrl('/api/v1/inventario/almacenes'));
   }
@@ -74,7 +74,7 @@ export class InventarioService {
     return this.http.delete<void>(this.api.buildUrl(`/api/v1/inventario/almacenes/${id}`));
   }
 
-  // --- Stock Crítico (Isaí Armuto) ---
+  // --- Stock Crítico ---
   obtenerStockCritico(stockMinimo = 100, soloAlertas = false): Observable<StockCritico[]> {
     const params = new HttpParams()
       .set('stockMinimo', stockMinimo)

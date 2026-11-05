@@ -37,7 +37,7 @@ export class CajaDashboard implements OnInit {
   });
 
   protected readonly formApertura = this.fb.nonNullable.group({
-    cajeroNombre: ['Brandon Ccalla', [Validators.required]],
+    cajeroNombre: ['Cajero de Turno', [Validators.required]],
     montoApertura: [500, [Validators.required, Validators.min(0)]],
     observaciones: ['Apertura de turno de caja diaria'],
   });

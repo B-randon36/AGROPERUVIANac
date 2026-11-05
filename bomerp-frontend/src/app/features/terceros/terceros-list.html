@@ -1,11 +1,16 @@
 <div class="terceros-container">
   <div class="header-action">
     <div>
-      <h2><span class="material-symbols-outlined icon-inline">group</span> Directorio de Clientes y Proveedores</h2>
-      <p class="subtitle">Gestión centralizada de terceros comerciales, RUC/DNI y contactos</p>
+      <div class="badge-module">
+        <span class="material-symbols-outlined icon-mini">groups</span>
+        DIRECTORIO COMERCIAL
+      </div>
+      <h2>Directorio de Clientes y Proveedores</h2>
+      <p class="subtitle">Gestión centralizada de terceros comerciales, RUC/DNI, contactos y direcciones</p>
     </div>
     <a routerLink="/terceros/nuevo" class="btn btn-primary">
-      + Registrar Tercero
+      <span class="material-symbols-outlined icon-inline">person_add</span>
+      Registrar Tercero
     </a>
   </div>
 
@@ -17,6 +22,7 @@
         [class.active]="filtroTipo() === 'TODOS'"
         (click)="cambiarFiltro('TODOS')"
       >
+        <span class="material-symbols-outlined icon-tab">view_list</span>
         Todos
       </button>
       <button
@@ -25,7 +31,8 @@
         [class.active]="filtroTipo() === 'PROVEEDOR'"
         (click)="cambiarFiltro('PROVEEDOR')"
       >
-        <span class="material-symbols-outlined icon-inline">business</span> Proveedores
+        <span class="material-symbols-outlined icon-tab">business</span>
+        Proveedores
       </button>
       <button
         type="button"
@@ -33,23 +40,28 @@
         [class.active]="filtroTipo() === 'CLIENTE'"
         (click)="cambiarFiltro('CLIENTE')"
       >
-        <span class="material-symbols-outlined icon-inline">person</span> Clientes
+        <span class="material-symbols-outlined icon-tab">person</span>
+        Clientes
       </button>
     </div>
 
     <div class="search-box">
+      <span class="material-symbols-outlined search-icon">search</span>
       <input
         type="text"
         [ngModel]="terminoBusqueda()"
         (ngModelChange)="terminoBusqueda.set($event)"
-        placeholder="Buscar por Razón Social, RUC o dirección..."
+        placeholder="Buscar por razón social, RUC o dirección..."
         class="search-input"
       />
     </div>
   </div>
 
   @if (error()) {
-    <div class="alert alert-danger">{{ error() }}</div>
+    <div class="alert alert-danger">
+      <span class="material-symbols-outlined alert-icon">error</span>
+      <div>{{ error() }}</div>
+    </div>
   }
 
   @if (cargando()) {
@@ -59,43 +71,83 @@
     </div>
   } @else {
     <div class="card table-card">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Documento</th>
-            <th>Razón Social / Nombre</th>
-            <th>Tipo</th>
-            <th>Teléfono</th>
-            <th>Dirección</th>
-            <th>Correo</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (ter of tercerosFiltrados; track ter.id) {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
             <tr>
-              <td>
-                <span class="doc-badge">{{ ter.tipoDocumento }}: {{ ter.numeroDocumento }}</span>
-              </td>
-              <td><strong>{{ ter.razonSocial }}</strong></td>
-              <td>
-                <span
-                  class="type-badge"
-                  [ngClass]="'badge-' + ter.tipoTercero.toLowerCase()"
-                >
-                  {{ ter.tipoTercero }}
-                </span>
-              </td>
-              <td>{{ ter.telefono || '-' }}</td>
-              <td>{{ ter.direccion || '-' }}</td>
-              <td>{{ ter.correo || '-' }}</td>
+              <th>Documento</th>
+              <th>Razón Social / Nombre</th>
+              <th>Clasificación</th>
+              <th>Teléfono</th>
+              <th>Dirección Fiscal / Entrega</th>
+              <th>Correo</th>
+              <th class="text-right">Acciones</th>
             </tr>
-          } @empty {
-            <tr>
-              <td colspan="6" class="empty-row">No se encontraron terceros registrados con ese criterio.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (ter of tercerosFiltrados; track ter.id) {
+              <tr>
+                <td>
+                  <span class="doc-badge">{{ ter.tipoDocumento }}: {{ ter.numeroDocumento }}</span>
+                </td>
+                <td>
+                  <div class="company-name-cell">
+                    <span class="name-bold">{{ ter.razonSocial }}</span>
+                    @if (ter.activo === false) {
+                      <span class="inactive-tag">Inactivo</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <span
+                    class="type-badge"
+                    [ngClass]="'badge-' + ter.tipoTercero.toLowerCase()"
+                  >
+                    {{ ter.tipoTercero }}
+                  </span>
+                </td>
+                <td>
+                  @if (ter.telefono) {
+                    <span class="contact-text">{{ ter.telefono }}</span>
+                  } @else {
+                    <span class="text-muted">-</span>
+                  }
+                </td>
+                <td>
+                  @if (ter.direccion) {
+                    <span class="address-text" [title]="ter.direccion">{{ ter.direccion }}</span>
+                  } @else {
+                    <span class="text-muted">-</span>
+                  }
+                </td>
+                <td>
+                  @if (ter.correo) {
+                    <a [href]="'mailto:' + ter.correo" class="email-link">{{ ter.correo }}</a>
+                  } @else {
+                    <span class="text-muted">-</span>
+                  }
+                </td>
+                <td class="text-right actions-col">
+                  <a [routerLink]="['/terceros', ter.id, 'editar']" class="btn-table-action" title="Editar tercero">
+                    <span class="material-symbols-outlined icon-table">edit</span>
+                    <span>Editar</span>
+                  </a>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="empty-row">
+                  <div class="empty-state">
+                    <span class="material-symbols-outlined empty-icon">folder_off</span>
+                    <p class="empty-title">No se encontraron registros de clientes o proveedores</p>
+                    <p class="empty-sub">Intenta con otro término de búsqueda o registra un nuevo tercero comercial.</p>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   }
 </div>

@@ -65,7 +65,7 @@ export interface MovimientoKardex {
   fechaHora: string;
 }
 
-// Modelos para Almacenes Físicos (Isaí Armuto)
+// Modelos para Almacenes Físicos
 export interface Almacen {
   id: number;
   codigo: string;
@@ -92,7 +92,7 @@ export interface AlmacenRequest {
   activo?: boolean;
 }
 
-// Reporte de Stock Crítico (Isaí Armuto)
+// Reporte de Stock Crítico
 export interface StockCritico {
   productoId: number;
   nombreProducto: string;

@@ -129,22 +129,22 @@
       <div class="kpi-grid">
         <div class="kpi-card">
           <span class="kpi-title">Saldo Inicial</span>
-          <span class="kpi-num">{{ s.saldoInicial | currency:'PEN':'symbol':'1.2-2' }}</span>
+          <span class="kpi-num">{{ s.saldoInicial | currency:'PEN':'S/ ':'1.2-2' }}</span>
           <span class="kpi-sub">Fondo de apertura</span>
         </div>
         <div class="kpi-card">
           <span class="kpi-title">(+) Ingresos Efectivo</span>
-          <span class="kpi-num text-success">+{{ s.totalIngresosEfectivo | currency:'PEN':'symbol':'1.2-2' }}</span>
+          <span class="kpi-num text-success">+{{ s.totalIngresosEfectivo | currency:'PEN':'S/ ':'1.2-2' }}</span>
           <span class="kpi-sub">Cobros en mostrador</span>
         </div>
         <div class="kpi-card">
           <span class="kpi-title">(-) Egresos Efectivo</span>
-          <span class="kpi-num text-danger">-{{ s.totalEgresosEfectivo | currency:'PEN':'symbol':'1.2-2' }}</span>
+          <span class="kpi-num text-danger">-{{ s.totalEgresosEfectivo | currency:'PEN':'S/ ':'1.2-2' }}</span>
           <span class="kpi-sub">Gastos y retiros</span>
         </div>
         <div class="kpi-card highlight-card">
           <span class="kpi-title">Saldo Esperado en Gaveta</span>
-          <span class="kpi-num kpi-primary">{{ s.saldoEsperadoEfectivo | currency:'PEN':'symbol':'1.2-2' }}</span>
+          <span class="kpi-num kpi-primary">{{ s.saldoEsperadoEfectivo | currency:'PEN':'S/ ':'1.2-2' }}</span>
           <span class="kpi-sub">Monto físico a justificar</span>
         </div>
       </div>
@@ -251,7 +251,7 @@
                         <div class="text-muted text-xs">{{ m.descripcion }} {{ m.referenciaExterna ? '(' + m.referenciaExterna + ')' : '' }}</div>
                       </td>
                       <td class="text-right font-bold" [class.text-success]="m.tipo === 'INGRESO'" [class.text-danger]="m.tipo === 'EGRESO'">
-                        {{ m.tipo === 'INGRESO' ? '+' : '-' }}{{ m.monto | currency:'PEN':'symbol':'1.2-2' }}
+                        {{ m.tipo === 'INGRESO' ? '+' : '-' }}{{ m.monto | currency:'PEN':'S/ ':'1.2-2' }}
                       </td>
                     </tr>
                   } @empty {

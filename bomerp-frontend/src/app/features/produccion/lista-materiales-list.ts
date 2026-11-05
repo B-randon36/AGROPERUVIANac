@@ -14,7 +14,7 @@ import { Producto } from '../catalogo/producto/producto.model';
     <div class="feature-container">
       <div class="page-header">
         <div>
-          <div class="badge badge-warning">MÓDULO 3 · PRODUCCIÓN Y RECETAS BOM</div>
+          <div class="badge badge-warning">PRODUCCIÓN & RECETAS BOM</div>
           <h1>Recetas Maestras Bill of Materials (BOM)</h1>
           <p class="subtitle">Estructura persistente de materiales, mermas y componentes estándar por producto terminado</p>
         </div>
