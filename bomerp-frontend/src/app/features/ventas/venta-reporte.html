@@ -98,35 +98,70 @@
   <!-- Tarjetas de Agregados -->
   @if (!loading() && !error()) {
     <div class="metricas-grid">
+      <!-- 1. Total de Ventas (Con indicador de anuladas al lado) -->
       <div class="card metrica-card">
         <div class="metrica-header">
-          <span class="material-symbols-outlined metrica-icono">receipt_long</span>
+          <span class="material-symbols-outlined metrica-icono text-primary">receipt_long</span>
           <span class="metrica-titulo">Total de Ventas</span>
+          @if (totalAnuladas() > 0) {
+            <span class="badge badge-danger badge-sm" title="Ventas anuladas">{{ totalAnuladas() }} anulada(s)</span>
+          }
         </div>
-        <div class="metrica-valor">{{ totalVentas() }}</div>
-        <div class="metrica-pie">Transacciones encontradas</div>
+        <div class="metrica-valor-group">
+          <div class="metrica-valor">{{ totalVentas() }}</div>
+          <div class="metrica-subvalor">
+            <span class="badge badge-subtle-success">{{ ventasEfectivas() }} efectivas</span>
+          </div>
+        </div>
+        <div class="metrica-pie">Transacciones globales registradas</div>
       </div>
 
+      <!-- 2. Ventas Anuladas (Tarjeta contigua específica) -->
+      <div class="card metrica-card card-anuladas" [class.has-anuladas]="totalAnuladas() > 0">
+        <div class="metrica-header">
+          <span class="material-symbols-outlined metrica-icono text-danger">cancel</span>
+          <span class="metrica-titulo">Ventas Anuladas</span>
+        </div>
+        <div class="metrica-valor text-danger">{{ totalAnuladas() }}</div>
+        <div class="metrica-pie">
+          @if (montoAnulado() > 0) {
+            Extorno: {{ montoAnulado() | currency: 'PEN' : 'S/ ' }}
+          } @else {
+            Sin extornos registrados
+          }
+        </div>
+      </div>
+
+      <!-- 3. Monto Total Facturado (Descontando ventas anuladas) -->
       <div class="card metrica-card highlight">
         <div class="metrica-header">
-          <span class="material-symbols-outlined metrica-icono">payments</span>
+          <span class="material-symbols-outlined metrica-icono text-success">payments</span>
           <span class="metrica-titulo">Monto Total Facturado</span>
         </div>
         <div class="metrica-valor text-success">
           {{ montoTotal() | currency: 'PEN' : 'S/ ' }}
         </div>
-        <div class="metrica-pie">Recaudación acumulada</div>
+        <div class="metrica-pie">
+          @if (totalAnuladas() > 0) {
+            <span class="pie-descuento">
+              <span class="material-symbols-outlined icon-mini">info</span> Descontando {{ totalAnuladas() }} venta(s) anulada(s)
+            </span>
+          } @else {
+            Recaudación neta acumulada
+          }
+        </div>
       </div>
 
+      <!-- 4. Ticket Promedio -->
       <div class="card metrica-card">
         <div class="metrica-header">
-          <span class="material-symbols-outlined metrica-icono">trending_up</span>
+          <span class="material-symbols-outlined metrica-icono text-info">trending_up</span>
           <span class="metrica-titulo">Ticket Promedio</span>
         </div>
         <div class="metrica-valor">
           {{ ticketPromedio() | currency: 'PEN' : 'S/ ' }}
         </div>
-        <div class="metrica-pie">Por orden de venta</div>
+        <div class="metrica-pie">Por orden efectiva confirmada</div>
       </div>
     </div>
 

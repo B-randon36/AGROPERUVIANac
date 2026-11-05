@@ -21,14 +21,19 @@ export class VentaReporteComponent implements OnInit {
   // Agregados reales calculados en el servidor (SQL SUM/COUNT en BD Oracle/H2)
   protected readonly agregado = signal<VentaAgregado>({
     totalVentas: 0,
+    totalAnuladas: 0,
     montoTotal: 0,
+    montoAnulado: 0,
     ticketPromedio: 0,
   });
 
   // Totales provenientes directamente del servidor (S14: separación de responsabilidades)
   protected readonly totalVentas = computed(() => this.agregado().totalVentas ?? 0);
+  protected readonly totalAnuladas = computed(() => this.agregado().totalAnuladas ?? 0);
   protected readonly montoTotal = computed(() => this.agregado().montoTotal ?? 0);
+  protected readonly montoAnulado = computed(() => this.agregado().montoAnulado ?? 0);
   protected readonly ticketPromedio = computed(() => this.agregado().ticketPromedio ?? 0);
+  protected readonly ventasEfectivas = computed(() => Math.max(0, this.totalVentas() - this.totalAnuladas()));
 
   // Filtros
   protected readonly estadoFiltro = signal('');
@@ -65,7 +70,9 @@ export class VentaReporteComponent implements OnInit {
           } else {
             this.agregado.set({
               totalVentas: rep.totalVentas ?? 0,
+              totalAnuladas: rep.totalAnuladas ?? 0,
               montoTotal: rep.montoTotal ?? rep.totalRecaudado ?? 0,
+              montoAnulado: rep.montoAnulado ?? 0,
               ticketPromedio: rep.ticketPromedio ?? 0,
             });
           }

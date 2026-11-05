@@ -51,7 +51,9 @@ export interface VentaResumen {
 
 export interface VentaAgregado {
   totalVentas: number;
+  totalAnuladas?: number;
   montoTotal: number;
+  montoAnulado?: number;
   ticketPromedio: number;
 }
 
@@ -68,8 +70,10 @@ export interface PageResponse<T> {
 
 export interface VentaReporte {
   totalVentas?: number;
+  totalAnuladas?: number;
   totalRecaudado?: number;
   montoTotal?: number;
+  montoAnulado?: number;
   ticketPromedio?: number;
   agregado?: VentaAgregado;
   ventas?: VentaResumen[];

@@ -10,11 +10,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pe.edu.upeu.bomerp.compras.dto.*;
 import pe.edu.upeu.bomerp.compras.entity.Compra;
 import pe.edu.upeu.bomerp.compras.entity.EstadoCompra;
+import pe.edu.upeu.bomerp.compras.entity.PagoCompra;
 import pe.edu.upeu.bomerp.compras.entity.Proveedor;
 import pe.edu.upeu.bomerp.compras.repository.CompraRepository;
+import pe.edu.upeu.bomerp.compras.repository.InsumoRepository;
+import pe.edu.upeu.bomerp.compras.repository.PagoCompraRepository;
 import pe.edu.upeu.bomerp.compras.repository.ProveedorRepository;
 import pe.edu.upeu.bomerp.compras.service.CompraServiceImpl;
 import pe.edu.upeu.bomerp.exception.BusinessConflictException;
+import pe.edu.upeu.bomerp.finanzas.api.FinanzasApi;
+import pe.edu.upeu.bomerp.inventario.service.InventarioService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,6 +39,18 @@ class CompraServiceTest {
 
     @Mock
     private ProveedorRepository proveedorRepository;
+
+    @Mock
+    private PagoCompraRepository pagoCompraRepository;
+
+    @Mock
+    private InsumoRepository insumoRepository;
+
+    @Mock
+    private InventarioService inventarioService;
+
+    @Mock
+    private FinanzasApi finanzasApi;
 
     @InjectMocks
     private CompraServiceImpl compraService;
@@ -102,8 +119,10 @@ class CompraServiceTest {
         CompraResponse resp = compraService.registrarCompra(req);
 
         assertNotNull(resp);
-        assertEquals(new BigDecimal("1000.00"), resp.getTotal());
-        assertEquals(new BigDecimal("1000.00"), resp.getSaldoPendiente());
+        assertEquals(new BigDecimal("1180.00"), resp.getTotal());
+        assertEquals(new BigDecimal("1180.00"), resp.getSaldoPendiente());
+        assertEquals(new BigDecimal("1000.00"), resp.getSubtotal());
+        assertEquals(new BigDecimal("180.00"), resp.getIgv());
         assertEquals(EstadoCompra.REGISTRADA, resp.getEstado());
         verify(compraRepository, times(1)).save(any(Compra.class));
     }
@@ -116,6 +135,7 @@ class CompraServiceTest {
 
         when(compraRepository.findById(10L)).thenReturn(Optional.of(compraRegistrada));
         when(compraRepository.save(any(Compra.class))).thenAnswer(i -> i.getArgument(0));
+        when(pagoCompraRepository.save(any(PagoCompra.class))).thenAnswer(i -> i.getArgument(0));
 
         CompraResponse resp = compraService.amortizarPago(10L, amortizacion);
 
@@ -123,6 +143,7 @@ class CompraServiceTest {
         assertEquals(new BigDecimal("0.00"), resp.getSaldoPendiente());
         assertEquals(EstadoCompra.PAGADA, resp.getEstado());
         verify(compraRepository, times(1)).save(compraRegistrada);
+        verify(pagoCompraRepository, times(1)).save(any(PagoCompra.class));
     }
 
     @Test

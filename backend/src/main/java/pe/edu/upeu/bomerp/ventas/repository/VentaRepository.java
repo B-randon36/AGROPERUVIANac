@@ -65,7 +65,11 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
 
     @Query("""
         SELECT new pe.edu.upeu.bomerp.ventas.dto.VentaAgregado(
-            COUNT(v), COALESCE(SUM(v.total), 0BD))
+            COUNT(v),
+            COALESCE(SUM(CASE WHEN v.estado = pe.edu.upeu.bomerp.ventas.entity.EstadoVenta.REGISTRADA THEN v.total ELSE 0BD END), 0BD),
+            COUNT(CASE WHEN v.estado = pe.edu.upeu.bomerp.ventas.entity.EstadoVenta.ANULADA THEN 1 END),
+            COALESCE(SUM(CASE WHEN v.estado = pe.edu.upeu.bomerp.ventas.entity.EstadoVenta.ANULADA THEN v.total ELSE 0BD END), 0BD)
+        )
         FROM Venta v
         WHERE (:estado IS NULL OR v.estado = :estado)
           AND (:desde IS NULL OR v.fecha >= :desde)

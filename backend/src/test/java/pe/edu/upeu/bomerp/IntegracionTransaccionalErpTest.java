@@ -184,7 +184,7 @@ class IntegracionTransaccionalErpTest {
 
         // 3. Pagar por TRANSFERENCIA bancaria liquida la deuda sin exceder efectivo físico de gaveta
         CompraResponse pagada = compraService.amortizarPago(compra.getId(), new AmortizarPagoRequest(
-                new BigDecimal("2000.00"),
+                compra.getSaldoPendiente(),
                 "TRANSFERENCIA",
                 "OP-BCP-778899"
         ));

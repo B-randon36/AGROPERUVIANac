@@ -293,4 +293,25 @@ class VentaServiceTest {
         assertNotNull(response);
         assertEquals(403L, response.getId());
     }
+
+    @Test
+    @DisplayName("Reporte: Debe calcular métricas reflejando ventas anuladas y monto neto descontado")
+    void reporte_debeRetornarMetricasConAnuladasYMontoNeto() {
+        pe.edu.upeu.bomerp.ventas.dto.VentaAgregado mockAgregado =
+                new pe.edu.upeu.bomerp.ventas.dto.VentaAgregado(10L, new BigDecimal("1600.00"), 2L, new BigDecimal("400.00"));
+
+        when(ventaRepository.agregados(isNull(), isNull(), isNull())).thenReturn(mockAgregado);
+        when(ventaRepository.buscarResumen(isNull(), isNull(), isNull(), any())).thenReturn(List.of());
+
+        pe.edu.upeu.bomerp.ventas.dto.VentaReporte reporte = ventaService.reporte(null, null, null);
+
+        assertNotNull(reporte);
+        assertNotNull(reporte.getAgregado());
+        assertEquals(10L, reporte.getAgregado().getTotalVentas());
+        assertEquals(2L, reporte.getAgregado().getTotalAnuladas());
+        assertEquals(new BigDecimal("1600.00"), reporte.getAgregado().getMontoTotal());
+        assertEquals(new BigDecimal("400.00"), reporte.getAgregado().getMontoAnulado());
+        // 1600 / 8 ventas efectivas = 200.00 de ticket promedio
+        assertEquals(new BigDecimal("200.00"), reporte.getAgregado().getTicketPromedio());
+    }
 }

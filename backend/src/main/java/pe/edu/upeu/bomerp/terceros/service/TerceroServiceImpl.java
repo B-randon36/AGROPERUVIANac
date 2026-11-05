@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pe.edu.upeu.bomerp.compras.entity.Proveedor;
-import pe.edu.upeu.bomerp.compras.repository.ProveedorRepository;
+import pe.edu.upeu.bomerp.compras.dto.ProveedorRequest;
+import pe.edu.upeu.bomerp.compras.service.CompraService;
 import pe.edu.upeu.bomerp.exception.BusinessConflictException;
 import pe.edu.upeu.bomerp.exception.ResourceNotFoundException;
 import pe.edu.upeu.bomerp.terceros.dto.TerceroRequest;
@@ -22,7 +22,7 @@ import java.util.List;
 public class TerceroServiceImpl implements TerceroService {
 
     private final TerceroRepository terceroRepository;
-    private final ProveedorRepository proveedorRepository;
+    private final CompraService compraService;
 
     @Override
     @Transactional(readOnly = true)
@@ -116,19 +116,17 @@ public class TerceroServiceImpl implements TerceroService {
     }
 
     private void syncProveedor(Tercero t) {
-        if (proveedorRepository != null) {
+        if (compraService != null && t.getNumeroDocumento() != null && t.getNumeroDocumento().trim().length() == 11) {
             try {
-                if (proveedorRepository.findByRuc(t.getNumeroDocumento()).isEmpty()) {
-                    Proveedor p = Proveedor.builder()
-                            .ruc(t.getNumeroDocumento())
-                            .razonSocial(t.getRazonSocial())
-                            .telefono(t.getTelefono())
-                            .email(t.getCorreo())
-                            .direccion(t.getDireccion())
-                            .build();
-                    proveedorRepository.save(p);
-                    log.info("Sincronizado proveedor {} en compras desde CRM Terceros.", t.getRazonSocial());
-                }
+                ProveedorRequest p = ProveedorRequest.builder()
+                        .ruc(t.getNumeroDocumento().trim())
+                        .razonSocial(t.getRazonSocial())
+                        .telefono(t.getTelefono())
+                        .email(t.getCorreo())
+                        .direccion(t.getDireccion())
+                        .build();
+                compraService.crearProveedor(p);
+                log.info("Sincronizado proveedor {} en compras desde CRM Terceros.", t.getRazonSocial());
             } catch (Exception e) {
                 log.warn("No se pudo sincronizar proveedor en compras: {}", e.getMessage());
             }
