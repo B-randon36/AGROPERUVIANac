@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import pe.edu.upeu.bomerp.ventas.dto.ReporteOmnicanalResponse;
 import pe.edu.upeu.bomerp.ventas.dto.VentaReporte;
 import pe.edu.upeu.bomerp.ventas.dto.VentaRequest;
 import pe.edu.upeu.bomerp.ventas.dto.VentaResponse;
@@ -74,6 +75,12 @@ public class VentaController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta) {
         return ResponseEntity.ok(ventaService.reporte(estado, desde, hasta));
+    }
+
+    @Operation(summary = "Generar reporte omnicanal consolidado y ranking de rentabilidad de productos")
+    @GetMapping("/reporte-omnicanal")
+    public ResponseEntity<ReporteOmnicanalResponse> reporteOmnicanal() {
+        return ResponseEntity.ok(ventaService.obtenerReporteOmnicanal());
     }
 
     @Operation(summary = "Eliminar todas las ventas del reporte transaccional")

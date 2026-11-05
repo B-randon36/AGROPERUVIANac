@@ -43,3 +43,4 @@ public class PagoCompra {
     @Column(name = "FECHA_CREACION", nullable = false)
     private LocalDateTime fechaCreacion;
 }
+

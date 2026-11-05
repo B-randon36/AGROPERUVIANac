@@ -26,6 +26,8 @@ public class PedidoDeliveryResponse {
     private EstadoDelivery estadoDelivery;
     private LocalDateTime fechaPactada;
     private LocalDateTime fechaEntrega;
+    private Double latitud;
+    private Double longitud;
     private String observaciones;
 }
 

@@ -15,6 +15,8 @@ export interface PedidoDelivery {
   estadoDelivery: EstadoDelivery;
   fechaPactada?: string;
   fechaEntrega?: string;
+  latitud?: number;
+  longitud?: number;
   observaciones?: string;
 }
 
@@ -29,6 +31,8 @@ export interface CrearDeliveryRequest {
   costoEnvio: number;
   montoTotal?: number;
   repartidorNombre?: string;
+  latitud?: number;
+  longitud?: number;
   fechaPactada?: string;
   observaciones?: string;
 }

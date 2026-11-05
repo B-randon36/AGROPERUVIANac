@@ -66,6 +66,8 @@ public class DeliveryServiceImpl implements DeliveryService {
                 .costoEnvio(request.getCostoEnvio() != null ? request.getCostoEnvio() : BigDecimal.ZERO)
                 .montoTotal(request.getMontoTotal() != null ? request.getMontoTotal() : BigDecimal.ZERO)
                 .repartidorNombre(request.getRepartidorNombre())
+                .latitud(request.getLatitud())
+                .longitud(request.getLongitud())
                 .estadoDelivery(EstadoDelivery.PENDIENTE)
                 .fechaPactada(request.getFechaPactada() != null ? request.getFechaPactada() : LocalDateTime.now().plusHours(2))
                 .observaciones(request.getObservaciones())
@@ -139,6 +141,8 @@ public class DeliveryServiceImpl implements DeliveryService {
                 .estadoDelivery(p.getEstadoDelivery())
                 .fechaPactada(p.getFechaPactada())
                 .fechaEntrega(p.getFechaEntrega())
+                .latitud(p.getLatitud())
+                .longitud(p.getLongitud())
                 .observaciones(p.getObservaciones())
                 .build();
     }

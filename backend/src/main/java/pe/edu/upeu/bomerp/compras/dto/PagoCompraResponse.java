@@ -21,3 +21,4 @@ public class PagoCompraResponse {
     private String estado;
     private LocalDateTime fechaCreacion;
 }
+

@@ -60,6 +60,12 @@ public class PedidoDelivery {
     @Column(name = "FECHA_ENTREGA")
     private LocalDateTime fechaEntrega;
 
+    @Column(name = "LATITUD")
+    private Double latitud;
+
+    @Column(name = "LONGITUD")
+    private Double longitud;
+
     @Column(name = "OBSERVACIONES", length = 300)
     private String observaciones;
 }

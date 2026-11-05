@@ -380,6 +380,9 @@ export class DeliveryList implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private obtenerCoordenada(p: PedidoDelivery, index: number): [number, number] {
+    if (p.latitud != null && p.longitud != null) {
+      return [p.latitud, p.longitud];
+    }
     if (this.coordsPedidosNuevos.has(p.id)) {
       return this.coordsPedidosNuevos.get(p.id)!;
     }
@@ -647,6 +650,8 @@ export class DeliveryList implements OnInit, AfterViewInit, OnDestroy {
       costoEnvio: +this.nuevoCostoEnvio,
       montoTotal: +this.nuevoMontoTotal,
       repartidorNombre: this.nuevoRepartidor,
+      latitud: coordGuardada ? coordGuardada[0] : undefined,
+      longitud: coordGuardada ? coordGuardada[1] : undefined,
       observaciones: this.nuevasObservaciones,
     }).subscribe({
       next: (nuevoPedido) => {

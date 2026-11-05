@@ -12,3 +12,4 @@ public interface InsumoRepository extends JpaRepository<Insumo, Long> {
     Optional<Insumo> findByCodigo(String codigo);
     List<Insumo> findByEstado(String estado);
 }
+

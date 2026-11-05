@@ -17,3 +17,4 @@ public class InsumoDto {
     private BigDecimal precioSugerido;
     private String estado;
 }
+

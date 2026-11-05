@@ -98,9 +98,10 @@ public class SecurityConfig {
                         // 5. Inventario: Lotes, FEFO y Kardex
                         .requestMatchers("/api/v1/inventario/**").hasAnyRole("ADMIN", "SUPERVISOR", "VENDEDOR", "CAJERO")
 
-                        // 6. Producción y Compras
+                        // 6. Producción, Compras y CRM Terceros
                         .requestMatchers("/api/v1/produccion/**").hasAnyRole("ADMIN", "SUPERVISOR")
                         .requestMatchers("/api/v1/compras/**").hasAnyRole("ADMIN", "SUPERVISOR")
+                        .requestMatchers("/api/v1/terceros/**").authenticated()
 
                         // 7. Todo lo demás requiere autenticación
                         .anyRequest().authenticated()

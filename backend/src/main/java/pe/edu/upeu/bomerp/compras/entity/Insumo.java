@@ -34,3 +34,4 @@ public class Insumo {
     @Column(name = "ESTADO", length = 20)
     private String estado;
 }
+

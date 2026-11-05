@@ -35,6 +35,8 @@ public class CrearDeliveryRequest {
     private BigDecimal montoTotal;
 
     private String repartidorNombre;
+    private Double latitud;
+    private Double longitud;
     private LocalDateTime fechaPactada;
     private String observaciones;
 }

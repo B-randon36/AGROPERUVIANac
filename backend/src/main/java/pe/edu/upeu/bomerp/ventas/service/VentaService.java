@@ -1,5 +1,6 @@
 package pe.edu.upeu.bomerp.ventas.service;
 
+import pe.edu.upeu.bomerp.ventas.dto.ReporteOmnicanalResponse;
 import pe.edu.upeu.bomerp.ventas.dto.VentaReporte;
 import pe.edu.upeu.bomerp.ventas.dto.VentaRequest;
 import pe.edu.upeu.bomerp.ventas.dto.VentaResponse;
@@ -26,6 +27,7 @@ public interface VentaService {
 
     VentaResponse anular(Long id);
     VentaReporte reporte(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta);
+    ReporteOmnicanalResponse obtenerReporteOmnicanal();
     void eliminarTodas();
     void eliminar(Long id);
 }

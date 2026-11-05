@@ -10,3 +10,4 @@ import java.util.List;
 public interface PagoCompraRepository extends JpaRepository<PagoCompra, Long> {
     List<PagoCompra> findByCompraIdOrderByFechaPagoAsc(Long compraId);
 }
+
