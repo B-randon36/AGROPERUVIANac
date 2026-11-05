@@ -22,6 +22,9 @@ public class Compra {
     @Column(name = "ID")
     private Long id;
 
+    @Column(name = "SERIE_COMPROBANTE", length = 10)
+    private String serieComprobante;
+
     @Column(name = "NUMERO_COMPROBANTE", nullable = false, length = 30)
     private String numeroComprobante;
 
@@ -31,6 +34,12 @@ public class Compra {
 
     @Column(name = "FECHA_EMISION", nullable = false)
     private LocalDate fechaEmision;
+
+    @Column(name = "CONDICION_PAGO", length = 30)
+    private String condicionPago;
+
+    @Column(name = "FECHA_VENCIMIENTO_PAGO")
+    private LocalDate fechaVencimientoPago;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "ESTADO", nullable = false, length = 20)
@@ -42,6 +51,9 @@ public class Compra {
     @Column(name = "IGV", nullable = false, precision = 12, scale = 2)
     private BigDecimal igv;
 
+    @Column(name = "COSTO_FLETE", precision = 12, scale = 2)
+    private BigDecimal costoFlete;
+
     @Column(name = "TOTAL", nullable = false, precision = 12, scale = 2)
     private BigDecimal total;
 
@@ -51,4 +63,8 @@ public class Compra {
     @Builder.Default
     @OneToMany(mappedBy = "compra", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleCompra> detalles = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "compra", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PagoCompra> pagos = new ArrayList<>();
 }

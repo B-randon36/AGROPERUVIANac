@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -19,6 +20,13 @@ public class DetalleCompraRequest {
 
     @NotBlank(message = "El nombre del insumo es obligatorio")
     private String nombreInsumo;
+
+    private String loteProveedor;
+
+    private LocalDate fechaVencimiento;
+
+    @DecimalMin(value = "0.01", message = "El factor de conversión debe ser mayor a 0")
+    private BigDecimal factorConversion;
 
     @NotNull(message = "La cantidad es obligatoria")
     @DecimalMin(value = "0.001", message = "La cantidad debe ser mayor a 0")

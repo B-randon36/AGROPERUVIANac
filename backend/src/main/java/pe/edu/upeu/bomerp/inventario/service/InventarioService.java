@@ -72,6 +72,16 @@ public interface InventarioService {
             String numeroComprobante
     );
 
+    LoteDto registrarIngresoCompraInsumo(
+            Long insumoId,
+            String nombreInsumo,
+            BigDecimal cantidad,
+            BigDecimal costoUnitario,
+            String numeroComprobante,
+            String loteProveedor,
+            LocalDate fechaVencimiento
+    );
+
     List<LoteDto> listarLotes(Long productoId);
 
     List<LoteDto> listarLotesProximosAVencer(int diasUmbral);

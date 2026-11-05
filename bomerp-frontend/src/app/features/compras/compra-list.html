@@ -1,9 +1,12 @@
 <div class="feature-container">
   <div class="page-header">
     <div>
-      <div class="badge badge-success">ABASTECIMIENTO & COMPRAS</div>
-      <h1>Historial de Adquisiciones y Cuentas por Pagar</h1>
-      <p class="subtitle">Gestión de adquisiciones, recepción de insumos y cuentas por pagar</p>
+      <div class="badge-module">
+        <span class="material-symbols-outlined icon-mini">local_shipping</span>
+        GESTIÓN DE ABASTECIMIENTO
+      </div>
+      <h1>Historial de Adquisiciones y Pagos a Proveedores</h1>
+      <p class="subtitle">Control de compras de materia prima, fletes, cuentas por pagar y conciliación de amortizaciones</p>
     </div>
     <div class="header-actions">
       <a routerLink="/compras/nueva" class="btn btn-primary">
@@ -12,92 +15,171 @@
       <a routerLink="/compras/proveedores" class="btn btn-secondary">
         <span class="material-symbols-outlined icon-inline">store</span> Directorio de Proveedores
       </a>
-      <button class="btn btn-secondary" (click)="cargarDatos()" title="Actualizar">
-        <span class="material-symbols-outlined" style="vertical-align: middle;">refresh</span>
+      <button class="btn btn-secondary" (click)="cargarDatos()" title="Recargar">
+        <span class="material-symbols-outlined icon-inline">refresh</span>
       </button>
     </div>
   </div>
 
   @if (error()) {
-    <div class="alert alert-danger" style="display: flex; align-items: center; gap: 0.5rem;">
-      <span class="material-symbols-outlined">warning</span>
-      <span>{{ error() }}</span>
+    <div class="alert alert-danger">
+      <span class="material-symbols-outlined alert-icon">warning</span>
+      <div>{{ error() }}</div>
     </div>
   }
   @if (successMsg()) {
-    <div class="alert alert-success" style="display: flex; align-items: center; gap: 0.5rem;">
-      <span class="material-symbols-outlined">check_circle</span>
-      <span>{{ successMsg() }}</span>
+    <div class="alert alert-success">
+      <span class="material-symbols-outlined alert-icon">check_circle</span>
+      <div>{{ successMsg() }}</div>
     </div>
   }
 
-  <!-- KPI Reporte -->
-  @if (resumen(); as r) {
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <span class="material-symbols-outlined metric-icon">inventory_2</span>
-        <div>
-          <span class="metric-label">Facturas de Compra</span>
-          <h3 class="metric-value">{{ r.totalCompras }}</h3>
-        </div>
-      </div>
-      <div class="metric-card">
-        <span class="material-symbols-outlined metric-icon">payments</span>
-        <div>
-          <span class="metric-label">Total Facturado</span>
-          <h3 class="metric-value">{{ r.montoTotalComprado | currency:'PEN':'S/ ' }}</h3>
-        </div>
-      </div>
-      <div class="metric-card">
-        <span class="material-symbols-outlined metric-icon text-success">task_alt</span>
-        <div>
-          <span class="metric-label">Total Pagado</span>
-          <h3 class="metric-value text-success">{{ r.montoTotalPagado | currency:'PEN':'S/ ' }}</h3>
-        </div>
-      </div>
-      <div class="metric-card">
-        <span class="material-symbols-outlined metric-icon text-danger">pending_actions</span>
-        <div>
-          <span class="metric-label">Saldo Pendiente de Pago</span>
-          <h3 class="metric-value text-danger">{{ r.saldoPendienteTotal | currency:'PEN':'S/ ' }}</h3>
-        </div>
+  <!-- KPIs de Compras y Deuda a Proveedores -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <span class="material-symbols-outlined metric-icon">inventory_2</span>
+      <div>
+        <span class="metric-label">Órdenes de Compra</span>
+        <h3 class="metric-value">{{ totalComprasCalc() }}</h3>
       </div>
     </div>
-  }
+    <div class="metric-card">
+      <span class="material-symbols-outlined metric-icon text-primary-accent">receipt_long</span>
+      <div>
+        <span class="metric-label">Total Facturado</span>
+        <h3 class="metric-value">{{ totalFacturadoCalc() | currency:'PEN':'S/ ' }}</h3>
+      </div>
+    </div>
+    <div class="metric-card">
+      <span class="material-symbols-outlined metric-icon text-success">task_alt</span>
+      <div>
+        <span class="metric-label">Total Pagado / Liquidado</span>
+        <h3 class="metric-value text-success">{{ totalPagadoCalc() | currency:'PEN':'S/ ' }}</h3>
+      </div>
+    </div>
+    <div class="metric-card">
+      <span class="material-symbols-outlined metric-icon text-danger">pending_actions</span>
+      <div>
+        <span class="metric-label">Saldo Pendiente a Proveedores</span>
+        <h3 class="metric-value text-danger">{{ saldoPendienteCalc() | currency:'PEN':'S/ ' }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de Filtros Interactivas (Inspirada en Elisban + Glacier) -->
+  <div class="filters-panel">
+    <div class="tabs-estados">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="estadoFiltro() === 'TODAS'"
+        (click)="filtrarPorEstado('TODAS')"
+      >
+        Todas
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="estadoFiltro() === 'REGISTRADA'"
+        (click)="filtrarPorEstado('REGISTRADA')"
+      >
+        <span class="dot-status dot-warning"></span> Pendientes con Saldo
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="estadoFiltro() === 'PAGADA'"
+        (click)="filtrarPorEstado('PAGADA')"
+      >
+        <span class="dot-status dot-success"></span> Totalmente Pagadas
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="estadoFiltro() === 'ANULADA'"
+        (click)="filtrarPorEstado('ANULADA')"
+      >
+        <span class="dot-status dot-danger"></span> Anuladas
+      </button>
+    </div>
+
+    <div class="filter-controls">
+      <div class="date-group">
+        <label>Desde:</label>
+        <input type="date" [(ngModel)]="desdeFiltro" (change)="cargarDatos()" class="date-input" />
+      </div>
+      <div class="date-group">
+        <label>Hasta:</label>
+        <input type="date" [(ngModel)]="hastaFiltro" (change)="cargarDatos()" class="date-input" />
+      </div>
+
+      <div class="search-box">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
+          type="text"
+          [(ngModel)]="busquedaTexto"
+          placeholder="Buscar factura o proveedor..."
+          class="search-input"
+        />
+      </div>
+
+      @if (estadoFiltro() !== 'TODAS' || desdeFiltro() || hastaFiltro() || busquedaTexto()) {
+        <button type="button" class="btn-clear" (click)="limpiarFiltros()" title="Restablecer filtros">
+          <span class="material-symbols-outlined">restart_alt</span>
+        </button>
+      }
+    </div>
+  </div>
 
   <!-- Tabla de Compras -->
-  <div class="card mt-4">
+  <div class="card">
     <div class="table-container">
-      <table>
+      <table class="data-table">
         <thead>
           <tr>
             <th>Comprobante</th>
             <th>Proveedor / RUC</th>
             <th>Fecha Emisión</th>
+            <th>Condición</th>
             <th>Subtotal</th>
-            <th>IGV (18%)</th>
-            <th>Total Factura</th>
+            <th>IGV</th>
+            <th>Flete</th>
+            <th>Total</th>
             <th>Saldo Pendiente</th>
             <th>Estado</th>
             <th class="text-center">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          @for (c of compras(); track c.id) {
+          @for (c of comprasFiltradas(); track c.id) {
             <tr>
-              <td><code>{{ c.numeroComprobante }}</code></td>
+              <td>
+                <span class="doc-badge">{{ c.serieComprobante ? c.serieComprobante + '-' : '' }}{{ c.numeroComprobante }}</span>
+              </td>
               <td>
                 @if (c.proveedor) {
-                  <div><strong>{{ c.proveedor.razonSocial }}</strong></div>
-                  <div style="font-size: 0.78rem; color: var(--text-muted);">RUC: {{ c.proveedor.ruc }}</div>
+                  <div class="provider-name">{{ c.proveedor.razonSocial }}</div>
+                  <div class="provider-ruc">RUC: {{ c.proveedor.ruc }}</div>
                 } @else {
                   <span>Proveedor #{{ c.proveedorId }}</span>
                 }
               </td>
-              <td>{{ c.fechaEmision }}</td>
+              <td>{{ c.fechaEmision | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <span class="condicion-tag">{{ c.condicionPago || 'CONTADO' }}</span>
+              </td>
               <td>{{ c.subtotal | currency:'PEN':'S/ ' }}</td>
               <td>{{ c.igv | currency:'PEN':'S/ ' }}</td>
-              <td><strong>{{ c.total | currency:'PEN':'S/ ' }}</strong></td>
+              <td>
+                @if (c.costoFlete && c.costoFlete > 0) {
+                  <span class="flete-badge">{{ c.costoFlete | currency:'PEN':'S/ ' }}</span>
+                } @else {
+                  <span class="text-muted">-</span>
+                }
+              </td>
+              <td>
+                <strong class="total-factura">{{ c.total | currency:'PEN':'S/ ' }}</strong>
+              </td>
               <td>
                 <span [class.text-danger]="c.saldoPendiente > 0" [class.text-success]="c.saldoPendiente === 0">
                   <strong>{{ c.saldoPendiente | currency:'PEN':'S/ ' }}</strong>
@@ -108,22 +190,24 @@
                   [class.badge-success]="c.estado === 'PAGADA'"
                   [class.badge-warning]="c.estado === 'REGISTRADA'"
                   [class.badge-danger]="c.estado === 'ANULADA'">
-                  {{ c.estado }}
+                  {{ c.estado === 'REGISTRADA' ? 'CON SALDO' : c.estado }}
                 </span>
               </td>
               <td class="text-center">
                 <div class="btn-group">
-                  <button class="btn btn-secondary btn-sm" (click)="verDetalle(c)">
-                    <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">visibility</span> Detalle
+                  <button class="btn-action" (click)="verDetalle(c)" title="Ver detalle de insumos y pagos">
+                    <span class="material-symbols-outlined icon-btn">visibility</span>
+                    <span>Detalle</span>
                   </button>
                   @if (c.saldoPendiente > 0 && c.estado !== 'ANULADA') {
-                    <button class="btn btn-primary btn-sm" (click)="abrirAmortizar(c)">
-                      <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">payments</span> Amortizar
+                    <button class="btn-action btn-action-pay" (click)="abrirAmortizar(c)" title="Registrar pago o amortización">
+                      <span class="material-symbols-outlined icon-btn">payments</span>
+                      <span>Pagar</span>
                     </button>
                   }
                   @if (c.estado !== 'ANULADA') {
-                    <button class="btn btn-danger btn-sm" (click)="anular(c)" title="Anular Compra">
-                      <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">cancel</span>
+                    <button class="btn-action btn-action-cancel" (click)="anular(c)" title="Anular Compra">
+                      <span class="material-symbols-outlined icon-btn">cancel</span>
                     </button>
                   }
                 </div>
@@ -132,7 +216,13 @@
           } @empty {
             @if (!loading()) {
               <tr>
-                <td colspan="9" class="text-center py-4">No hay compras registradas en el módulo.</td>
+                <td colspan="11" class="empty-row">
+                  <div class="empty-state">
+                    <span class="material-symbols-outlined empty-icon">folder_open</span>
+                    <p class="empty-title">No se encontraron órdenes de compra con los filtros seleccionados.</p>
+                    <p class="empty-sub">Prueba modificando las fechas o crea una nueva compra de insumos.</p>
+                  </div>
+                </td>
               </tr>
             }
           }
@@ -142,77 +232,175 @@
   </div>
 </div>
 
-<!-- Modal Amortizar Pago -->
+<!-- Modal Amortizar Pago Glacier -->
 @if (modalAmortizar() && compraSeleccionada(); as cmp) {
   <div class="modal-backdrop">
-    <div class="modal-content">
+    <div class="modal-card">
       <div class="modal-header">
-        <h3>Amortizar Pago: {{ cmp.numeroComprobante }}</h3>
+        <div class="modal-title-box">
+          <span class="material-symbols-outlined modal-icon text-success">paid</span>
+          <div>
+            <h3>Amortizar Factura: {{ cmp.numeroComprobante }}</h3>
+            <p class="modal-subtitle">Proveedor: {{ cmp.proveedor?.razonSocial }}</p>
+          </div>
+        </div>
         <button class="modal-close" (click)="modalAmortizar.set(false)">×</button>
       </div>
-      <div class="alert alert-info">
-        <span>Saldo por liquidar: <strong>{{ cmp.saldoPendiente | currency:'PEN':'S/ ' }}</strong></span>
+
+      <div class="modal-body">
+        <div class="alert-saldo-pendiente">
+          <span>Saldo Actual Pendiente:</span>
+          <strong>{{ cmp.saldoPendiente | currency:'PEN':'S/ ' }}</strong>
+        </div>
+
+        <form [formGroup]="formAmortizar" (ngSubmit)="confirmarAmortizar()" class="amortizar-form">
+          <div class="form-group">
+            <label class="form-label">Monto a Amortizar / Pagar (S/) *</label>
+            <input type="number" step="0.01" min="0.01" formControlName="montoPago" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Método de Pago *</label>
+            <select formControlName="metodoPago" class="form-control">
+              <option value="TRANSFERENCIA">Transferencia Bancaria BCP / BBVA</option>
+              <option value="EFECTIVO">Efectivo (Gaveta de Caja Activa)</option>
+              <option value="CHEQUE">Cheque Gerencia</option>
+              <option value="YAPE">Yape Empresa</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Número de Operación / Constancia</label>
+            <input type="text" formControlName="referencia" class="form-control" placeholder="Ej: OP-987654321" />
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="modalAmortizar.set(false)">Cancelar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="loading()">
+              @if (loading()) { Guardando... } @else { Confirmar Pago }
+            </button>
+          </div>
+        </form>
       </div>
-      <form [formGroup]="formAmortizar" (ngSubmit)="confirmarAmortizar()">
-        <div class="form-group">
-          <label class="form-label">Monto a Amortizar / Pagar (S/) *</label>
-          <input type="number" step="0.10" formControlName="montoPago" class="form-control" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Método de Pago</label>
-          <select formControlName="metodoPago" class="form-control">
-            <option value="TRANSFERENCIA">Transferencia Bancaria</option>
-            <option value="EFECTIVO">Efectivo de Caja</option>
-            <option value="CHEQUE">Cheque Gerencia</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Número de Operación / Referencia</label>
-          <input type="text" formControlName="referencia" class="form-control" />
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="modalAmortizar.set(false)">Cancelar</button>
-          <button type="submit" class="btn btn-primary" [disabled]="loading()">Confirmar Amortización</button>
-        </div>
-      </form>
     </div>
   </div>
 }
 
-<!-- Modal Detalle Insumos de Compra -->
+<!-- Modal Detalle Insumos & Historial de Pagos Glacier -->
 @if (modalDetalle() && compraSeleccionada(); as cmp) {
   <div class="modal-backdrop">
-    <div class="modal-content">
+    <div class="modal-card modal-card-lg">
       <div class="modal-header">
-        <h3>Detalle de Compra: {{ cmp.numeroComprobante }}</h3>
+        <div class="modal-title-box">
+          <span class="material-symbols-outlined modal-icon">receipt</span>
+          <div>
+            <h3>Comprobante {{ cmp.serieComprobante ? cmp.serieComprobante + '-' : '' }}{{ cmp.numeroComprobante }}</h3>
+            <p class="modal-subtitle">{{ cmp.proveedor?.razonSocial }} &bull; Emitido: {{ cmp.fechaEmision | date:'dd/MM/yyyy' }}</p>
+          </div>
+        </div>
         <button class="modal-close" (click)="modalDetalle.set(false)">×</button>
       </div>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Insumo</th>
-              <th>Cantidad</th>
-              <th>Precio Unit.</th>
-              <th>Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (d of cmp.detalles; track d.id || d.insumoId) {
-              <tr>
-                <td><strong>{{ d.nombreInsumo || 'Insumo #' + d.insumoId }}</strong></td>
-                <td>{{ d.cantidad }}</td>
-                <td>{{ d.precioUnitario | currency:'PEN':'S/ ' }}</td>
-                <td>{{ (d.subtotal || (d.cantidad * d.precioUnitario)) | currency:'PEN':'S/ ' }}</td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="4" class="text-center py-3">Insumos ingresados al almacén central.</td>
-              </tr>
-            }
-          </tbody>
-        </table>
+
+      <div class="modal-body">
+        <!-- Pestañas internas de detalle -->
+        <div class="modal-tabs">
+          <button
+            type="button"
+            class="modal-tab-btn"
+            [class.active]="tabDetalle() === 'INSUMOS'"
+            (click)="tabDetalle.set('INSUMOS')"
+          >
+            <span class="material-symbols-outlined icon-mini">inventory_2</span>
+            Insumos y Trazabilidad ({{ cmp.detalles?.length || 0 }})
+          </button>
+          <button
+            type="button"
+            class="modal-tab-btn"
+            [class.active]="tabDetalle() === 'PAGOS'"
+            (click)="tabDetalle.set('PAGOS')"
+          >
+            <span class="material-symbols-outlined icon-mini">history</span>
+            Historial de Pagos / Amortizaciones ({{ historialPagos().length }})
+          </button>
+        </div>
+
+        @if (tabDetalle() === 'INSUMOS') {
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Insumo</th>
+                  <th>Cant. Comprada</th>
+                  <th>Factor</th>
+                  <th>Ingreso Almacén</th>
+                  <th>Lote Proveedor</th>
+                  <th>Vencimiento</th>
+                  <th>Precio Unit.</th>
+                  <th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (d of cmp.detalles; track d.id || d.insumoId) {
+                  <tr>
+                    <td><strong>{{ d.nombreInsumo }}</strong></td>
+                    <td>{{ d.cantidad }}</td>
+                    <td>{{ d.factorConversion || 1 }}</td>
+                    <td>
+                      <span class="badge-ingreso">{{ (d.cantidadIngreso || d.cantidad) | number:'1.2-2' }}</span>
+                    </td>
+                    <td>
+                      @if (d.loteProveedor) {
+                        <code>{{ d.loteProveedor }}</code>
+                      } @else {
+                        <span class="text-muted">-</span>
+                      }
+                    </td>
+                    <td>{{ d.fechaVencimiento ? (d.fechaVencimiento | date:'dd/MM/yyyy') : '-' }}</td>
+                    <td>{{ d.precioUnitario | currency:'PEN':'S/ ' }}</td>
+                    <td><strong>{{ (d.subtotal || (d.cantidad * d.precioUnitario)) | currency:'PEN':'S/ ' }}</strong></td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="8" class="text-center py-3">Sin líneas de insumos registradas.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Fecha Pago</th>
+                  <th>Monto Pagado</th>
+                  <th>Método</th>
+                  <th>N° Operación</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of historialPagos(); track p.id) {
+                  <tr>
+                    <td>{{ p.fechaPago | date:'dd/MM/yyyy' }}</td>
+                    <td class="text-success font-bold">{{ p.montoPagado | currency:'PEN':'S/ ' }}</td>
+                    <td><span class="condicion-tag">{{ p.metodoPago }}</span></td>
+                    <td><code>{{ p.numeroOperacion || '-' }}</code></td>
+                    <td>
+                      <span class="badge badge-success">{{ p.estado }}</span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" class="empty-row py-4">
+                      No se han registrado amortizaciones aún para esta compra.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
+
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="modalDetalle.set(false)">Cerrar</button>
       </div>

@@ -23,6 +23,12 @@ public class CompraController {
 
     private final CompraService compraService;
 
+    @Operation(summary = "Catálogo maestro de insumos y materiales")
+    @GetMapping("/insumos")
+    public ResponseEntity<List<InsumoDto>> listarInsumos() {
+        return ResponseEntity.ok(compraService.listarInsumos());
+    }
+
     @Operation(summary = "Registrar un nuevo proveedor")
     @PostMapping("/proveedores")
     public ResponseEntity<ProveedorResponse> crearProveedor(@Valid @RequestBody ProveedorRequest request) {
@@ -47,6 +53,12 @@ public class CompraController {
         return ResponseEntity.ok(compraService.amortizarPago(id, request));
     }
 
+    @Operation(summary = "Consultar el historial de pagos de amortización de una compra")
+    @GetMapping("/{id}/pagos")
+    public ResponseEntity<List<PagoCompraResponse>> listarPagos(@PathVariable Long id) {
+        return ResponseEntity.ok(compraService.listarPagosPorCompra(id));
+    }
+
     @Operation(summary = "Anular una compra y liquidar saldo pendiente")
     @PostMapping("/{id}/anular")
     public ResponseEntity<CompraResponse> anularCompra(@PathVariable Long id) {
@@ -68,9 +80,15 @@ public class CompraController {
         return ResponseEntity.ok(compraService.obtener(id));
     }
 
-    @Operation(summary = "Listar todas las compras registradas")
+    @Operation(summary = "Listar compras registradas con filtros opcionales de estado y fecha")
     @GetMapping
-    public ResponseEntity<List<CompraResponse>> listarCompras() {
+    public ResponseEntity<List<CompraResponse>> listarCompras(
+            @RequestParam(required = false) EstadoCompra estado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        if (estado != null || desde != null || hasta != null) {
+            return ResponseEntity.ok(compraService.listarCompras(estado, desde, hasta));
+        }
         return ResponseEntity.ok(compraService.listarCompras());
     }
 }

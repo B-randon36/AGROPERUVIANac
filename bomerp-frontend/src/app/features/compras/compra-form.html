@@ -1,32 +1,37 @@
 <div class="feature-container">
   <div class="page-header">
     <div>
-      <div class="badge badge-success">ABASTECIMIENTO & COMPRAS</div>
+      <div class="badge-module">
+        <span class="material-symbols-outlined icon-mini">local_shipping</span>
+        ABASTECIMIENTO & MATERIAS PRIMAS
+      </div>
       <h1>Registrar Orden de Compra de Insumos</h1>
-      <p class="subtitle">Abastecimiento de materias primas e insumos agroindustriales</p>
+      <p class="subtitle">Adquisición de materias primas con trazabilidad por lote, factor de conversión y flete</p>
     </div>
     <div class="header-actions">
       <a routerLink="/compras/proveedores/nuevo" class="btn btn-secondary">
         <span class="material-symbols-outlined icon-inline">person_add</span> Nuevo Proveedor
       </a>
-      <a routerLink="/compras" class="btn btn-secondary">← Volver al Historial</a>
+      <a routerLink="/compras" class="btn btn-secondary">
+        <span class="material-symbols-outlined icon-inline">arrow_back</span> Volver al Historial
+      </a>
     </div>
   </div>
 
   @if (error()) {
-    <div class="alert alert-danger" style="display: flex; align-items: center; gap: 0.5rem;">
-      <span class="material-symbols-outlined">warning</span>
-      <span>{{ error() }}</span>
+    <div class="alert alert-danger">
+      <span class="material-symbols-outlined alert-icon">warning</span>
+      <div>{{ error() }}</div>
     </div>
   }
 
-  <form [formGroup]="form" (ngSubmit)="guardar()" class="compra-grid">
-    <!-- Cabecera de Factura / Orden de Compra -->
+  <form [formGroup]="form" (ngSubmit)="abrirConfirmacion()" class="compra-grid">
+    <!-- 1. Cabecera del Comprobante -->
     <div class="card">
-      <h2 class="section-title">1. Datos del Comprobante y Proveedor (Cabecera)</h2>
+      <h2 class="section-title">1. Datos del Proveedor y Comprobante (Cabecera)</h2>
       <div class="header-fields">
-        <div class="form-group">
-          <label class="form-label">Proveedor Agroindustrial / Industrial *</label>
+        <div class="form-group span-2">
+          <label class="form-label">Proveedor Agroindustrial / Comercial *</label>
           <select formControlName="proveedorId" class="form-control">
             @for (p of proveedores(); track p.id) {
               <option [value]="p.id">{{ p.razonSocial }} — RUC: {{ p.ruc }}</option>
@@ -35,11 +40,22 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">N° Factura / Comprobante *</label>
+          <label class="form-label">Serie (SUNAT) *</label>
+          <input
+            type="text"
+            formControlName="serieComprobante"
+            placeholder="Ej: F001 o 0001"
+            class="form-control"
+            maxlength="10"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Número de Comprobante *</label>
           <input
             type="text"
             formControlName="numeroComprobante"
-            placeholder="Ej: F001-004912"
+            placeholder="Ej: 0004912"
             class="form-control"
           />
         </div>
@@ -48,51 +64,100 @@
           <label class="form-label">Fecha de Emisión *</label>
           <input type="date" formControlName="fechaEmision" class="form-control" />
         </div>
+
+        <div class="form-group">
+          <label class="form-label">Condición de Pago *</label>
+          <select formControlName="condicionPago" class="form-control">
+            <option value="CONTADO">Contado (Pago Inmediato)</option>
+            <option value="CREDITO_15_DIAS">Crédito a 15 días</option>
+            <option value="CREDITO_30_DIAS">Crédito a 30 días</option>
+            <option value="CREDITO_60_DIAS">Crédito a 60 días</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Costo de Flete / Transporte (S/)</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            formControlName="costoFlete"
+            class="form-control"
+            placeholder="0.00"
+          />
+          <small class="form-hint">Costo de flete desde origen (Piura, Cusco) puesto en planta.</small>
+        </div>
       </div>
     </div>
 
-    <!-- Detalle de Insumos Adquiridos -->
+    <!-- 2. Detalle de Insumos -->
     <div class="card">
       <div class="detalle-header">
         <div>
-          <h2 class="section-title">2. Ítems de Materia Prima e Insumos de Empaque (Detalle)</h2>
-          <p class="section-hint">Seleccione un insumo del maestro o personalice la descripción y costo pactado.</p>
+          <h2 class="section-title">2. Insumos Adquiridos, Factor de Conversión y Trazabilidad FEFO</h2>
+          <p class="section-hint">Define la cantidad comprada, factor hacia unidad base de inventario, lote del proveedor y fecha de vencimiento.</p>
         </div>
         <button type="button" class="btn btn-secondary btn-sm" (click)="agregarLinea()">
-          <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">add</span> Agregar Ítem
+          <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">add</span> Agregar Línea
         </button>
       </div>
 
       <div class="table-container mt-2" formArrayName="detalles">
-        <table>
+        <table class="data-table">
           <thead>
             <tr>
-              <th style="width: 26%;">Plantilla Insumo</th>
-              <th style="width: 30%;">Descripción en Factura *</th>
-              <th style="width: 14%;">Cantidad *</th>
-              <th style="width: 14%;">Costo Unit. (S/) *</th>
-              <th style="width: 12%;">Subtotal</th>
-              <th style="width: 4%;"></th>
+              <th style="width: 22%;">Insumo Maestro *</th>
+              <th style="width: 11%;">Cant. Compra *</th>
+              <th style="width: 10%;">Factor Conv.</th>
+              <th style="width: 11%;">Ingreso Almacén</th>
+              <th style="width: 14%;">Lote Proveedor</th>
+              <th style="width: 12%;">Vencimiento</th>
+              <th style="width: 10%;">Costo Unit. (S/) *</th>
+              <th style="width: 8%;">Subtotal</th>
+              <th style="width: 2%;"></th>
             </tr>
           </thead>
           <tbody>
             @for (ctrl of detallesArray.controls; track $index; let i = $index) {
               <tr [formGroupName]="i">
                 <td>
-                  <select class="form-control" [value]="ctrl.controls.insumoId.value" (change)="seleccionarInsumoCatalogo(i, $event)">
-                    @for (ins of catalogoInsumos; track ins.id) {
+                  <select class="form-control form-control-sm" [value]="ctrl.controls.insumoId.value" (change)="seleccionarInsumoCatalogo(i, $event)">
+                    @for (ins of catalogoInsumos(); track ins.id) {
                       <option [value]="ins.id">{{ ins.nombre }}</option>
                     }
                   </select>
                 </td>
                 <td>
-                  <input type="text" formControlName="nombreInsumo" class="form-control" />
+                  <input type="number" step="0.01" min="0.01" formControlName="cantidad" class="form-control form-control-sm text-right" />
                 </td>
                 <td>
-                  <input type="number" step="0.01" formControlName="cantidad" class="form-control" />
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0.01"
+                    formControlName="factorConversion"
+                    class="form-control form-control-sm text-right"
+                    title="Factor para convertir de unidad de compra (ej: saco 50kg) a unidad base de inventario"
+                  />
                 </td>
                 <td>
-                  <input type="number" step="0.01" formControlName="precioUnitario" class="form-control" />
+                  <span class="badge-ingreso">
+                    {{ cantidadesIngreso()[i] | number:'1.2-2' }}
+                  </span>
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    formControlName="loteProveedor"
+                    placeholder="Ej: LOT-CHIRA-01"
+                    class="form-control form-control-sm uppercase"
+                  />
+                </td>
+                <td>
+                  <input type="date" formControlName="fechaVencimiento" class="form-control form-control-sm" />
+                </td>
+                <td>
+                  <input type="number" step="0.01" min="0.01" formControlName="precioUnitario" class="form-control form-control-sm text-right" />
                 </td>
                 <td>
                   <strong>{{ subtotalesLinea()[i] | currency:'PEN':'S/ ' }}</strong>
@@ -100,7 +165,7 @@
                 <td class="text-center">
                   <button
                     type="button"
-                    class="btn btn-danger btn-sm"
+                    class="btn-delete-row"
                     (click)="eliminarLinea(i)"
                     [disabled]="detallesArray.length === 1"
                     title="Quitar línea"
@@ -114,26 +179,40 @@
         </table>
       </div>
 
-      <!-- Resumen Tributario -->
-      <div class="totales-box">
-        <div class="totales-row">
-          <span>Base Imponible (Subtotal):</span>
-          <strong>{{ baseImponible() | currency:'PEN':'S/ ' }}</strong>
+      <!-- Resumen Tributario y Financiero -->
+      <div class="totales-container">
+        <div class="totales-info">
+          <div class="info-tag">
+            <span class="material-symbols-outlined icon-mini">verified</span>
+            <span>El stock ingresa automáticamente con regla FEFO al Kardex de Almacén.</span>
+          </div>
         </div>
-        <div class="totales-row">
-          <span>IGV (18%):</span>
-          <strong>{{ igvCalculado() | currency:'PEN':'S/ ' }}</strong>
-        </div>
-        <div class="totales-row total-final">
-          <span>Total Cuenta por Pagar:</span>
-          <strong>{{ totalFactura() | currency:'PEN':'S/ ' }}</strong>
+        <div class="totales-box">
+          <div class="totales-row">
+            <span>Base Imponible (Subtotal):</span>
+            <strong>{{ subtotalNeto() | currency:'PEN':'S/ ' }}</strong>
+          </div>
+          <div class="totales-row">
+            <span>IGV (18%):</span>
+            <strong>{{ igvCalculado() | currency:'PEN':'S/ ' }}</strong>
+          </div>
+          @if (fleteVal() > 0) {
+            <div class="totales-row text-flete">
+              <span>Flete / Transporte:</span>
+              <strong>{{ fleteVal() | currency:'PEN':'S/ ' }}</strong>
+            </div>
+          }
+          <div class="totales-row total-final">
+            <span>Total Orden de Compra:</span>
+            <strong>{{ totalFactura() | currency:'PEN':'S/ ' }}</strong>
+          </div>
         </div>
       </div>
 
       <div class="form-actions mt-4">
         <button type="submit" class="btn btn-primary" [disabled]="loading() || form.invalid">
           <span class="material-symbols-outlined icon-inline">save</span>
-          {{ loading() ? 'Registrando Compra...' : 'Confirmar y Registrar Compra' }}
+          Revisar y Registrar Compra
         </button>
         <a routerLink="/compras" class="btn btn-secondary">Cancelar</a>
       </div>
@@ -141,3 +220,70 @@
   </form>
 </div>
 
+<!-- Modal de Confirmación Previa Glacier -->
+@if (modalConfirmacion()) {
+  <div class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <span class="material-symbols-outlined modal-icon">assignment_turned_in</span>
+          <div>
+            <h3>Confirmar Orden de Compra</h3>
+            <p class="modal-subtitle">Verifica los datos antes de emitir la compra y asentar en Kardex</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" (click)="cerrarConfirmacion()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="confirm-summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">Proveedor:</span>
+            <span class="summary-val">{{ proveedorSeleccionado()?.razonSocial || 'Proveedor Seleccionado' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Comprobante:</span>
+            <span class="summary-val font-mono">{{ form.controls.serieComprobante.value }}-{{ form.controls.numeroComprobante.value }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Condición:</span>
+            <span class="summary-val">{{ form.controls.condicionPago.value }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Fecha Emisión:</span>
+            <span class="summary-val">{{ form.controls.fechaEmision.value }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Líneas de Insumos:</span>
+            <span class="summary-val">{{ detallesArray.length }} ítem(s)</span>
+          </div>
+          @if (fleteVal() > 0) {
+            <div class="summary-item">
+              <span class="summary-label">Costo Flete:</span>
+              <span class="summary-val">{{ fleteVal() | currency:'PEN':'S/ ' }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="confirm-total-banner">
+          <span>MONTO TOTAL A LIQUIDAR / PAGAR</span>
+          <span class="total-big">{{ totalFactura() | currency:'PEN':'S/ ' }}</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarConfirmacion()">
+          Modificar Datos
+        </button>
+        <button type="button" class="btn btn-primary" (click)="guardar()" [disabled]="loading()">
+          @if (loading()) {
+            <span>Registrando...</span>
+          } @else {
+            <span class="material-symbols-outlined icon-inline">check_circle</span>
+            <span>Confirmar y Guardar Compra</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

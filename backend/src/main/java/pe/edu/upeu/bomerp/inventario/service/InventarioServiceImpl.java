@@ -472,19 +472,36 @@ public class InventarioServiceImpl implements InventarioService {
             BigDecimal cantidad,
             BigDecimal costoUnitario,
             String numeroComprobante) {
+        return registrarIngresoCompraInsumo(insumoId, nombreInsumo, cantidad, costoUnitario, numeroComprobante, null, null);
+    }
+
+    @Override
+    public LoteDto registrarIngresoCompraInsumo(
+            Long insumoId,
+            String nombreInsumo,
+            BigDecimal cantidad,
+            BigDecimal costoUnitario,
+            String numeroComprobante,
+            String loteProveedor,
+            LocalDate fechaVencimiento) {
 
         String nombreSeguro = truncarNombre(nombreInsumo != null ? nombreInsumo : ("Insumo #" + insumoId));
         LocalDate hoy = LocalDate.now();
-        LocalDate vencimiento = hoy.plusMonths(12);
+        LocalDate vencimiento = (fechaVencimiento != null && !fechaVencimiento.isBefore(hoy))
+                ? fechaVencimiento
+                : hoy.plusMonths(12);
 
         String baseComprobante = (numeroComprobante != null ? numeroComprobante.replaceAll("[^A-Za-z0-9]", "") : "COMP");
-        String codigoLote = ("LOT-INS-" + baseComprobante + "-" + insumoId + "-" + (int) (Math.random() * 900 + 100));
-        if (codigoLote.length() > 48) {
-            codigoLote = codigoLote.substring(0, 48);
+        String codLoteCustom = (loteProveedor != null && !loteProveedor.isBlank())
+                ? "LOT-PROV-" + loteProveedor.trim().toUpperCase() + "-" + insumoId
+                : "LOT-INS-" + baseComprobante + "-" + insumoId + "-" + (int) (Math.random() * 900 + 100);
+
+        if (codLoteCustom.length() > 48) {
+            codLoteCustom = codLoteCustom.substring(0, 48);
         }
 
         Lote lote = Lote.builder()
-                .codigoLote(codigoLote.toUpperCase())
+                .codigoLote(codLoteCustom.toUpperCase())
                 .productoId(insumoId)
                 .productoNombre(nombreSeguro)
                 .fechaFabricacion(hoy)
@@ -493,7 +510,7 @@ public class InventarioServiceImpl implements InventarioService {
                 .stockActual(cantidad)
                 .costoUnitario(costoUnitario != null ? costoUnitario : BigDecimal.ZERO)
                 .estado(EstadoLote.DISPONIBLE)
-                .observaciones("Ingreso por Orden de Compra " + numeroComprobante)
+                .observaciones("Ingreso por Orden de Compra " + numeroComprobante + (loteProveedor != null ? " [Lote Prov: " + loteProveedor + "]" : ""))
                 .build();
 
         Lote guardado = loteRepository.save(lote);
@@ -510,8 +527,8 @@ public class InventarioServiceImpl implements InventarioService {
                 .fechaHora(LocalDateTime.now())
                 .build());
 
-        log.info("Ingreso en almacén y Kardex registrado para insumo '{}' ({} unidades) desde comprobante {}",
-                nombreSeguro, cantidad, numeroComprobante);
+        log.info("Ingreso en almacén y Kardex registrado para insumo '{}' ({} unidades, lote {}) desde comprobante {}",
+                nombreSeguro, cantidad, guardado.getCodigoLote(), numeroComprobante);
         return mapToDto(guardado);
     }
 
