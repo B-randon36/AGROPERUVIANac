@@ -1,5 +1,7 @@
 package pe.edu.upeu.bomerp.ventas.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,6 +21,20 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
     @Override
     @EntityGraph(attributePaths = "detalles")
     Optional<Venta> findById(Long id);
+
+    @EntityGraph(attributePaths = "detalles")
+    @Query("""
+        SELECT v FROM Venta v
+        WHERE (:estado IS NULL OR v.estado = :estado)
+          AND (:desde IS NULL OR v.fecha >= :desde)
+          AND (:hasta IS NULL OR v.fecha <= :hasta)
+          AND (:vendedorId IS NULL OR v.vendedorId = :vendedorId)
+        """)
+    Page<Venta> buscar(@Param("estado") EstadoVenta estado,
+                       @Param("desde") LocalDateTime desde,
+                       @Param("hasta") LocalDateTime hasta,
+                       @Param("vendedorId") String vendedorId,
+                       Pageable pageable);
 
     @EntityGraph(attributePaths = "detalles")
     @Query("""

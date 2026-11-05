@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
-import { VentaRequest, VentaResponse, VentaReporte } from './venta.model';
+import { VentaRequest, VentaResponse, VentaReporte, PageResponse } from './venta.model';
 
 @Injectable({ providedIn: 'root' })
 export class VentaService {
@@ -24,14 +25,32 @@ export class VentaService {
     estado?: string,
     desde?: string,
     hasta?: string,
-    ordenarPor = 'fecha',
-    direccion = 'DESC',
+    page = 0,
+    size = 50,
+    sort = 'fecha,desc',
   ): Observable<VentaResponse[]> {
-    let params = new HttpParams().set('ordenarPor', ordenarPor).set('direccion', direccion);
+    let params = new HttpParams().set('page', page).set('size', size).set('sort', sort);
     if (estado) params = params.set('estado', estado);
     if (desde) params = params.set('desde', desde);
     if (hasta) params = params.set('hasta', hasta);
-    return this.http.get<VentaResponse[]>(this.api.buildUrl(this.resource), { params });
+    return this.http.get<any>(this.api.buildUrl(this.resource), { params }).pipe(
+      map(res => Array.isArray(res) ? res : (res?.content || []))
+    );
+  }
+
+  buscarPaginado(
+    estado?: string,
+    desde?: string,
+    hasta?: string,
+    page = 0,
+    size = 20,
+    sort = 'fecha,desc',
+  ): Observable<PageResponse<VentaResponse>> {
+    let params = new HttpParams().set('page', page).set('size', size).set('sort', sort);
+    if (estado) params = params.set('estado', estado);
+    if (desde) params = params.set('desde', desde);
+    if (hasta) params = params.set('hasta', hasta);
+    return this.http.get<PageResponse<VentaResponse>>(this.api.buildUrl(this.resource), { params });
   }
 
   obtener(id: number): Observable<VentaResponse> {

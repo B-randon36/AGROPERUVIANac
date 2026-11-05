@@ -4,6 +4,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,18 +36,18 @@ import java.util.stream.Collectors;
 public class VentaController {
 
     private final VentaService ventaService;
+    private final pe.edu.upeu.bomerp.ventas.service.AuditoriaService auditoriaService;
 
-    @Operation(summary = "Consultar ventas con filtros opcionales (estado, rango de fechas) y aislamiento RN8 por vendedor")
+    @Operation(summary = "Consulta ventas con filtros, ordenamiento y paginación")
     @GetMapping
-    public ResponseEntity<List<VentaResponse>> buscar(
+    public ResponseEntity<Page<VentaResponse>> buscar(
             @RequestParam(required = false) EstadoVenta estado,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta,
-            @RequestParam(defaultValue = "fecha") String ordenarPor,
-            @RequestParam(defaultValue = "DESC") String direccion,
+            @PageableDefault(size = 20, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal Jwt jwt) {
         String vendedorId = esVendedorRestringido(jwt) ? jwt.getSubject() : null;
-        return ResponseEntity.ok(ventaService.buscar(estado, desde, hasta, ordenarPor, direccion, vendedorId));
+        return ResponseEntity.ok(ventaService.buscar(estado, desde, hasta, vendedorId, pageable));
     }
 
     @Operation(summary = "Consultar una venta por ID con validación de propiedad RN8 (VENDEDOR solo ve sus ventas)")
@@ -62,10 +66,17 @@ public class VentaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ventaService.crear(request, vendedorId));
     }
 
-    @Operation(summary = "Anula una venta registrada, restaurando el stock de sus productos")
+    @Operation(summary = "Anula una venta registrada, restaurando el stock de sus productos y auditando al actor")
     @RequestMapping(value = "/{id}/anular", method = {RequestMethod.PATCH, RequestMethod.PUT})
-    public ResponseEntity<VentaResponse> anular(@PathVariable Long id) {
-        return ResponseEntity.ok(ventaService.anular(id));
+    public ResponseEntity<VentaResponse> anular(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        String actor = (jwt != null) ? jwt.getSubject() : "ANONYMOUS";
+        return ResponseEntity.ok(ventaService.anular(id, actor));
+    }
+
+    @Operation(summary = "Consultar el historial de auditoría de ventas")
+    @GetMapping("/auditoria")
+    public ResponseEntity<?> listarAuditoria() {
+        return ResponseEntity.ok(auditoriaService.listarTodasPorEntidad("VENTA"));
     }
 
     @Operation(summary = "Generar reporte agregado de ventas (total recaudado, ticket promedio y resumen)")

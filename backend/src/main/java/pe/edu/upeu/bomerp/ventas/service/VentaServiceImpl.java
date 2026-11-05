@@ -1,6 +1,8 @@
 package pe.edu.upeu.bomerp.ventas.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +40,15 @@ public class VentaServiceImpl implements VentaService {
     private final ProductoService productoService;
     private final InventarioService inventarioService;
     private final FinanzasApi finanzasApi;
+    private final AuditoriaService auditoriaService;
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<VentaResponse> buscar(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta,
+                                      String vendedorId, Pageable pageable) {
+        return ventaRepository.buscar(estado, desde, hasta, vendedorId, pageable)
+                .map(this::toResponse);
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -134,6 +145,7 @@ public class VentaServiceImpl implements VentaService {
         venta.setTotal(total);
 
         Venta guardada = ventaRepository.save(venta);
+        auditoriaService.registrar(vendedorId, "CREAR", "VENTA", guardada.getId(), "total=" + total);
 
         // 4. Integración Financiera Automática (Sesión de Caja Activa o Cuenta por Cobrar)
         if (finanzasApi != null) {
@@ -161,6 +173,12 @@ public class VentaServiceImpl implements VentaService {
     @Override
     @Transactional
     public VentaResponse anular(Long id) {
+        return anular(id, null);
+    }
+
+    @Override
+    @Transactional
+    public VentaResponse anular(Long id, String vendedorId) {
         Venta venta = ventaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + id));
 
@@ -195,6 +213,7 @@ public class VentaServiceImpl implements VentaService {
 
         venta.setEstado(EstadoVenta.ANULADA);
         Venta anulada = ventaRepository.save(venta);
+        auditoriaService.registrar(vendedorId, "ANULAR", "VENTA", anulada.getId(), "ticket=" + anulada.getNumeroTicket());
         return toResponse(anulada);
     }
 

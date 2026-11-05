@@ -1,5 +1,7 @@
 package pe.edu.upeu.bomerp.ventas.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import pe.edu.upeu.bomerp.ventas.dto.ReporteOmnicanalResponse;
 import pe.edu.upeu.bomerp.ventas.dto.VentaReporte;
 import pe.edu.upeu.bomerp.ventas.dto.VentaRequest;
@@ -10,6 +12,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface VentaService {
+    Page<VentaResponse> buscar(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta, String vendedorId, Pageable pageable);
+
     default List<VentaResponse> buscar(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta, String ordenarPor, String direccion) {
         return buscar(estado, desde, hasta, ordenarPor, direccion, null);
     }
@@ -25,7 +29,11 @@ public interface VentaService {
     }
     VentaResponse crear(VentaRequest request, String vendedorId);
 
-    VentaResponse anular(Long id);
+    default VentaResponse anular(Long id) {
+        return anular(id, null);
+    }
+    VentaResponse anular(Long id, String vendedorId);
+
     VentaReporte reporte(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta);
     ReporteOmnicanalResponse obtenerReporteOmnicanal();
     void eliminarTodas();

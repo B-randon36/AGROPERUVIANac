@@ -21,6 +21,7 @@ import pe.edu.upeu.bomerp.ventas.entity.EstadoVenta;
 import pe.edu.upeu.bomerp.ventas.entity.MetodoPagoVenta;
 import pe.edu.upeu.bomerp.ventas.entity.Venta;
 import pe.edu.upeu.bomerp.ventas.repository.VentaRepository;
+import pe.edu.upeu.bomerp.ventas.service.AuditoriaService;
 import pe.edu.upeu.bomerp.ventas.service.VentaServiceImpl;
 
 import java.math.BigDecimal;
@@ -45,6 +46,9 @@ class VentaServiceTest {
 
     @Mock
     private FinanzasApi finanzasApi;
+
+    @Mock
+    private AuditoriaService auditoriaService;
 
     @InjectMocks
     private VentaServiceImpl ventaService;

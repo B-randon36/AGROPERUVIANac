@@ -245,6 +245,47 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Barra de Paginación S14 -->
+      @if (totalElements() > 0) {
+        <div class="paginacion-bar">
+          <div class="paginacion-info">
+            Mostrando <strong>{{ ventas().length }}</strong> de <strong>{{ totalElements() }}</strong> ventas
+            (Página {{ pageIndex() + 1 }} de {{ totalPages() }})
+          </div>
+          <div class="paginacion-controles">
+            <label for="pageSizeSelect" class="page-size-label">Por página:</label>
+            <select
+              id="pageSizeSelect"
+              #tamanio
+              [value]="pageSize()"
+              (change)="cambiarPageSize(+tamanio.value)"
+              class="form-control page-size-select"
+            >
+              <option [value]="5">5</option>
+              <option [value]="10">10</option>
+              <option [value]="20">20</option>
+              <option [value]="50">50</option>
+            </select>
+            <button
+              type="button"
+              class="btn btn-secondary btn-page"
+              [disabled]="pageIndex() === 0"
+              (click)="cambiarPagina(pageIndex() - 1)"
+            >
+              <span class="material-symbols-outlined icon-inline">chevron_left</span> Anterior
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary btn-page"
+              [disabled]="pageIndex() >= totalPages() - 1"
+              (click)="cambiarPagina(pageIndex() + 1)"
+            >
+              Siguiente <span class="material-symbols-outlined icon-inline">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      }
     </div>
   }
 
