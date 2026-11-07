@@ -7,17 +7,26 @@ import pe.edu.upeu.bomerp.ventas.dto.VentaReporte;
 import pe.edu.upeu.bomerp.ventas.dto.VentaRequest;
 import pe.edu.upeu.bomerp.ventas.dto.VentaResponse;
 import pe.edu.upeu.bomerp.ventas.entity.EstadoVenta;
+import pe.edu.upeu.bomerp.ventas.entity.MetodoPagoVenta;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface VentaService {
-    Page<VentaResponse> buscar(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta, String vendedorId, Pageable pageable);
+    Page<VentaResponse> buscar(EstadoVenta estado, MetodoPagoVenta metodoPago, LocalDateTime desde, LocalDateTime hasta, String vendedorId, Pageable pageable);
+
+    default Page<VentaResponse> buscar(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta, String vendedorId, Pageable pageable) {
+        return buscar(estado, null, desde, hasta, vendedorId, pageable);
+    }
 
     default List<VentaResponse> buscar(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta, String ordenarPor, String direccion) {
-        return buscar(estado, desde, hasta, ordenarPor, direccion, null);
+        return buscar(estado, null, desde, hasta, ordenarPor, direccion, null);
     }
-    List<VentaResponse> buscar(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta, String ordenarPor, String direccion, String vendedorId);
+    List<VentaResponse> buscar(EstadoVenta estado, MetodoPagoVenta metodoPago, LocalDateTime desde, LocalDateTime hasta, String ordenarPor, String direccion, String vendedorId);
+
+    default List<VentaResponse> buscar(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta, String ordenarPor, String direccion, String vendedorId) {
+        return buscar(estado, null, desde, hasta, ordenarPor, direccion, vendedorId);
+    }
 
     default VentaResponse obtener(Long id) {
         return obtener(id, null);
@@ -34,7 +43,12 @@ public interface VentaService {
     }
     VentaResponse anular(Long id, String vendedorId);
 
-    VentaReporte reporte(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta);
+    VentaReporte reporte(EstadoVenta estado, MetodoPagoVenta metodoPago, LocalDateTime desde, LocalDateTime hasta);
+
+    default VentaReporte reporte(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta) {
+        return reporte(estado, null, desde, hasta);
+    }
+
     ReporteOmnicanalResponse obtenerReporteOmnicanal();
     void eliminarTodas();
     void eliminar(Long id);

@@ -20,7 +20,7 @@ export const routes: Routes = [
       // Gestión Financiera y Caja Diaria
       {
         path: 'caja',
-        canActivate: [authGuard, rolGuard('SUPERVISOR', 'ADMIN')],
+        canActivate: [authGuard, rolGuard('ADMIN', 'SUPERVISOR', 'CAJERO', 'VENDEDOR')],
         loadComponent: () => import('./features/caja/caja-dashboard').then((m) => m.CajaDashboard),
         title: 'Caja & Movimientos · ERP Agro Peruvian Foods',
       },
@@ -99,21 +99,21 @@ export const routes: Routes = [
       },
       {
         path: 'finanzas/sesiones',
-        canActivate: [authGuard, rolGuard('ADMIN', 'SUPERVISOR')],
+        canActivate: [authGuard, rolGuard('ADMIN', 'SUPERVISOR', 'CAJERO', 'VENDEDOR')],
         loadComponent: () =>
           import('./features/finanzas/sesion-caja/sesion-caja-list').then((m) => m.SesionCajaList),
         title: 'Sesiones de Caja Diaria · ERP Agro Peruvian Foods',
       },
       {
         path: 'finanzas/sesiones/nueva',
-        canActivate: [authGuard, rolGuard('ADMIN', 'SUPERVISOR')],
+        canActivate: [authGuard, rolGuard('ADMIN', 'SUPERVISOR', 'CAJERO', 'VENDEDOR')],
         loadComponent: () =>
           import('./features/finanzas/sesion-caja/sesion-caja-form').then((m) => m.SesionCajaForm),
         title: 'Apertura de Caja · ERP Agro Peruvian Foods',
       },
       {
         path: 'finanzas/sesiones/:id',
-        canActivate: [authGuard, rolGuard('ADMIN', 'SUPERVISOR')],
+        canActivate: [authGuard, rolGuard('ADMIN', 'SUPERVISOR', 'CAJERO', 'VENDEDOR')],
         loadComponent: () =>
           import('./features/finanzas/sesion-caja/sesion-caja-form').then((m) => m.SesionCajaForm),
         title: 'Detalle de Sesión de Caja · ERP Agro Peruvian Foods',

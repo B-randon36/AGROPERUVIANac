@@ -44,21 +44,21 @@ public class VentaServiceImpl implements VentaService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<VentaResponse> buscar(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta,
+    public Page<VentaResponse> buscar(EstadoVenta estado, MetodoPagoVenta metodoPago, LocalDateTime desde, LocalDateTime hasta,
                                       String vendedorId, Pageable pageable) {
-        return ventaRepository.buscar(estado, desde, hasta, vendedorId, pageable)
+        return ventaRepository.buscar(estado, metodoPago, desde, hasta, vendedorId, pageable)
                 .map(this::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<VentaResponse> buscar(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta,
+    public List<VentaResponse> buscar(EstadoVenta estado, MetodoPagoVenta metodoPago, LocalDateTime desde, LocalDateTime hasta,
                                       String ordenarPor, String direccion, String vendedorId) {
         Sort.Direction dir = "ASC".equalsIgnoreCase(direccion) ? Sort.Direction.ASC : Sort.Direction.DESC;
         String campoOrden = (ordenarPor != null && !ordenarPor.isBlank()) ? ordenarPor : "fecha";
         Sort sort = Sort.by(dir, campoOrden);
 
-        return ventaRepository.buscar(estado, desde, hasta, vendedorId, sort).stream()
+        return ventaRepository.buscar(estado, metodoPago, desde, hasta, vendedorId, sort).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -233,10 +233,10 @@ public class VentaServiceImpl implements VentaService {
 
     @Override
     @Transactional(readOnly = true)
-    public VentaReporte reporte(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta) {
-        VentaAgregado agregado = ventaRepository.agregados(estado, desde, hasta);
+    public VentaReporte reporte(EstadoVenta estado, MetodoPagoVenta metodoPago, LocalDateTime desde, LocalDateTime hasta) {
+        VentaAgregado agregado = ventaRepository.agregados(estado, metodoPago, desde, hasta);
         Sort sort = Sort.by(Sort.Direction.DESC, "fecha");
-        List<VentaResumen> resumenes = ventaRepository.buscarResumen(estado, desde, hasta, sort);
+        List<VentaResumen> resumenes = ventaRepository.buscarResumen(estado, metodoPago, desde, hasta, sort);
         return new VentaReporte(agregado, resumenes);
     }
 

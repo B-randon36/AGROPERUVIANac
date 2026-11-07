@@ -1,0 +1,222 @@
+/* ==========================================================================
+   AGRO PERUVIAN FOODS S.A.C. - THEME GLACIER DESIGN (ORIGINAL 34rem / 544px)
+   ========================================================================== */
+
+:root {
+  --agro-primary: #38BDF8;           /* Glacier Sky Blue */
+  --agro-primary-hover: #0284C7;
+  --agro-primary-glow: rgba(56, 189, 248, 0.35);
+  
+  --agro-navy-dark: #1A2438;
+  --agro-navy-deep: #0F172A;
+  --agro-text-main: #F8FAFC;
+  --agro-text-muted: #94A3B8;
+  --agro-input-bg: rgba(15, 23, 42, 0.88);
+}
+
+/* --------------------------------------------------------------------------
+   1. FONDO GENERAL Y RESTAURACIÓN DE TAMAÑO ORIGINAL KEYCLOAK (34rem)
+   -------------------------------------------------------------------------- */
+body.agro-body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  background-color: #0b1120 !important;
+  background-image: 
+    radial-gradient(circle at 50% 12%, rgba(56, 189, 248, 0.15) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.10) 0%, transparent 40%),
+    radial-gradient(circle at 15% 85%, rgba(2, 132, 199, 0.12) 0%, transparent 40%),
+    linear-gradient(180deg, #0f172a 0%, #070b12 100%) !important;
+  background-attachment: fixed !important;
+  min-height: 100vh;
+  margin: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--agro-text-main) !important;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.agro-bg-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* TAMAÑO ORIGINAL NATIVO DE KEYCLOAK (34rem = 544px) */
+.pf-v5-c-login__container {
+  grid-template-columns: 34rem !important;
+  grid-template-areas: "header"
+                       "main" !important;
+  width: 34rem !important;
+  max-width: 95vw !important;
+  margin: 0 auto !important;
+  position: relative;
+  z-index: 2;
+}
+
+/* --------------------------------------------------------------------------
+   2. CABECERA CON LOGO OFICIAL (ENCIMA DE LA TARJETA)
+   -------------------------------------------------------------------------- */
+.agro-header {
+  margin-bottom: 1.5rem !important;
+  text-align: center !important;
+}
+
+.agro-brand-wrapper {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+.agro-logo-frame {
+  width: 84px !important;
+  height: 84px !important;
+  background: #FFFFFF !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px !important;
+  box-shadow: 
+    0 0 0 3px rgba(125, 211, 252, 0.45),
+    0 0 25px rgba(56, 189, 248, 0.35),
+    0 10px 25px rgba(0, 0, 0, 0.5) !important;
+  transition: transform 0.25s ease !important;
+  flex-shrink: 0;
+}
+
+.agro-logo-frame:hover {
+  transform: scale(1.04);
+}
+
+.agro-logo-img {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+.agro-brand-titles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.agro-brand-company {
+  font-size: 1.55rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;
+  line-height: 1.2;
+}
+
+.agro-brand-system {
+  font-size: 0.8rem !important;
+  color: #BAE6FD !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  margin-top: 0.25rem !important;
+  opacity: 0.9;
+}
+
+/* --------------------------------------------------------------------------
+   3. TARJETA PRINCIPAL (TAMAÑO ORIGINAL KEYCLOAK CON ESTILO GLACIER)
+   -------------------------------------------------------------------------- */
+.pf-v5-c-login__main {
+  background: rgba(22, 32, 50, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(125, 211, 252, 0.2) !important;
+  border-top: 4px solid var(--agro-primary) !important;
+  border-radius: 12px !important;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.75),
+    0 0 30px rgba(56, 189, 248, 0.12) !important;
+}
+
+.pf-v5-c-title {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Campos de Formulario */
+.pf-v5-c-form__label-text {
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: #CBD5E1 !important;
+}
+
+.pf-v5-c-form-control input {
+  background-color: var(--agro-input-bg) !important;
+  border: 1px solid rgba(148, 163, 184, 0.25) !important;
+  border-radius: 6px !important;
+  color: #FFFFFF !important;
+  font-size: 0.95rem !important;
+  height: 42px !important;
+  transition: all 0.2s ease !important;
+}
+
+.pf-v5-c-form-control input:focus {
+  border-color: var(--agro-primary) !important;
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  box-shadow: 0 0 0 3px var(--agro-primary-glow) !important;
+  outline: none !important;
+}
+
+.pf-v5-c-input-group__item button {
+  background-color: var(--agro-input-bg) !important;
+  border: 1px solid rgba(148, 163, 184, 0.25) !important;
+  border-left: none !important;
+  border-radius: 0 6px 6px 0 !important;
+  color: var(--agro-text-muted) !important;
+  height: 42px !important;
+}
+
+.pf-v5-c-input-group__item button:hover {
+  color: var(--agro-primary) !important;
+}
+
+/* Botón Iniciar Sesión */
+#kc-login.pf-v5-c-button.pf-m-primary {
+  background: linear-gradient(135deg, #0284C7 0%, #0369A1 45%, #059669 100%) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  color: #FFFFFF !important;
+  font-size: 0.96rem !important;
+  font-weight: 700 !important;
+  height: 44px !important;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35) !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  margin-top: 0.75rem !important;
+}
+
+#kc-login.pf-v5-c-button.pf-m-primary:hover {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284C7 45%, #10b981 100%) !important;
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.45) !important;
+  transform: translateY(-1px);
+}
+
+.agro-footer-note {
+  font-size: 0.73rem;
+  color: #64748B;
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 0.5rem;
+}
+
+.agro-footer-note strong {
+  color: #94A3B8;
+}

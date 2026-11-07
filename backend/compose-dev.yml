@@ -58,6 +58,7 @@ services:
       KC_DB_PASSWORD: 123456
     volumes:
       - ./agroperuvianfoods-realm.json:/opt/keycloak/data/import/agroperuvianfoods-realm.json:ro
+      - ./themes:/opt/keycloak/themes
 
   loki:
     image: grafana/loki:3.0.0

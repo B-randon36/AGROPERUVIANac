@@ -49,6 +49,25 @@
         </select>
       </div>
 
+      <div class="filtro-item">
+        <label for="filtroMetodoPago" class="filtro-label">Filtrar por método de pago</label>
+        <select
+          id="filtroMetodoPago"
+          #metodoFiltro
+          [value]="metodoPagoFiltro()"
+          (change)="filtrarPorMetodoPago(metodoFiltro.value)"
+          class="form-control"
+        >
+          <option value="">Todos los métodos</option>
+          <option value="EFECTIVO">💵 Efectivo al Contado</option>
+          <option value="TARJETA">💳 Tarjeta (POS)</option>
+          <option value="YAPE">📱 Yape (Billetera)</option>
+          <option value="PLIN">📱 Plin (Billetera)</option>
+          <option value="CREDITO">📋 Crédito Comercial</option>
+          <option value="TRANSFERENCIA">🏦 Transferencia Bancaria</option>
+        </select>
+      </div>
+
       <div class="filtro-fechas-group">
         <div class="filtro-item">
           <label for="fechaDesde" class="filtro-label">Desde</label>
@@ -80,7 +99,7 @@
           >
             <span class="material-symbols-outlined icon-inline">filter_alt</span> Filtrar por fecha
           </button>
-          @if (desdeFiltro() || hastaFiltro() || estadoFiltro()) {
+          @if (desdeFiltro() || hastaFiltro() || estadoFiltro() || metodoPagoFiltro()) {
             <button
               type="button"
               class="btn btn-secondary btn-reset"
@@ -173,6 +192,7 @@
             <tr>
               <th>Fecha y Hora</th>
               <th>Estado</th>
+              <th>Método de Pago</th>
               <th>Líneas</th>
               <th>Total de Venta</th>
               <th style="text-align: center;">Acciones</th>
@@ -195,6 +215,12 @@
                     [class.badge-danger]="venta.estado === 'ANULADA'"
                   >
                     {{ venta.estado }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge badge-metodo-pago" [ngClass]="getClaseMetodoPago(venta.metodoPago)">
+                    <span class="material-symbols-outlined icon-inline" style="font-size: 0.95rem;">{{ getIconoMetodoPago(venta.metodoPago) }}</span>
+                    {{ getEtiquetaMetodoPago(venta.metodoPago) }}
                   </span>
                 </td>
                 <td>
@@ -236,7 +262,7 @@
 
               <!-- Fila 2: Subtabla con el Detalle Real de Líneas -->
               <tr class="fila-detalle">
-                <td colspan="5">
+                <td colspan="6">
                   <table class="tabla-detalle">
                     <thead>
                       <tr>
@@ -269,7 +295,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="5" class="empty-state">
+                <td colspan="6" class="empty-state">
                   <div class="empty-content">
                     <span class="material-symbols-outlined empty-icon">inbox</span>
                     <p>No hay ventas registradas para este filtro o rango de fechas.</p>

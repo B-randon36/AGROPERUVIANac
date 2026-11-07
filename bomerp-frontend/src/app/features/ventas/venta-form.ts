@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, computed, inject, signal, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, inject, signal, ViewChild, ElementRef, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CurrencyPipe, CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
@@ -12,6 +12,9 @@ import { ProductoService } from '../catalogo/producto/producto.service';
 import { Producto } from '../catalogo/producto/producto.model';
 import { VentaService } from './venta.service';
 import { VentaResponse, DetalleVentaResponse, MetodoPagoPos } from './venta.model';
+import { SesionCajaService } from '../finanzas/sesion-caja/sesion-caja-service';
+import { SesionCaja } from '../finanzas/sesion-caja/sesion-caja.model';
+import { AuthService } from '../../core/auth/auth-service';
 
 @Component({
   selector: 'app-venta-form',
@@ -31,7 +34,10 @@ export class VentaForm implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly productoService = inject(ProductoService);
   private readonly ventaService = inject(VentaService);
+  private readonly sesionCajaService = inject(SesionCajaService);
+  protected readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   @ViewChild('videoScanner') videoScannerRef?: ElementRef<HTMLVideoElement>;
   private codeReader: BrowserMultiFormatReader | null = null;
@@ -44,6 +50,14 @@ export class VentaForm implements OnInit, OnDestroy {
   protected readonly loading = signal(false);
   protected readonly buscandoDni = signal(false);
 
+  // Estados de integración con Sesión de Caja Activa (Turno POS)
+  protected readonly sesionCajaActiva = signal<SesionCaja | null>(null);
+  protected readonly cargandoSesion = signal(false);
+  protected readonly mostrarModalAperturaCaja = signal(false);
+  protected readonly saldoInicialApertura = signal<number>(200);
+  protected readonly abriendoCaja = signal(false);
+  protected readonly errorAperturaCaja = signal<string | null>(null);
+
   // Estados para el escáner de código de barras por cámara
   protected readonly mostrarModalEscaner = signal(false);
   protected readonly camarasDisponibles = signal<MediaDeviceInfo[]>([]);
@@ -52,11 +66,29 @@ export class VentaForm implements OnInit, OnDestroy {
   protected readonly errorCamara = signal<string | null>(null);
   protected readonly ultimoEscaneado = signal<string | null>(null);
   protected readonly mensajeEscaneo = signal<{ texto: string; exito: boolean } | null>(null);
+  protected readonly flashEscaneo = signal(false);
+
+  // Detección de pistola lectora de código de barras por hardware USB
+  protected readonly toastEscaneoHardware = signal<{ nombre: string; total: number; cantidad: number } | null>(null);
+  private toastTimer: any = null;
+  private scannerGunBuffer = '';
+  private scannerGunLastKeyTime = 0;
+
+  // Reactividad forzada para zoneless
+  protected readonly versionDetalles = signal(0);
 
   // Estados para la previsualización del ticket térmico
   protected readonly ventaGenerada = signal<VentaResponse | null>(null);
   protected readonly mostrarModalTicket = signal(false);
   protected readonly esBorrador = signal(false);
+
+  // Estados para la calculadora de cobro en efectivo y cambio (vuelto)
+  protected readonly montoRecibido = signal<number | null>(null);
+  protected readonly billetesComunes = [10, 20, 50, 100, 200];
+  protected readonly Math = Math;
+
+  protected readonly ticketMontoRecibido = signal<number | null>(null);
+  protected readonly ticketCambio = signal<number | null>(null);
 
   protected readonly form = this.fb.nonNullable.group({
     clienteNombre: ['Mercado Mayorista de Frutas Lima', [Validators.maxLength(100)]],
@@ -64,6 +96,24 @@ export class VentaForm implements OnInit, OnDestroy {
     metodoPago: ['EFECTIVO' as MetodoPagoPos],
     diasCredito: [30, [Validators.min(1), Validators.max(180)]],
     detalles: this.fb.array([this.crearLinea()], [Validators.minLength(1)]),
+  });
+
+  protected readonly metodoPagoActual = toSignal(
+    this.form.controls.metodoPago.valueChanges,
+    { initialValue: this.form.controls.metodoPago.value },
+  );
+
+  protected readonly esEfectivo = computed(
+    () => this.metodoPagoActual() === 'EFECTIVO'
+  );
+
+  protected readonly cambio = computed(() => {
+    const recibido = this.montoRecibido();
+    if (recibido === null || recibido === undefined || isNaN(recibido)) {
+      return null;
+    }
+    const tot = this.total();
+    return Math.round((recibido - tot) * 100) / 100;
   });
 
   protected get lineasForm() {
@@ -75,33 +125,123 @@ export class VentaForm implements OnInit, OnDestroy {
     { initialValue: this.form.controls.detalles.getRawValue() },
   );
 
-  protected readonly subtotales = computed(() =>
-    this.valoresDetalles().map((linea) => {
+  protected readonly subtotales = computed(() => {
+    this.versionDetalles();
+    return this.valoresDetalles().map((linea) => {
       const producto = this.productos().find((p) => p.id === linea.productoId);
       return (producto?.precio ?? 0) * (linea.cantidad ?? 0);
-    }),
-  );
+    });
+  });
 
-  protected readonly total = computed(() =>
-    this.subtotales().reduce((suma, s) => suma + s, 0),
-  );
+  protected readonly total = computed(() => {
+    this.versionDetalles();
+    return this.subtotales().reduce((suma, s) => suma + s, 0);
+  });
 
-  protected readonly preciosUnitarios = computed(() =>
-    this.valoresDetalles().map((linea) => {
+  protected readonly preciosUnitarios = computed(() => {
+    this.versionDetalles();
+    return this.valoresDetalles().map((linea) => {
       const producto = this.productos().find((p) => p.id === linea.productoId);
       return producto?.precio ?? 0;
-    }),
-  );
+    });
+  });
 
-  protected readonly opcionesPorLinea = computed(() =>
-    this.valoresDetalles().map((linea) => {
+  protected readonly opcionesPorLinea = computed(() => {
+    this.versionDetalles();
+    return this.valoresDetalles().map((linea) => {
       const texto = (linea.busqueda ?? '').toLowerCase();
       return this.productos().filter((p) => p.nombre.toLowerCase().includes(texto));
-    }),
+    });
+  });
+
+  // Lista viva de productos agregados en el ticket para visualización y control dentro del escáner
+  protected readonly itemsEnCarrito = computed(() => {
+    this.versionDetalles();
+    const lineas = this.lineasForm.getRawValue();
+    return lineas
+      .map((l, index) => {
+        const prod = this.productos().find((p) => p.id === l.productoId);
+        return {
+          index,
+          productoId: l.productoId,
+          producto: prod,
+          nombre: prod?.nombre ?? l.busqueda ?? `Producto #${l.productoId}`,
+          precio: prod?.precio ?? 0,
+          cantidad: l.cantidad ?? 1,
+          subtotal: (prod?.precio ?? 0) * (l.cantidad ?? 1),
+        };
+      })
+      .filter((item) => item.productoId > 0 && item.cantidad > 0);
+  });
+
+  protected readonly totalUnidadesEscaneadas = computed(() =>
+    this.itemsEnCarrito().reduce((sum, item) => sum + item.cantidad, 0),
   );
 
   ngOnInit(): void {
     this.cargarProductos();
+    this.cargarSesionCajaActiva();
+  }
+
+  protected cargarSesionCajaActiva(): void {
+    this.cargandoSesion.set(true);
+    this.sesionCajaService.obtenerActiva().subscribe({
+      next: (sesion) => {
+        this.sesionCajaActiva.set(sesion);
+        this.cargandoSesion.set(false);
+      },
+      error: () => {
+        this.sesionCajaActiva.set(null);
+        this.cargandoSesion.set(false);
+      },
+    });
+  }
+
+  protected abrirModalApertura(): void {
+    this.errorAperturaCaja.set(null);
+    this.mostrarModalAperturaCaja.set(true);
+  }
+
+  protected cerrarModalApertura(): void {
+    this.mostrarModalAperturaCaja.set(false);
+    this.errorAperturaCaja.set(null);
+  }
+
+  protected confirmarAperturaCaja(): void {
+    const usuario = this.authService.usuario();
+    const cajeroNombre = usuario?.nombre || 'Brandon Ccalla';
+    const roles = this.authService.roles() || [];
+    const rol = roles.includes('VENDEDOR') ? 'VENDEDOR, CAJERO' : (roles[0] || 'CAJERO');
+    const saldo = Number(this.saldoInicialApertura());
+
+    if (isNaN(saldo) || saldo < 0) {
+      this.errorAperturaCaja.set('El saldo inicial debe ser un número mayor o igual a cero.');
+      return;
+    }
+
+    this.abriendoCaja.set(true);
+    this.errorAperturaCaja.set(null);
+
+    this.sesionCajaService
+      .abrir({
+        usuarioId: 1,
+        cajero: cajeroNombre,
+        cajeroRol: rol,
+        saldoInicial: saldo,
+      })
+      .subscribe({
+        next: (sesionCreada) => {
+          this.abriendoCaja.set(false);
+          this.sesionCajaActiva.set(sesionCreada);
+          this.mostrarModalAperturaCaja.set(false);
+        },
+        error: (err) => {
+          this.abriendoCaja.set(false);
+          this.errorAperturaCaja.set(
+            err?.error?.message || 'No se pudo aperturar el turno de caja.'
+          );
+        },
+      });
   }
 
   private cargarProductos(): void {
@@ -143,11 +283,48 @@ export class VentaForm implements OnInit, OnDestroy {
 
   protected agregarLinea(): void {
     this.lineasForm.push(this.crearLinea());
+    this.versionDetalles.update((v) => v + 1);
+    this.cdr.markForCheck();
   }
 
   protected quitarLinea(indice: number): void {
     if (this.lineasForm.length > 1) {
       this.lineasForm.removeAt(indice);
+    } else {
+      this.lineasForm.at(0).patchValue({
+        productoId: 0,
+        busqueda: '',
+        cantidad: 1,
+      });
+    }
+    this.versionDetalles.update((v) => v + 1);
+    this.cdr.markForCheck();
+  }
+
+  protected aumentarCantidadLinea(indice: number): void {
+    if (indice >= 0 && indice < this.lineasForm.length) {
+      const linea = this.lineasForm.at(indice);
+      const cant = linea.controls.cantidad.value || 0;
+      linea.controls.cantidad.setValue(cant + 1);
+      linea.controls.cantidad.markAsDirty();
+      this.versionDetalles.update((v) => v + 1);
+      this.emitirBeepPos();
+      this.cdr.markForCheck();
+    }
+  }
+
+  protected disminuirCantidadLinea(indice: number): void {
+    if (indice >= 0 && indice < this.lineasForm.length) {
+      const linea = this.lineasForm.at(indice);
+      const cant = linea.controls.cantidad.value || 0;
+      if (cant > 1) {
+        linea.controls.cantidad.setValue(cant - 1);
+        linea.controls.cantidad.markAsDirty();
+      } else {
+        this.quitarLinea(indice);
+      }
+      this.versionDetalles.update((v) => v + 1);
+      this.cdr.markForCheck();
     }
   }
 
@@ -157,6 +334,30 @@ export class VentaForm implements OnInit, OnDestroy {
       productoId: producto.id,
       busqueda: producto.nombre,
     });
+    this.versionDetalles.update((v) => v + 1);
+    this.cdr.markForCheck();
+  }
+
+  protected onMontoRecibidoChange(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    if (val === '' || val === null || val === undefined) {
+      this.montoRecibido.set(null);
+    } else {
+      const num = parseFloat(val);
+      this.montoRecibido.set(isNaN(num) ? null : num);
+    }
+  }
+
+  protected setMontoRecibido(monto: number): void {
+    this.montoRecibido.set(monto);
+  }
+
+  protected setMontoExacto(): void {
+    this.montoRecibido.set(this.total());
+  }
+
+  protected limpiarMontoRecibido(): void {
+    this.montoRecibido.set(null);
   }
 
   protected previsualizarBorrador(): void {
@@ -184,6 +385,9 @@ export class VentaForm implements OnInit, OnDestroy {
     const igv = Math.round(tot * 0.18 * 100) / 100;
     const sub = Math.round((tot - igv) * 100) / 100;
 
+    this.ticketMontoRecibido.set(this.esEfectivo() ? this.montoRecibido() : null);
+    this.ticketCambio.set(this.esEfectivo() ? this.cambio() : null);
+
     this.ventaGenerada.set({
       id: 0,
       numeroTicket: 'TKT-VISTA-PREVIA',
@@ -206,11 +410,31 @@ export class VentaForm implements OnInit, OnDestroy {
       this.form.markAllAsTouched();
       return;
     }
+
+    const esEfec = this.form.controls.metodoPago.value === 'EFECTIVO';
+    if (esEfec && !this.sesionCajaActiva()) {
+      if (confirm('Atención de Caja: No tienes un turno de caja abierto para registrar ventas en efectivo. ¿Deseas aperturar tu sesión de caja ahora para poder rendir cuentas en el arqueo?')) {
+        this.abrirModalApertura();
+        return;
+      }
+    }
+
+    if (esEfec && this.montoRecibido() !== null && this.cambio() !== null && this.cambio()! < 0) {
+      this.error.set(`El efectivo recibido (S/ ${this.montoRecibido()!.toFixed(2)}) es menor al total de la venta (S/ ${this.total().toFixed(2)}). Faltan S/ ${Math.abs(this.cambio()!).toFixed(2)}.`);
+      return;
+    }
+
     const cantidadLineas = this.lineasForm.length;
     const esCred = this.form.controls.metodoPago.value === 'CREDITO';
+    const sesionTexto = this.sesionCajaActiva() ? ` (Caja: ${this.sesionCajaActiva()!.codigoSesion})` : '';
+    const notaVuelto = esEfec && this.cambio() !== null && this.cambio()! >= 0
+      ? ` | Paga con: S/ ${this.montoRecibido()!.toFixed(2)} (Vuelto: S/ ${this.cambio()!.toFixed(2)})`
+      : '';
+
     const notaIntegracion = esCred
       ? ` (Se generará Cuenta por Cobrar a ${this.form.controls.diasCredito.value} días + Despacho FEFO)`
-      : ' (Impactará Sesión de Caja activa + Despacho FEFO)';
+      : ` (Impactará Sesión de Caja activa${sesionTexto} + Despacho FEFO)${notaVuelto}`;
+
     const resumen = `Vas a registrar una venta de ${cantidadLineas} línea(s) por un total de S/ ${this.total().toFixed(2)}${notaIntegracion}. ¿Confirmar?`;
     if (!confirm(resumen)) return;
     this.guardar();
@@ -235,10 +459,13 @@ export class VentaForm implements OnInit, OnDestroy {
       .subscribe({
         next: (ventaCreada) => {
           this.loading.set(false);
+          this.ticketMontoRecibido.set(this.esEfectivo() ? this.montoRecibido() : null);
+          this.ticketCambio.set(this.esEfectivo() ? this.cambio() : null);
           this.ventaGenerada.set(ventaCreada);
           this.esBorrador.set(false);
           this.mostrarModalTicket.set(true);
           this.cargarProductos();
+          this.cargarSesionCajaActiva();
         },
         error: (err: HttpErrorResponse) => this.manejarErrorGuardado(err),
       });
@@ -260,6 +487,9 @@ export class VentaForm implements OnInit, OnDestroy {
   protected nuevaVenta(): void {
     this.mostrarModalTicket.set(false);
     this.ventaGenerada.set(null);
+    this.montoRecibido.set(null);
+    this.ticketMontoRecibido.set(null);
+    this.ticketCambio.set(null);
     this.form.reset({
       clienteNombre: 'Cliente General',
       clienteDocumento: '',
@@ -268,7 +498,10 @@ export class VentaForm implements OnInit, OnDestroy {
     });
     this.lineasForm.clear();
     this.agregarLinea();
+    this.versionDetalles.set(0);
     this.error.set(null);
+    this.cargarSesionCajaActiva();
+    this.cdr.markForCheck();
   }
 
   protected irAReporte(): void {
@@ -278,6 +511,57 @@ export class VentaForm implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.detenerEscaner();
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
+  }
+
+  // =========================================================================
+  // DETECCIÓN GLOBAL DE PISTOLA LECTORA DE CÓDIGOS DE BARRA USB (HARDWARE)
+  // =========================================================================
+  @HostListener('window:keydown', ['$event'])
+  onGlobalKeyDown(event: KeyboardEvent): void {
+    // Si estamos en un modal de confirmación o ticket, no interceptar
+    if (this.mostrarModalTicket() || this.mostrarModalAperturaCaja()) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    const esInputTexto = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+
+    const ahora = Date.now();
+    const tiempoDesdeUltimaTecla = ahora - this.scannerGunLastKeyTime;
+    this.scannerGunLastKeyTime = ahora;
+
+    if (event.key === 'Enter') {
+      const buffer = this.scannerGunBuffer.trim();
+      this.scannerGunBuffer = '';
+      if (buffer.length >= 1) {
+        // Intercepta si los caracteres llegaron a velocidad de hardware (< 80ms entre teclas) o si no estamos en un input
+        if (tiempoDesdeUltimaTecla < 80 || !esInputTexto) {
+          event.preventDefault();
+          event.stopPropagation();
+          this.procesarCodigoEscaneado(buffer, true);
+        }
+      }
+    } else if (event.key.length === 1) {
+      if (tiempoDesdeUltimaTecla > 110) {
+        this.scannerGunBuffer = '';
+      }
+      this.scannerGunBuffer += event.key;
+    }
+  }
+
+  private mostrarToastHardware(nombre: string, cantidad: number, total: number): void {
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
+    this.toastEscaneoHardware.set({ nombre, cantidad, total });
+    this.cdr.markForCheck();
+    this.toastTimer = setTimeout(() => {
+      this.toastEscaneoHardware.set(null);
+      this.cdr.markForCheck();
+    }, 3200);
   }
 
   // =========================================================================
@@ -300,6 +584,7 @@ export class VentaForm implements OnInit, OnDestroy {
       if (devices.length === 0) {
         this.errorCamara.set('No se detectó ninguna cámara en este equipo (laptop o móvil).');
         this.escaneando.set(false);
+        this.cdr.markForCheck();
         return;
       }
 
@@ -312,6 +597,7 @@ export class VentaForm implements OnInit, OnDestroy {
       console.error('Error al inicializar cámara:', err);
       this.errorCamara.set('Permiso de cámara no otorgado o navegador sin soporte de medios.');
       this.escaneando.set(false);
+      this.cdr.markForCheck();
     }
   }
 
@@ -331,15 +617,17 @@ export class VentaForm implements OnInit, OnDestroy {
         this.videoScannerRef.nativeElement,
         (result) => {
           if (result) {
-            this.procesarCodigoEscaneado(result.getText());
+            this.procesarCodigoEscaneado(result.getText(), false);
           }
         },
       );
       this.escaneando.set(true);
+      this.cdr.markForCheck();
     } catch (err: unknown) {
       console.error('Error al iniciar stream de video:', err);
       this.errorCamara.set('No se pudo acceder a la transmisión de video de la cámara seleccionada.');
       this.escaneando.set(false);
+      this.cdr.markForCheck();
     }
   }
 
@@ -349,22 +637,33 @@ export class VentaForm implements OnInit, OnDestroy {
       this.scannerControls = null;
     }
     this.escaneando.set(false);
+    this.cdr.markForCheck();
   }
 
   protected cerrarEscanerCamara(): void {
     this.detenerEscaner();
     this.mostrarModalEscaner.set(false);
     this.mensajeEscaneo.set(null);
+    this.cdr.markForCheck();
   }
 
-  protected procesarCodigoEscaneado(codigoRaw: string): void {
+  protected procesarCodigoEscaneado(codigoRaw: string, esDirecto = false): void {
     const ahora = Date.now();
     const codigo = (codigoRaw || '').trim();
     if (!codigo) return;
 
-    if (codigo === this.ultimoCodigoValor && ahora - this.ultimoCodigoTiempo < 1800) {
-      return;
+    // Control de debounce para escaneo continuo con cámara:
+    // Si es el MISMO código que el anterior, esperar 900ms para no duplicar en 1 solo fotograma
+    // Si es un código DISTINTO, permitir escaneo inmediato tras 300ms
+    // Si es directo (pistola hardware, input manual o clic de prueba), 0ms de espera
+    if (!esDirecto) {
+      const mismoCodigo = codigo === this.ultimoCodigoValor;
+      const cooldown = mismoCodigo ? 900 : 300;
+      if (ahora - this.ultimoCodigoTiempo < cooldown) {
+        return;
+      }
     }
+
     this.ultimoCodigoTiempo = ahora;
     this.ultimoCodigoValor = codigo;
     this.ultimoEscaneado.set(codigo);
@@ -410,17 +709,34 @@ export class VentaForm implements OnInit, OnDestroy {
 
     if (producto) {
       this.emitirBeepPos();
+      this.activarFlashEscaneo();
       this.agregarProductoAlCarrito(producto);
+
+      const cantTotal = this.obtenerCantidadProducto(producto.id);
       this.mensajeEscaneo.set({
-        texto: `¡Escaneado con éxito! "${producto.nombre}" agregado (+1 un. · S/ ${producto.precio.toFixed(2)})`,
+        texto: `¡Escaneado con éxito! "${producto.nombre}" (+1 un. · En ticket: ${cantTotal} un. · S/ ${producto.precio.toFixed(2)} c/u). ¡Sigue escaneando más productos!`,
         exito: true,
       });
+
+      if (!this.mostrarModalEscaner()) {
+        this.mostrarToastHardware(producto.nombre, cantTotal, this.total());
+      }
     } else {
       this.mensajeEscaneo.set({
         texto: `Código leído: "${codigo}", pero no coincide con ningún producto del catálogo.`,
         exito: false,
       });
     }
+
+    this.cdr.markForCheck();
+  }
+
+  private activarFlashEscaneo(): void {
+    this.flashEscaneo.set(true);
+    setTimeout(() => {
+      this.flashEscaneo.set(false);
+      this.cdr.markForCheck();
+    }, 380);
   }
 
   private agregarProductoAlCarrito(producto: Producto): void {
@@ -444,6 +760,7 @@ export class VentaForm implements OnInit, OnDestroy {
           busqueda: producto.nombre,
           cantidad: 1,
         });
+        primeraLinea.markAsDirty();
       } else {
         const nuevaLinea = this.fb.nonNullable.group({
           productoId: [producto.id, [Validators.min(1)]],
@@ -453,10 +770,19 @@ export class VentaForm implements OnInit, OnDestroy {
         this.lineasForm.push(nuevaLinea);
       }
     }
+    this.versionDetalles.update((v) => v + 1);
+    this.cdr.markForCheck();
+  }
+
+  private obtenerCantidadProducto(productoId: number): number {
+    const linea = this.lineasForm.controls.find(
+      (l) => l.controls.productoId.value === productoId,
+    );
+    return linea?.controls.cantidad.value || 1;
   }
 
   protected simularEscaneo(productoId: number): void {
-    this.procesarCodigoEscaneado(productoId.toString());
+    this.procesarCodigoEscaneado(productoId.toString(), true);
   }
 
   private emitirBeepPos(): void {

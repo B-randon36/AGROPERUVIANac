@@ -23,6 +23,7 @@ export class VentaService {
 
   buscar(
     estado?: string,
+    metodoPago?: string,
     desde?: string,
     hasta?: string,
     page = 0,
@@ -31,6 +32,7 @@ export class VentaService {
   ): Observable<VentaResponse[]> {
     let params = new HttpParams().set('page', page).set('size', size).set('sort', sort);
     if (estado) params = params.set('estado', estado);
+    if (metodoPago) params = params.set('metodoPago', metodoPago);
     if (desde) params = params.set('desde', desde);
     if (hasta) params = params.set('hasta', hasta);
     return this.http.get<any>(this.api.buildUrl(this.resource), { params }).pipe(
@@ -40,6 +42,7 @@ export class VentaService {
 
   buscarPaginado(
     estado?: string,
+    metodoPago?: string,
     desde?: string,
     hasta?: string,
     page = 0,
@@ -48,6 +51,7 @@ export class VentaService {
   ): Observable<PageResponse<VentaResponse>> {
     let params = new HttpParams().set('page', page).set('size', size).set('sort', sort);
     if (estado) params = params.set('estado', estado);
+    if (metodoPago) params = params.set('metodoPago', metodoPago);
     if (desde) params = params.set('desde', desde);
     if (hasta) params = params.set('hasta', hasta);
     return this.http.get<PageResponse<VentaResponse>>(this.api.buildUrl(this.resource), { params });
@@ -61,9 +65,10 @@ export class VentaService {
     return this.http.patch<VentaResponse>(this.api.buildUrl(`${this.resource}/${id}/anular`), {});
   }
 
-  reporte(estado?: string, desde?: string, hasta?: string): Observable<VentaReporte> {
+  reporte(estado?: string, metodoPago?: string, desde?: string, hasta?: string): Observable<VentaReporte> {
     let params = new HttpParams();
     if (estado) params = params.set('estado', estado);
+    if (metodoPago) params = params.set('metodoPago', metodoPago);
     if (desde) params = params.set('desde', desde);
     if (hasta) params = params.set('hasta', hasta);
     return this.http.get<VentaReporte>(this.api.buildUrl(`${this.resource}/resumen`), { params });

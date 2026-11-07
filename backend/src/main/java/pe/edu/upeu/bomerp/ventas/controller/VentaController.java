@@ -42,12 +42,13 @@ public class VentaController {
     @GetMapping
     public ResponseEntity<Page<VentaResponse>> buscar(
             @RequestParam(required = false) EstadoVenta estado,
+            @RequestParam(required = false) pe.edu.upeu.bomerp.ventas.entity.MetodoPagoVenta metodoPago,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta,
             @PageableDefault(size = 20, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal Jwt jwt) {
         String vendedorId = esVendedorRestringido(jwt) ? jwt.getSubject() : null;
-        return ResponseEntity.ok(ventaService.buscar(estado, desde, hasta, vendedorId, pageable));
+        return ResponseEntity.ok(ventaService.buscar(estado, metodoPago, desde, hasta, vendedorId, pageable));
     }
 
     @Operation(summary = "Consultar una venta por ID con validación de propiedad RN8 (VENDEDOR solo ve sus ventas)")
@@ -67,7 +68,7 @@ public class VentaController {
     }
 
     @Operation(summary = "Anula una venta registrada, restaurando el stock de sus productos y auditando al actor")
-    @RequestMapping(value = "/{id}/anular", method = {RequestMethod.PATCH, RequestMethod.PUT})
+    @RequestMapping(value = "/{id}/anular", method = { RequestMethod.PATCH, RequestMethod.PUT })
     public ResponseEntity<VentaResponse> anular(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
         String actor = (jwt != null) ? jwt.getSubject() : "ANONYMOUS";
         return ResponseEntity.ok(ventaService.anular(id, actor));
@@ -83,9 +84,10 @@ public class VentaController {
     @GetMapping("/resumen")
     public ResponseEntity<VentaReporte> reporte(
             @RequestParam(required = false) EstadoVenta estado,
+            @RequestParam(required = false) pe.edu.upeu.bomerp.ventas.entity.MetodoPagoVenta metodoPago,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta) {
-        return ResponseEntity.ok(ventaService.reporte(estado, desde, hasta));
+        return ResponseEntity.ok(ventaService.reporte(estado, metodoPago, desde, hasta));
     }
 
     @Operation(summary = "Generar reporte omnicanal consolidado y ranking de rentabilidad de productos")
@@ -109,7 +111,8 @@ public class VentaController {
     }
 
     private boolean esVendedorRestringido(Jwt jwt) {
-        if (jwt == null) return false;
+        if (jwt == null)
+            return false;
         Map<String, Object> realmAccess = jwt.getClaim("realm_access");
         Object roles = realmAccess == null ? null : realmAccess.get("roles");
         if (!(roles instanceof Collection<?> lista)) {

@@ -646,3 +646,249 @@ tr:hover td {
   gap: 0.75rem;
 }
 
+/* =========================================================================
+   REGLAS GLOBALES DE IMPRESIÓN - AISLAMIENTO EXCLUSIVO DE TICKET TÉRMICO (80mm)
+   ========================================================================= */
+@media print {
+  @page {
+    margin: 0 !important;
+    size: 80mm auto !important;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    width: 80mm !important;
+    min-width: 80mm !important;
+    max-width: 80mm !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 1. Ocultar todos los elementos del DOM por defecto */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* 2. Remover completamente del flujo de layout elementos ajenos al ticket */
+  aside,
+  aside.sidebar,
+  .sidebar,
+  .sidebar-brand,
+  .sidebar-nav,
+  header,
+  header.topbar,
+  .topbar,
+  .topbar-left,
+  .topbar-right,
+  nav,
+  .transaccion-form,
+  .transaccion-container > *:not(.modal-backdrop),
+  .scanner-card,
+  .products-grid,
+  .cart-panel,
+  .pos-grid,
+  .filtros-card,
+  .ventas-table-card,
+  .kpi-row,
+  .metric-card,
+  .modal-top-bar,
+  .modal-footer-actions,
+  .modal-footer,
+  .btn-close-modal,
+  .no-print,
+  button {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+  }
+
+  /* 3. Contenedores ancestros: transparentes, estáticos y sin espaciado */
+  app-root,
+  app-layout,
+  .app-shell,
+  .main-wrapper,
+  main,
+  main.page-container,
+  .page-container,
+  app-venta-form,
+  app-venta-list,
+  app-venta-reporte,
+  .transaccion-container,
+  .ventas-page,
+  .modal-backdrop,
+  .modal-content,
+  .ticket-modal-wrapper,
+  .ticket-modal {
+    display: block !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  /* 4. Mostrar ÚNICAMENTE el ticket térmico imprimible */
+  .printable-ticket,
+  .printable-ticket * {
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .printable-ticket {
+    display: block !important;
+    position: static !important;
+    margin: 0 auto !important;
+    padding: 4mm 3mm !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    min-width: 80mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    font-family: 'JetBrains Mono', 'Courier New', Courier, monospace !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+    box-sizing: border-box !important;
+    page-break-after: avoid !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  .printable-ticket table,
+  .printable-ticket .ticket-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 4px 0 !important;
+  }
+
+  .printable-ticket th,
+  .printable-ticket td {
+    color: #000000 !important;
+    padding: 2px 0 !important;
+    font-size: 10px !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  .printable-ticket .ticket-logo-brand,
+  .printable-ticket h3 {
+    font-size: 13.5px !important;
+    font-weight: 800 !important;
+    color: #000000 !important;
+    text-align: center !important;
+    margin: 2px 0 !important;
+  }
+
+  .printable-ticket .ticket-sub,
+  .printable-ticket p {
+    font-size: 9.5px !important;
+    color: #000000 !important;
+    margin: 1px 0 !important;
+    text-align: center !important;
+  }
+
+  .printable-ticket .ticket-meta-grid {
+    font-size: 9.5px !important;
+    color: #000000 !important;
+    text-align: left !important;
+    margin: 4px 0 !important;
+  }
+
+  .printable-ticket .ticket-meta-grid div {
+    margin: 1px 0 !important;
+  }
+
+  .printable-ticket .ticket-number,
+  .printable-ticket h4 {
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    margin: 4px 0 !important;
+    color: #000000 !important;
+  }
+
+  .printable-ticket .ticket-divider {
+    color: #000000 !important;
+    font-size: 9px !important;
+    letter-spacing: -0.5px !important;
+    text-align: center !important;
+    margin: 3px 0 !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+  }
+
+  .printable-ticket .ticket-totals {
+    margin-top: 4px !important;
+    padding-top: 4px !important;
+    border-top: none !important;
+  }
+
+  .printable-ticket .tot-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    font-size: 10.5px !important;
+    margin: 2px 0 !important;
+    color: #000000 !important;
+  }
+
+  .printable-ticket .grand-total {
+    font-size: 12.5px !important;
+    font-weight: 800 !important;
+    margin-top: 4px !important;
+    color: #000000 !important;
+  }
+
+  .printable-ticket .total-big {
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    color: #000000 !important;
+  }
+
+  .printable-ticket .ticket-footer {
+    text-align: center !important;
+    margin-top: 6px !important;
+    font-size: 9px !important;
+    color: #000000 !important;
+  }
+
+  .printable-ticket .ticket-security-code,
+  .printable-ticket .ticket-fine-print {
+    font-size: 8.5px !important;
+    color: #000000 !important;
+    margin: 2px 0 !important;
+  }
+
+  .printable-ticket .ticket-barcode-sim {
+    font-size: 13px !important;
+    letter-spacing: 2px !important;
+    margin: 4px 0 !important;
+    text-align: center !important;
+    color: #000000 !important;
+  }
+}
+

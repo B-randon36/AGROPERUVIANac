@@ -60,6 +60,10 @@ export class VentaList implements OnInit {
     });
   }
 
+  imprimirTicket(): void {
+    window.print();
+  }
+
   anularVenta(id: number): void {
     if (!confirm(`¿Está seguro de anular la venta #${id}? Esta acción repondrá automáticamente el stock de los productos.`)) {
       return;

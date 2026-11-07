@@ -37,6 +37,7 @@ export class VentaReporteComponent implements OnInit {
 
   // Filtros
   protected readonly estadoFiltro = signal('');
+  protected readonly metodoPagoFiltro = signal('');
   protected readonly desdeFiltro = signal('');
   protected readonly hastaFiltro = signal('');
 
@@ -66,7 +67,12 @@ export class VentaReporteComponent implements OnInit {
 
     // 1. Obtener agregados reales del servidor (/api/v1/ventas/resumen)
     this.ventaService
-      .reporte(this.estadoFiltro() || undefined, desde, hasta)
+      .reporte(
+        this.estadoFiltro() || undefined,
+        this.metodoPagoFiltro() || undefined,
+        desde,
+        hasta,
+      )
       .subscribe({
         next: (rep) => {
           if (rep.agregado) {
@@ -88,6 +94,7 @@ export class VentaReporteComponent implements OnInit {
     this.ventaService
       .buscarPaginado(
         this.estadoFiltro() || undefined,
+        this.metodoPagoFiltro() || undefined,
         desde,
         hasta,
         this.pageIndex(),
@@ -113,6 +120,12 @@ export class VentaReporteComponent implements OnInit {
     this.cargar();
   }
 
+  filtrarPorMetodoPago(metodo: string): void {
+    this.metodoPagoFiltro.set(metodo);
+    this.pageIndex.set(0);
+    this.cargar();
+  }
+
   filtrarPorFecha(desde: string, hasta: string): void {
     this.desdeFiltro.set(desde);
     this.hastaFiltro.set(hasta);
@@ -122,6 +135,7 @@ export class VentaReporteComponent implements OnInit {
 
   limpiarFiltros(): void {
     this.estadoFiltro.set('');
+    this.metodoPagoFiltro.set('');
     this.desdeFiltro.set('');
     this.hastaFiltro.set('');
     this.pageIndex.set(0);
@@ -201,5 +215,61 @@ export class VentaReporteComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  getEtiquetaMetodoPago(metodo?: string): string {
+    switch (metodo) {
+      case 'EFECTIVO':
+        return 'Efectivo';
+      case 'TARJETA':
+        return 'Tarjeta (POS)';
+      case 'YAPE':
+        return 'Yape';
+      case 'PLIN':
+        return 'Plin';
+      case 'CREDITO':
+        return 'Crédito Comercial';
+      case 'TRANSFERENCIA':
+        return 'Transferencia';
+      default:
+        return metodo || 'Efectivo';
+    }
+  }
+
+  getIconoMetodoPago(metodo?: string): string {
+    switch (metodo) {
+      case 'EFECTIVO':
+        return 'payments';
+      case 'TARJETA':
+        return 'credit_card';
+      case 'YAPE':
+      case 'PLIN':
+        return 'phone_android';
+      case 'CREDITO':
+        return 'receipt_long';
+      case 'TRANSFERENCIA':
+        return 'account_balance';
+      default:
+        return 'paid';
+    }
+  }
+
+  getClaseMetodoPago(metodo?: string): string {
+    switch (metodo) {
+      case 'EFECTIVO':
+        return 'badge-mp-efectivo';
+      case 'TARJETA':
+        return 'badge-mp-tarjeta';
+      case 'YAPE':
+        return 'badge-mp-yape';
+      case 'PLIN':
+        return 'badge-mp-plin';
+      case 'CREDITO':
+        return 'badge-mp-credito';
+      case 'TRANSFERENCIA':
+        return 'badge-mp-transferencia';
+      default:
+        return 'badge-mp-efectivo';
+    }
   }
 }

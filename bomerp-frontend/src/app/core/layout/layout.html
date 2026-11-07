@@ -20,28 +20,30 @@
 
       @if (auth.autenticado()) {
         <!-- Gestión Financiera & Caja -->
-        @if (auth.tieneRol('ADMIN', 'SUPERVISOR')) {
+        @if (auth.tieneRol('ADMIN', 'SUPERVISOR', 'CAJERO', 'VENDEDOR')) {
           <div class="nav-section-title">GESTIÓN FINANCIERA & CAJA</div>
           <a routerLink="/finanzas/sesiones" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">point_of_sale</span>
             <span>Sesiones de Caja</span>
           </a>
-          <a routerLink="/finanzas/rendiciones" routerLinkActive="active" class="nav-item">
-            <span class="material-symbols-outlined nav-icon">receipt_long</span>
-            <span>Rendición Caja Chica</span>
-          </a>
-          <a routerLink="/finanzas/creditos" routerLinkActive="active" class="nav-item">
-            <span class="material-symbols-outlined nav-icon">request_quote</span>
-            <span>Cuentas por Cobrar</span>
-          </a>
-          <a routerLink="/finanzas/reportes" routerLinkActive="active" class="nav-item">
-            <span class="material-symbols-outlined nav-icon">analytics</span>
-            <span>Dashboard Financiero</span>
-          </a>
           <a routerLink="/caja" routerLinkActive="active" class="nav-item">
             <span class="material-symbols-outlined nav-icon">account_balance</span>
             <span>Arqueo de Turno</span>
           </a>
+          @if (auth.tieneRol('ADMIN', 'SUPERVISOR')) {
+            <a routerLink="/finanzas/rendiciones" routerLinkActive="active" class="nav-item">
+              <span class="material-symbols-outlined nav-icon">receipt_long</span>
+              <span>Rendición Caja Chica</span>
+            </a>
+            <a routerLink="/finanzas/creditos" routerLinkActive="active" class="nav-item">
+              <span class="material-symbols-outlined nav-icon">request_quote</span>
+              <span>Cuentas por Cobrar</span>
+            </a>
+            <a routerLink="/finanzas/reportes" routerLinkActive="active" class="nav-item">
+              <span class="material-symbols-outlined nav-icon">analytics</span>
+              <span>Dashboard Financiero</span>
+            </a>
+          }
         }
 
         <!-- Ventas & Comercial -->

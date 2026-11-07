@@ -58,6 +58,60 @@
     </div>
   </div>
 
+  <!-- BARRA DE VINCULACIÓN CON SESIÓN DE CAJA (RENDICIÓN DE CUENTAS) -->
+  @if (sesionCajaActiva(); as sesion) {
+    <div class="sesion-pos-card activa">
+      <div class="sesion-pos-left">
+        <div class="sesion-badge-icon">
+          <span class="material-symbols-outlined icon-sesion">point_of_sale</span>
+        </div>
+        <div class="sesion-pos-text">
+          <div class="sesion-pos-title">
+            <span class="pulse-dot-green"></span>
+            <strong>Turno de Caja Vinculado:</strong>
+            <code>{{ sesion.codigoSesion }}</code>
+            <span class="badge-chip-green">EN CURSO</span>
+          </div>
+          <div class="sesion-pos-meta">
+            Cajero: <strong>{{ sesion.cajero }}</strong> ({{ sesion.cajeroRol || 'Ventas POS' }}) &bull;
+            Fondo Inicial: <strong>{{ sesion.saldoInicial | currency:'PEN':'S/ ' }}</strong> &bull;
+            Ingresos Efectivo: <strong style="color: #059669;">+{{ (sesion.totalIngresosEfectivo || 0) | currency:'PEN':'S/ ' }}</strong> &bull;
+            Disponible en Gaveta: <strong style="color: #0f172a;">{{ (sesion.saldoEsperadoEfectivo || 0) | currency:'PEN':'S/ ' }}</strong>
+          </div>
+        </div>
+      </div>
+      <div class="sesion-pos-right">
+        <a [routerLink]="['/finanzas/sesiones', sesion.id]" class="btn btn-secondary btn-sm btn-rendir" title="Ir al arqueo físico de billetes y monedas para rendición de cuentas">
+          <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">account_balance</span>
+          Rendir Cuentas / Arqueo
+        </a>
+      </div>
+    </div>
+  } @else {
+    <div class="sesion-pos-card inactiva">
+      <div class="sesion-pos-left">
+        <div class="sesion-badge-icon inactivo">
+          <span class="material-symbols-outlined icon-sesion" style="color: #d97706;">warning</span>
+        </div>
+        <div class="sesion-pos-text">
+          <div class="sesion-pos-title" style="color: #b45309;">
+            <strong>Sin Turno de Caja Activo</strong>
+            <span class="badge-chip-amber">NO INICIADA</span>
+          </div>
+          <div class="sesion-pos-meta" style="color: #92400e;">
+            Para que las ventas en efectivo se registren en tu gaveta física y puedas rendir cuentas con el arqueo al finalizar tu turno, debes aperturar tu caja diaria.
+          </div>
+        </div>
+      </div>
+      <div class="sesion-pos-right">
+        <button type="button" class="btn btn-warning btn-sm btn-abrir-caja" (click)="abrirModalApertura()">
+          <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">login</span>
+          Iniciar Sesión de Caja
+        </button>
+      </div>
+    </div>
+  }
+
   @if (error()) {
     <div class="alert alert-danger">
       <span class="material-symbols-outlined icon-inline" style="color: #dc2626;">warning</span>
@@ -139,6 +193,130 @@
             <option [value]="45">45 días</option>
             <option [value]="60">60 días</option>
           </select>
+        </div>
+      </div>
+    }
+
+    <!-- CALCULADORA DE COBRO EN EFECTIVO & CAMBIO (VUELTO) -->
+    @if (esEfectivo()) {
+      <div class="cambio-efectivo-card">
+        <div class="cambio-header">
+          <div class="cambio-titulo">
+            <span class="material-symbols-outlined icon-pagos">payments</span>
+            <div>
+              <h4>Calculadora de Cobro en Efectivo & Cambio (Vuelto)</h4>
+              <p class="cambio-sub">Ingrese el efectivo entregado por el cliente para calcular el vuelto exacto al instante</p>
+            </div>
+          </div>
+          <div class="cambio-total-referencia">
+            <span class="lbl-ref">Total a Pagar:</span>
+            <span class="val-ref">{{ total() | currency:'PEN':'S/ ' }}</span>
+          </div>
+        </div>
+
+        <div class="cambio-body-grid">
+          <!-- Columna Input & Denominaciones rápidas -->
+          <div class="cambio-input-col">
+            <label for="montoRecibidoInput" class="form-label" style="font-weight: 700; margin-bottom: 0.25rem;">
+              Efectivo Recibido / Cliente Paga con:
+            </label>
+            <div class="input-soles-wrapper">
+              <span class="moneda-prefijo">S/</span>
+              <input
+                id="montoRecibidoInput"
+                type="number"
+                step="0.10"
+                min="0"
+                class="form-control input-monto-recibido"
+                placeholder="0.00"
+                [value]="montoRecibido() ?? ''"
+                (input)="onMontoRecibidoChange($event)"
+              />
+              @if (montoRecibido() !== null && montoRecibido()! > 0) {
+                <button
+                  type="button"
+                  class="btn-limpiar-monto"
+                  (click)="limpiarMontoRecibido()"
+                  title="Limpiar monto"
+                >
+                  &times;
+                </button>
+              }
+            </div>
+
+            <!-- Botones de billetes rápidos comunes en Perú -->
+            <div class="denominaciones-rapidas">
+              <span class="denominaciones-label">Atajos rápidos:</span>
+              <button
+                type="button"
+                class="btn-billete btn-exacto"
+                [class.activo]="montoRecibido() === total() && total() > 0"
+                (click)="setMontoExacto()"
+                [disabled]="total() <= 0"
+                title="Paga con el monto exacto"
+              >
+                Exacto (S/ {{ total().toFixed(2) }})
+              </button>
+              @for (billete of billetesComunes; track billete) {
+                <button
+                  type="button"
+                  class="btn-billete"
+                  [class.activo]="montoRecibido() === billete"
+                  [class.suficiente]="billete >= total() && total() > 0"
+                  (click)="setMontoRecibido(billete)"
+                >
+                  S/ {{ billete }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Columna Resultado de Vuelto / Cambio -->
+          <div class="cambio-resultado-col">
+            @if (montoRecibido() === null || montoRecibido() === undefined || montoRecibido() === 0) {
+              <div class="cambio-box cambio-espera">
+                <span class="material-symbols-outlined icon-cambio">point_of_sale</span>
+                <span class="txt-espera">Ingrese el efectivo entregado para calcular el vuelto</span>
+              </div>
+            } @else if (cambio()! > 0) {
+              <div class="cambio-box cambio-positivo">
+                <div class="cambio-box-header">
+                  <span class="material-symbols-outlined" style="font-size: 1.25rem;">change_circle</span>
+                  <span>VUELTO A ENTREGAR</span>
+                </div>
+                <div class="cambio-monto-destacado">
+                  {{ cambio() | currency:'PEN':'S/ ' }}
+                </div>
+                <span class="cambio-detalle">
+                  Recibido: S/ {{ montoRecibido()?.toFixed(2) }} &bull; Total: S/ {{ total().toFixed(2) }}
+                </span>
+              </div>
+            } @else if (cambio() === 0) {
+              <div class="cambio-box cambio-exacto">
+                <div class="cambio-box-header">
+                  <span class="material-symbols-outlined" style="font-size: 1.25rem;">check_circle</span>
+                  <span>PAGO EXACTO</span>
+                </div>
+                <div class="cambio-monto-destacado">
+                  S/ 0.00
+                </div>
+                <span class="cambio-detalle">No se requiere entregar vuelto</span>
+              </div>
+            } @else {
+              <div class="cambio-box cambio-insuficiente">
+                <div class="cambio-box-header">
+                  <span class="material-symbols-outlined" style="font-size: 1.25rem;">warning</span>
+                  <span>MONTO INSUFICIENTE</span>
+                </div>
+                <div class="cambio-monto-destacado">
+                  Faltan {{ Math.abs(cambio()!) | currency:'PEN':'S/ ' }}
+                </div>
+                <span class="cambio-detalle">
+                  Entregado S/ {{ montoRecibido()?.toFixed(2) }} de S/ {{ total().toFixed(2) }} requeridos
+                </span>
+              </div>
+            }
+          </div>
         </div>
       </div>
     }
@@ -264,6 +442,12 @@
 
       <div class="botones-confirmacion">
         <a routerLink="/ventas/reporte" class="btn btn-secondary">Cancelar</a>
+        @if (esEfectivo() && cambio() !== null && cambio()! >= 0) {
+          <div class="pill-vuelto-footer" title="Cambio que debes entregar al cliente">
+            <span class="material-symbols-outlined" style="font-size: 1.15rem; color: #16a34a;">payments</span>
+            <span>Vuelto: <strong>{{ cambio() | currency:'PEN':'S/ ' }}</strong></span>
+          </div>
+        }
         <button
           type="button"
           class="btn btn-secondary btn-preview"
@@ -278,7 +462,7 @@
           type="button"
           class="btn btn-primary btn-submit"
           (click)="confirmarYGuardar()"
-          [disabled]="loading() || form.invalid"
+          [disabled]="loading() || form.invalid || (esEfectivo() && cambio() !== null && cambio()! < 0)"
         >
           @if (loading()) {
             <span class="spinner-small"></span> Registrando venta...
@@ -321,6 +505,8 @@
             </h4>
             <div class="ticket-meta-grid">
               <div><strong>FECHA:</strong> {{ ticket.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</div>
+              <div><strong>CAJA / TURNO:</strong> {{ sesionCajaActiva()?.codigoSesion || 'GAVETA GENERAL' }}</div>
+              <div><strong>CAJERO:</strong> {{ sesionCajaActiva()?.cajero || authService.usuario()?.nombre || 'Vendedor POS' }}</div>
               <div><strong>CLIENTE:</strong> {{ ticket.clienteNombre || 'Cliente General' }}</div>
               <div><strong>PAGO:</strong> {{ ticket.metodoPago }}</div>
               <div><strong>ESTADO:</strong> {{ ticket.estado }}</div>
@@ -370,6 +556,16 @@
               <span>TOTAL {{ ticket.metodoPago === 'CREDITO' ? 'A CRÉDITO:' : 'A PAGAR:' }}</span>
               <span class="total-big">{{ (ticket.total || 0) | currency:'PEN':'S/ ' }}</span>
             </div>
+            @if (ticket.metodoPago === 'EFECTIVO' && ticketMontoRecibido() !== null) {
+              <div class="tot-row" style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #000;">
+                <span>EFECTIVO RECIBIDO:</span>
+                <span>{{ ticketMontoRecibido() | currency:'PEN':'S/ ' }}</span>
+              </div>
+              <div class="tot-row grand-total" style="color: #000;">
+                <span>CAMBIO / VUELTO:</span>
+                <span class="total-big">{{ (ticketCambio() || 0) | currency:'PEN':'S/ ' }}</span>
+              </div>
+            }
           </div>
 
           <div class="ticket-divider">========================================</div>
@@ -423,8 +619,15 @@
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span class="material-symbols-outlined" style="font-size: 1.6rem; color: #0284c7;">barcode_scanner</span>
             <div>
-              <h3 style="margin: 0; font-size: 1.15rem;">Lector de Código de Barras POS</h3>
-              <p style="margin: 0; font-size: 0.8rem; color: #64748b;">Compatible con cámara web de laptop y smartphone</p>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <h3 style="margin: 0; font-size: 1.15rem;">Lector de Código de Barras POS</h3>
+                <span class="badge-modo-continuo">
+                  <span class="dot-online"></span> Modo Continuo Activo
+                </span>
+              </div>
+              <p style="margin: 0; font-size: 0.8rem; color: #64748b;">
+                Escanea múltiples productos uno tras otro sin salir de la cámara
+              </p>
             </div>
           </div>
           <button type="button" class="btn-close-scanner" (click)="cerrarEscanerCamara()" aria-label="Cerrar">
@@ -433,7 +636,7 @@
         </div>
 
         <div class="scanner-body">
-          <div class="scanner-viewport">
+          <div class="scanner-viewport" [class.scanner-viewport-flash]="flashEscaneo()">
             <video #videoScanner autoplay playsinline muted class="scanner-video"></video>
 
             <div class="scanner-overlay-guide">
@@ -443,6 +646,13 @@
               <div class="scanner-corner bottom-right"></div>
               <div class="scanner-laser"></div>
             </div>
+
+            @if (flashEscaneo()) {
+              <div class="scanner-flash-indicator">
+                <span class="material-symbols-outlined">check_circle</span>
+                <span>¡CÓDIGO LEÍDO!</span>
+              </div>
+            }
 
             @if (errorCamara()) {
               <div class="scanner-camera-error">
@@ -488,9 +698,46 @@
           } @else {
             <div class="scanner-instruction">
               <span class="material-symbols-outlined" style="font-size: 1.1rem; color: #0284c7;">center_focus_strong</span>
-              <span>Apunte el código de barras o código QR hacia el recuadro central</span>
+              <span>Apunta el código de barras o QR de tus productos hacia el recuadro central</span>
             </div>
           }
+
+          <!-- Bandeja de Productos Escaneados en Vivo -->
+          <div class="scanner-cart-drawer">
+            <div class="scanner-cart-header">
+              <div class="scanner-cart-title">
+                <span class="material-symbols-outlined" style="font-size: 1.15rem; color: #0284c7;">shopping_cart</span>
+                <strong>Productos en este Ticket</strong>
+                <span class="badge badge-info" style="font-size: 0.75rem;">{{ totalUnidadesEscaneadas() }} un.</span>
+              </div>
+              <span class="scanner-cart-hint">Escaneo continuo habilitado</span>
+            </div>
+
+            @if (itemsEnCarrito().length === 0) {
+              <div class="scanner-cart-empty">
+                <span class="material-symbols-outlined" style="font-size: 1.8rem; color: #94a3b8;">qr_code_scanner</span>
+                <span>Apunta un código de barras o presiona un producto para comenzar a sumar</span>
+              </div>
+            } @else {
+              <div class="scanner-cart-list">
+                @for (item of itemsEnCarrito(); track item.productoId) {
+                  <div class="scanner-cart-item">
+                    <div class="cart-item-name-col">
+                      <strong class="cart-item-title">{{ item.nombre }}</strong>
+                      <span class="cart-item-unit-price">{{ item.precio | currency:'PEN':'S/ ' }} c/u</span>
+                    </div>
+                    <div class="cart-item-controls">
+                      <button type="button" class="btn-qty-mini" (click)="disminuirCantidadLinea(item.index)" title="Disminuir unidad">&minus;</button>
+                      <span class="cart-item-qty">{{ item.cantidad }}</span>
+                      <button type="button" class="btn-qty-mini" (click)="aumentarCantidadLinea(item.index)" title="Aumentar unidad">&plus;</button>
+                      <span class="cart-item-subtotal">{{ item.subtotal | currency:'PEN':'S/ ' }}</span>
+                      <button type="button" class="btn-del-mini" (click)="quitarLinea(item.index)" title="Quitar producto">&times;</button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
 
           <div class="scanner-demo-box">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
@@ -509,13 +756,13 @@
             </div>
             <div class="demo-buttons-grid">
               <button type="button" class="btn-demo-item" (click)="simularEscaneo(1)">
-                Aceite Coco 4L (ID 1)
+                + Aceite Coco 4L (ID 1)
               </button>
               <button type="button" class="btn-demo-item" (click)="simularEscaneo(5)">
-                Coco Rallado (ID 5)
+                + Coco Rallado (ID 5)
               </button>
               <button type="button" class="btn-demo-item" (click)="simularEscaneo(13)">
-                Aceite 460ml (ID 13)
+                + Aceite 460ml (ID 13)
               </button>
             </div>
             <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
@@ -525,26 +772,121 @@
                 placeholder="O escribe ID / código manual (ej. 1, 5, PROD-13)..."
                 class="form-control"
                 style="padding: 0.35rem 0.6rem; font-size: 0.8rem;"
-                (keydown.enter)="$event.preventDefault(); procesarCodigoEscaneado(manualCodeInput.value); manualCodeInput.value = ''"
+                (keydown.enter)="$event.preventDefault(); procesarCodigoEscaneado(manualCodeInput.value, true); manualCodeInput.value = ''; manualCodeInput.focus()"
               />
               <button
                 type="button"
                 class="btn btn-secondary btn-sm"
-                (click)="procesarCodigoEscaneado(manualCodeInput.value); manualCodeInput.value = ''"
+                (click)="procesarCodigoEscaneado(manualCodeInput.value, true); manualCodeInput.value = ''; manualCodeInput.focus()"
               >
-                Probar
+                + Agregar
               </button>
             </div>
           </div>
         </div>
 
         <div class="scanner-footer">
-          <span style="font-size: 0.85rem; color: #64748b;">
-            Líneas actuales: <strong>{{ lineasForm.length }}</strong> &bull; Total: <strong>{{ total() | currency: 'PEN' : 'S/ ' }}</strong>
-          </span>
+          <div class="scanner-footer-summary">
+            <span class="footer-lbl">Total acumulado:</span>
+            <span class="footer-tot">{{ total() | currency: 'PEN' : 'S/ ' }}</span>
+            <span class="footer-count">({{ totalUnidadesEscaneadas() }} unidades en {{ itemsEnCarrito().length }} productos)</span>
+          </div>
           <button type="button" class="btn btn-primary" (click)="cerrarEscanerCamara()">
-            <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">done</span>
-            Finalizar y Volver al Ticket
+            <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">check</span>
+            Listo, Volver al Ticket
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TOAST FLOTANTE PARA ESCÁNER DE PISTOLA FÍSICA USB (SIN CÁMARA) -->
+  @if (toastEscaneoHardware(); as toast) {
+    <div class="toast-hardware-scanner">
+      <div class="toast-hw-icon-wrapper">
+        <span class="material-symbols-outlined icon-gun">barcode_scanner</span>
+      </div>
+      <div class="toast-hw-body">
+        <span class="toast-hw-title">¡Escaneado con Pistola POS!</span>
+        <span class="toast-hw-prod">{{ toast.nombre }}</span>
+        <span class="toast-hw-details">Cantidad: <strong>{{ toast.cantidad }} un.</strong> &bull; Total Ticket: <strong>{{ toast.total | currency:'PEN':'S/ ' }}</strong></span>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL DE APERTURA RÁPIDA DE CAJA DIRECTO EN POS -->
+  @if (mostrarModalAperturaCaja()) {
+    <div class="modal-backdrop" (click)="cerrarModalApertura()">
+      <div class="modal-content modal-apertura-caja" (click)="$event.stopPropagation()">
+        <div class="modal-top-bar">
+          <div class="modal-title-group">
+            <span class="material-symbols-outlined" style="color: #059669; font-size: 1.5rem;">point_of_sale</span>
+            <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 700;">Aperturar Sesión de Caja (Turno POS)</h3>
+          </div>
+          <button type="button" class="btn-close-modal" (click)="cerrarModalApertura()">&times;</button>
+        </div>
+
+        <div class="modal-body-caja">
+          <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 1.25rem; line-height: 1.4;">
+            Inicia tu turno de caja ingresando el saldo inicial (fondo de sencillo) en tu gaveta física. Todas las ventas en efectivo que emitas en el POS quedarán vinculadas a esta sesión para tu arqueo y rendición de cuentas.
+          </p>
+
+          @if (errorAperturaCaja()) {
+            <div class="alert alert-danger" style="margin-bottom: 1rem;">
+              <span class="material-symbols-outlined icon-inline" style="color: #dc2626;">warning</span>
+              <div>{{ errorAperturaCaja() }}</div>
+            </div>
+          }
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label" style="font-weight: 600;">Cajero / Vendedor Responsable:</label>
+            <input
+              type="text"
+              class="form-control"
+              [value]="authService.usuario()?.nombre || 'Brandon Ccalla (Ventas)'"
+              disabled
+              style="background: #f1f5f9; font-weight: 600; color: #334155;"
+            />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label" style="font-weight: 700; color: #065f46;">
+              Saldo Inicial en Gaveta (Fondo de Sencillo):
+            </label>
+            <div class="input-soles-wrapper">
+              <span class="moneda-prefijo">S/</span>
+              <input
+                type="number"
+                step="10"
+                min="0"
+                class="form-control input-monto-recibido"
+                [value]="saldoInicialApertura()"
+                (input)="saldoInicialApertura.set(+$any($event.target).value)"
+                placeholder="200.00"
+              />
+            </div>
+            <div class="denominaciones-rapidas" style="margin-top: 0.6rem;">
+              <span class="denominaciones-label">Fondos sugeridos:</span>
+              <button type="button" class="btn-billete" [class.activo]="saldoInicialApertura() === 100" (click)="saldoInicialApertura.set(100)">S/ 100</button>
+              <button type="button" class="btn-billete" [class.activo]="saldoInicialApertura() === 200" (click)="saldoInicialApertura.set(200)">S/ 200</button>
+              <button type="button" class="btn-billete" [class.activo]="saldoInicialApertura() === 300" (click)="saldoInicialApertura.set(300)">S/ 300</button>
+              <button type="button" class="btn-billete" [class.activo]="saldoInicialApertura() === 350" (click)="saldoInicialApertura.set(350)">S/ 350</button>
+              <button type="button" class="btn-billete" [class.activo]="saldoInicialApertura() === 500" (click)="saldoInicialApertura.set(500)">S/ 500</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer-actions no-print" style="padding: 1rem 1.25rem; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalApertura()" [disabled]="abriendoCaja()">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" (click)="confirmarAperturaCaja()" [disabled]="abriendoCaja()">
+            @if (abriendoCaja()) {
+              <span class="spinner-small"></span> Aperturando...
+            } @else {
+              <span class="material-symbols-outlined icon-inline" style="font-size: 1.1rem;">check_circle</span>
+              Aperturar Turno (S/ {{ saldoInicialApertura().toFixed(2) }})
+            }
           </button>
         </div>
       </div>

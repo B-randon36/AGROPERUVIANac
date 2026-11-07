@@ -121,9 +121,9 @@
 
 <!-- Modal Ticket Térmico ESC/POS -->
 @if (modalTicket() && ventaSeleccionada(); as ticket) {
-  <div class="modal-backdrop">
-    <div class="modal-content ticket-modal">
-      <div class="ticket-paper">
+  <div class="modal-backdrop" (click)="modalTicket.set(false)">
+    <div class="modal-content ticket-modal" (click)="$event.stopPropagation()">
+      <div class="ticket-paper printable-ticket">
         <div class="ticket-header">
           <h3>AGRO PERUVIAN FOODS S.A.C.</h3>
           <p>RUC: 20608974512</p>
@@ -168,8 +168,12 @@
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="modalTicket.set(false)">Cerrar</button>
+      <div class="modal-footer no-print">
+        <button type="button" class="btn btn-secondary" (click)="modalTicket.set(false)">Cerrar</button>
+        <button type="button" class="btn btn-info btn-print" (click)="imprimirTicket()">
+          <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">print</span>
+          Imprimir Ticket (ESC/POS)
+        </button>
       </div>
     </div>
   </div>
