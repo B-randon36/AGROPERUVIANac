@@ -300,8 +300,8 @@ class VentaServiceTest {
         pe.edu.upeu.bomerp.ventas.dto.VentaAgregado mockAgregado =
                 new pe.edu.upeu.bomerp.ventas.dto.VentaAgregado(10L, new BigDecimal("1600.00"), 2L, new BigDecimal("400.00"));
 
-        when(ventaRepository.agregados(isNull(), isNull(), isNull())).thenReturn(mockAgregado);
-        when(ventaRepository.buscarResumen(isNull(), isNull(), isNull(), any())).thenReturn(List.of());
+        when(ventaRepository.agregados(isNull(), isNull(), isNull(), isNull())).thenReturn(mockAgregado);
+        when(ventaRepository.buscarResumen(isNull(), isNull(), isNull(), isNull(), any())).thenReturn(List.of());
 
         pe.edu.upeu.bomerp.ventas.dto.VentaReporte reporte = ventaService.reporte(null, null, null);
 
@@ -313,5 +313,26 @@ class VentaServiceTest {
         assertEquals(new BigDecimal("400.00"), reporte.getAgregado().getMontoAnulado());
         // 1600 / 8 ventas efectivas = 200.00 de ticket promedio
         assertEquals(new BigDecimal("200.00"), reporte.getAgregado().getTicketPromedio());
+    }
+
+    @Test
+    @DisplayName("Reporte con Método de Pago: Debe filtrar agregados por método de pago específico")
+    void reporte_conMetodoPago_debeFiltrarPorMetodo() {
+        pe.edu.upeu.bomerp.ventas.dto.VentaAgregado mockAgregado =
+                new pe.edu.upeu.bomerp.ventas.dto.VentaAgregado(5L, new BigDecimal("800.00"), 0L, BigDecimal.ZERO);
+
+        when(ventaRepository.agregados(isNull(), org.mockito.ArgumentMatchers.eq(pe.edu.upeu.bomerp.ventas.entity.MetodoPagoVenta.YAPE), isNull(), isNull()))
+                .thenReturn(mockAgregado);
+        when(ventaRepository.buscarResumen(isNull(), org.mockito.ArgumentMatchers.eq(pe.edu.upeu.bomerp.ventas.entity.MetodoPagoVenta.YAPE), isNull(), isNull(), any()))
+                .thenReturn(List.of());
+
+        pe.edu.upeu.bomerp.ventas.dto.VentaReporte reporte =
+                ventaService.reporte(null, pe.edu.upeu.bomerp.ventas.entity.MetodoPagoVenta.YAPE, null, null);
+
+        assertNotNull(reporte);
+        assertNotNull(reporte.getAgregado());
+        assertEquals(5L, reporte.getAgregado().getTotalVentas());
+        assertEquals(0L, reporte.getAgregado().getTotalAnuladas());
+        assertEquals(new BigDecimal("800.00"), reporte.getAgregado().getMontoTotal());
     }
 }
