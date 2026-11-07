@@ -26,6 +26,16 @@ export class RendicionCajaChicaService {
     );
   }
 
+  crearCentroCosto(data: {
+    codigoCc: string;
+    nombreArea: string;
+  }): Observable<import('./rendicion-caja-chica.model').CentroCosto> {
+    return this.http.post<import('./rendicion-caja-chica.model').CentroCosto>(
+      this.api.buildUrl(`${this.basePath}/centros-costo`),
+      data
+    );
+  }
+
   listarPresupuestosCaja(cajaChicaId: number): Observable<import('./rendicion-caja-chica.model').AsignacionCajaCentroCosto[]> {
     return this.http.get<import('./rendicion-caja-chica.model').AsignacionCajaCentroCosto[]>(
       this.api.buildUrl(`${this.basePath}/cajas-chicas/${cajaChicaId}/presupuestos`)

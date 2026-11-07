@@ -375,6 +375,27 @@ public class RendicionCajaChicaServiceImpl implements RendicionCajaChicaService 
                 .toList();
     }
 
+    @Override
+    @Transactional
+    public pe.edu.upeu.bomerp.finanzas.dto.CentroCostoResponse crearCentroCosto(pe.edu.upeu.bomerp.finanzas.dto.CentroCostoRequest request) {
+        String codigoLimpio = request.getCodigoCc().trim().toUpperCase();
+        if (centroCostoRepository.existsByCodigoCc(codigoLimpio)) {
+            throw new IllegalArgumentException("Ya existe un centro de costo con el código: " + codigoLimpio);
+        }
+        pe.edu.upeu.bomerp.finanzas.entity.CentroCosto cc = pe.edu.upeu.bomerp.finanzas.entity.CentroCosto.builder()
+                .codigoCc(codigoLimpio)
+                .nombreArea(request.getNombreArea().trim())
+                .activo(true)
+                .build();
+        cc = centroCostoRepository.save(cc);
+        return pe.edu.upeu.bomerp.finanzas.dto.CentroCostoResponse.builder()
+                .id(cc.getId())
+                .codigoCc(cc.getCodigoCc())
+                .nombreArea(cc.getNombreArea())
+                .activo(cc.getActivo())
+                .build();
+    }
+
     private pe.edu.upeu.bomerp.finanzas.dto.AsignacionCajaCentroCostoResponse mapToAsignacionResponse(pe.edu.upeu.bomerp.finanzas.entity.AsignacionCajaCentroCosto a) {
         return pe.edu.upeu.bomerp.finanzas.dto.AsignacionCajaCentroCostoResponse.builder()
                 .cajaChicaId(a.getCajaChica().getId())

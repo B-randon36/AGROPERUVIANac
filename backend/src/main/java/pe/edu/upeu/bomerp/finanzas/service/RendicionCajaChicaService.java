@@ -45,5 +45,7 @@ public interface RendicionCajaChicaService {
     List<pe.edu.upeu.bomerp.finanzas.dto.AsignacionCajaCentroCostoResponse> listarPresupuestosPorCaja(Long cajaChicaId);
 
     List<pe.edu.upeu.bomerp.finanzas.dto.CentroCostoResponse> listarCentrosCosto();
+
+    pe.edu.upeu.bomerp.finanzas.dto.CentroCostoResponse crearCentroCosto(pe.edu.upeu.bomerp.finanzas.dto.CentroCostoRequest request);
 }
 

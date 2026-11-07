@@ -68,6 +68,14 @@ export class RendicionCajaChicaList implements OnInit {
   protected readonly loadingPresupuestos = signal(false);
   protected readonly mensajeExitoPresupuesto = signal<string | null>(null);
 
+  // Modal de Creación de Nuevo Centro de Costo Maestro
+  protected readonly mostrarModalNuevoCC = signal(false);
+  protected readonly nuevoCcCodigo = signal('');
+  protected readonly nuevoCcNombre = signal('');
+  protected readonly loadingCrearCC = signal(false);
+  protected readonly errorCrearCC = signal<string | null>(null);
+  protected readonly exitoCrearCC = signal<string | null>(null);
+
   ngOnInit(): void {
     this.cargarCajasChicas();
     this.aplicarFiltros();
@@ -280,6 +288,68 @@ export class RendicionCajaChicaList implements OnInit {
 
   // --- Gestión de Presupuestos por Centro de Costo (M:N) ---
 
+  abrirModalCentroCosto(): void {
+    this.nuevoCcCodigo.set('');
+    this.nuevoCcNombre.set('');
+    this.errorCrearCC.set(null);
+    this.exitoCrearCC.set(null);
+    this.mostrarModalNuevoCC.set(true);
+    if (this.centrosCosto().length === 0) {
+      this.cargarCentrosCosto();
+    }
+  }
+
+  cerrarModalCentroCosto(): void {
+    this.mostrarModalNuevoCC.set(false);
+    this.errorCrearCC.set(null);
+    this.exitoCrearCC.set(null);
+  }
+
+  cargarCentrosCosto(seleccionarId?: number): void {
+    this.rendicionService.listarCentrosCosto().subscribe({
+      next: (ccs) => {
+        this.centrosCosto.set(ccs);
+        if (seleccionarId) {
+          this.formPresupuestoCentroCostoId.set(seleccionarId);
+        } else if (ccs.length > 0 && !this.formPresupuestoCentroCostoId()) {
+          this.formPresupuestoCentroCostoId.set(ccs[0].id);
+        }
+      },
+      error: () => console.warn('Error al cargar centros de costo'),
+    });
+  }
+
+  guardarNuevoCentroCosto(): void {
+    const codigo = this.nuevoCcCodigo().trim().toUpperCase();
+    const nombre = this.nuevoCcNombre().trim();
+
+    if (!codigo || !nombre) {
+      this.errorCrearCC.set('Por favor completa el código y el nombre del Centro de Costo.');
+      return;
+    }
+
+    this.loadingCrearCC.set(true);
+    this.errorCrearCC.set(null);
+    this.exitoCrearCC.set(null);
+
+    this.rendicionService.crearCentroCosto({ codigoCc: codigo, nombreArea: nombre }).subscribe({
+      next: (nuevoCC) => {
+        this.loadingCrearCC.set(false);
+        this.exitoCrearCC.set(`¡Centro de Costo "${nuevoCC.nombreArea}" creado con éxito!`);
+        this.nuevoCcCodigo.set('');
+        this.nuevoCcNombre.set('');
+        this.cargarCentrosCosto(nuevoCC.id);
+        setTimeout(() => {
+          this.cerrarModalCentroCosto();
+        }, 1200);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.loadingCrearCC.set(false);
+        this.errorCrearCC.set(err?.error?.message || 'Error al registrar el Centro de Costo.');
+      },
+    });
+  }
+
   abrirGestionPresupuestos(caja: CajaChica): void {
     this.cajaParaPresupuesto.set(caja);
     this.mensajeExitoPresupuesto.set(null);
@@ -287,14 +357,7 @@ export class RendicionCajaChicaList implements OnInit {
     this.cargarPresupuestosCaja(caja.id);
 
     if (this.centrosCosto().length === 0) {
-      this.rendicionService.listarCentrosCosto().subscribe({
-        next: (ccs) => {
-          this.centrosCosto.set(ccs);
-          if (ccs.length > 0 && !this.formPresupuestoCentroCostoId()) {
-            this.formPresupuestoCentroCostoId.set(ccs[0].id);
-          }
-        },
-      });
+      this.cargarCentrosCosto();
     }
   }
 

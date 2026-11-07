@@ -8,6 +8,9 @@
       <p class="subtitle">Control de gastos operativos, presupuestos por área y comprobantes</p>
     </div>
     <div class="header-actions">
+      <button class="btn btn-neutral-secondary" (click)="abrirModalCentroCosto()" title="Crear nueva área o línea de costo corporativa">
+        <span class="material-symbols-outlined icon-inline">domain_add</span> + Nuevo Centro de Costo
+      </button>
       <button class="btn btn-neutral-secondary" (click)="abrirModalCajaChica()">
         <span class="material-symbols-outlined icon-inline">account_balance_wallet</span> + Nueva Caja Chica
       </button>
@@ -19,8 +22,15 @@
 
   <!-- TARJETAS DE FONDOS DISPONIBLES EN CAJAS CHICAS -->
   <div class="cajas-chicas-banner">
-    <div class="banner-title">
+    <div class="banner-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
       <span>FONDOS FIJOS OPERATIVOS ASIGNADOS:</span>
+      <button
+        type="button"
+        (click)="abrirModalCentroCosto()"
+        style="background: #F0F9FF; border: 1px solid #BAE6FD; color: #0284C7; font-size: 0.78rem; font-weight: 700; padding: 0.3rem 0.65rem; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: all 0.2s ease;">
+        <span class="material-symbols-outlined" style="font-size: 1rem;">domain_add</span>
+        <span>+ Centro de Costo Maestro</span>
+      </button>
     </div>
     <div class="cajas-chicas-chips">
       @for (c of cajasChicas(); track c.id) {
@@ -439,9 +449,17 @@
           <div class="card p-3 mb-4" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 1.25rem;">
             <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 1rem; margin-bottom: 1.25rem;">
               <div>
-                <label style="font-size: 0.875rem; font-weight: 700; color: #1E293B; display: block; margin-bottom: 0.4rem;">
-                  ¿A qué área o línea se asignará? *
-                </label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                  <label style="font-size: 0.875rem; font-weight: 700; color: #1E293B; margin: 0;">
+                    ¿A qué área o línea se asignará? *
+                  </label>
+                  <button
+                    type="button"
+                    (click)="abrirModalCentroCosto()"
+                    style="background: none; border: none; color: #0284C7; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem; padding: 0;">
+                    <span class="material-symbols-outlined" style="font-size: 0.95rem;">add_circle</span> Crear nueva área
+                  </button>
+                </div>
                 <select
                   class="form-control"
                   style="font-size: 0.95rem; padding: 0.65rem 0.85rem; height: auto; border-radius: 8px; border: 1.5px solid #CBD5E1;"
@@ -547,6 +565,125 @@
             Cerrar Ventana
           </button>
         </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: CREACIÓN DE NUEVO CENTRO DE COSTO MAESTRO -->
+  @if (mostrarModalNuevoCC()) {
+    <div class="safe-modal-backdrop" (click)="cerrarModalCentroCosto()">
+      <div class="modal-dialog" (click)="$event.stopPropagation()" style="max-width: 580px; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 25px 50px -12px rgba(26, 36, 56, 0.35);">
+        
+        <!-- Header con estética Glacier Dark + Primary -->
+        <div class="modal-header" style="background: #1A2438; color: #fff; padding: 1.25rem 1.5rem; border-bottom: 3px solid #7DD3FC; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="background: rgba(125, 211, 252, 0.15); border: 1px solid rgba(125, 211, 252, 0.35); padding: 0.5rem; border-radius: 10px; color: #7DD3FC; display: flex; align-items: center; justify-content: center;">
+              <span class="material-symbols-outlined" style="font-size: 1.5rem;">domain_add</span>
+            </div>
+            <div>
+              <h3 style="margin: 0; color: #fff; font-size: 1.15rem; font-weight: 700;">Nuevo Centro de Costo Maestro</h3>
+              <p class="subtitle" style="margin: 0.15rem 0 0 0; font-size: 0.8rem; color: #88B4CC;">
+                Catálogo corporativo de áreas presupuestales y líneas de negocio
+              </p>
+            </div>
+          </div>
+          <button type="button" class="btn-close" (click)="cerrarModalCentroCosto()" style="color: #94A3B8; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+
+        <div class="modal-body" style="padding: 1.5rem;">
+          <!-- Nota de ayuda amable -->
+          <div class="friendly-help-note" style="margin-bottom: 1.25rem;">
+            <span class="friendly-help-icon">💡</span>
+            <div class="friendly-help-text">
+              <strong>Estructura departamental:</strong> Los Centros de Costo identifican departamentos o líneas de la empresa (ej. <em>Control de Calidad</em>, <em>Marketing</em> o <em>Mantenimiento</em>). Al crearlo, podrás asignarle fondos de inmediato en cualquiera de las Cajas Chicas.
+            </div>
+          </div>
+
+          @if (errorCrearCC()) {
+            <div class="alert alert-danger" style="padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 8px; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span class="material-symbols-outlined" style="font-size: 1.2rem; color: #DC2626;">warning</span>
+              <span>{{ errorCrearCC() }}</span>
+            </div>
+          }
+
+          @if (exitoCrearCC()) {
+            <div class="alert alert-success" style="padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 8px; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span class="material-symbols-outlined" style="font-size: 1.2rem; color: #16A34A;">check_circle</span>
+              <span>{{ exitoCrearCC() }}</span>
+            </div>
+          }
+
+          <div style="display: flex; flex-direction: column; gap: 1.1rem;">
+            <div>
+              <label style="font-size: 0.875rem; font-weight: 700; color: #1E293B; display: block; margin-bottom: 0.4rem;">
+                Código del Centro de Costo *
+              </label>
+              <div style="position: relative;">
+                <input
+                  type="text"
+                  class="form-control"
+                  style="font-size: 0.95rem; font-weight: 600; padding: 0.65rem 0.85rem; padding-left: 2.5rem; height: auto; border-radius: 8px; border: 1.5px solid #CBD5E1; text-transform: uppercase;"
+                  [ngModel]="nuevoCcCodigo()"
+                  (ngModelChange)="nuevoCcCodigo.set($event.toUpperCase())"
+                  placeholder="Ej: CC-CALIDAD, CC-VENTAS, CC-MANT"
+                  maxlength="30"
+                />
+                <span class="material-symbols-outlined" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); font-size: 1.15rem; color: #64748B;">tag</span>
+              </div>
+              <small style="color: #64748B; font-size: 0.75rem; display: block; margin-top: 0.25rem;">
+                Identificador único contable en mayúsculas (se recomienda prefijo <code>CC-</code>).
+              </small>
+            </div>
+
+            <div>
+              <label style="font-size: 0.875rem; font-weight: 700; color: #1E293B; display: block; margin-bottom: 0.4rem;">
+                Nombre del Área o Línea Operativa *
+              </label>
+              <div style="position: relative;">
+                <input
+                  type="text"
+                  class="form-control"
+                  style="font-size: 0.95rem; padding: 0.65rem 0.85rem; padding-left: 2.5rem; height: auto; border-radius: 8px; border: 1.5px solid #CBD5E1;"
+                  [ngModel]="nuevoCcNombre()"
+                  (ngModelChange)="nuevoCcNombre.set($event)"
+                  placeholder="Ej: Control de Calidad e Inocuidad, Marketing & Ventas"
+                  maxlength="100"
+                />
+                <span class="material-symbols-outlined" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); font-size: 1.15rem; color: #64748B;">apartment</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Áreas Registradas Actualmente -->
+          @if (centrosCosto().length > 0) {
+            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #E2E8F0;">
+              <span style="font-size: 0.78rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 0.5rem;">
+                Áreas Registradas Actualmente ({{ centrosCosto().length }}):
+              </span>
+              <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; max-height: 110px; overflow-y: auto;">
+                @for (cc of centrosCosto(); track cc.id) {
+                  <span style="font-size: 0.75rem; background: #F1F5F9; border: 1px solid #CBD5E1; color: #334155; padding: 0.25rem 0.55rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <strong style="color: #0369A1;">{{ cc.codigoCc }}</strong> &bull; {{ cc.nombreArea }}
+                  </span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer" style="padding: 1rem 1.5rem; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-neutral-secondary" (click)="cerrarModalCentroCosto()" [disabled]="loadingCrearCC()">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-glacier-primary" (click)="guardarNuevoCentroCosto()" [disabled]="loadingCrearCC() || !nuevoCcCodigo() || !nuevoCcNombre()">
+            @if (loadingCrearCC()) {
+              <span class="spinner-border spinner-border-sm me-1" style="width: 1rem; height: 1rem; border-width: 2px;"></span> Guardando...
+            } @else {
+              <span class="material-symbols-outlined icon-inline" style="font-size: 1.1rem;">save</span> Guardar Centro de Costo
+            }
+          </button>
+        </div>
+
       </div>
     </div>
   }

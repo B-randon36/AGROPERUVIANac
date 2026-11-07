@@ -59,6 +59,14 @@ public class RendicionCajaChicaController {
         return ResponseEntity.ok(rendicionService.listarCentrosCosto());
     }
 
+    @Operation(summary = "Crear nuevo centro de costo maestro")
+    @PostMapping("/centros-costo")
+    public ResponseEntity<pe.edu.upeu.bomerp.finanzas.dto.CentroCostoResponse> crearCentroCosto(
+            @Valid @RequestBody pe.edu.upeu.bomerp.finanzas.dto.CentroCostoRequest request) {
+        var response = rendicionService.crearCentroCosto(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
     @Operation(summary = "Asignar presupuesto por centro de costo a una caja chica")
     @PostMapping("/cajas-chicas/{id}/presupuestos")
     public ResponseEntity<pe.edu.upeu.bomerp.finanzas.dto.AsignacionCajaCentroCostoResponse> asignarPresupuesto(
