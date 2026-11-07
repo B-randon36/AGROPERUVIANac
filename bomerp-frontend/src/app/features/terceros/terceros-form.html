@@ -1,4 +1,19 @@
 <div class="form-container">
+  <!-- NAVEGACIÓN ESTANDARIZADA & BREADCRUMB (Pilar 1) -->
+  <div class="view-back-nav">
+    <a routerLink="/terceros" class="btn-back-nav">
+      <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+      Volver al Directorio
+    </a>
+    <div class="breadcrumb-trail">
+      <a routerLink="/terceros">Directorio Comercial</a>
+      <span class="separator">/</span>
+      <a routerLink="/terceros">Clientes y Proveedores</a>
+      <span class="separator">/</span>
+      <span class="current">{{ esEdicion() ? 'Editar Tercero' : 'Registrar Tercero' }}</span>
+    </div>
+  </div>
+
   <div class="header-action">
     <div>
       <div class="badge-module">
@@ -10,7 +25,7 @@
         {{ esEdicion() ? 'Actualización de datos fiscales y contactos del cliente o proveedor' : 'Alta de persona natural o jurídica en el directorio de terceros' }}
       </p>
     </div>
-    <a routerLink="/terceros" class="btn btn-secondary">
+    <a routerLink="/terceros" class="btn btn-neutral-secondary">
       <span class="material-symbols-outlined icon-inline">arrow_back</span>
       Volver al Directorio
     </a>
@@ -144,8 +159,8 @@
         </div>
 
         <div class="form-actions">
-          <a routerLink="/terceros" class="btn btn-secondary">Cancelar</a>
-          <button type="submit" class="btn btn-primary" [disabled]="guardando() || consultando()">
+          <a routerLink="/terceros" class="btn btn-neutral-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-glacier-primary" [disabled]="guardando() || consultando()">
             @if (guardando()) {
               <span class="btn-spinner-dark"></span>
               <span>Guardando...</span>

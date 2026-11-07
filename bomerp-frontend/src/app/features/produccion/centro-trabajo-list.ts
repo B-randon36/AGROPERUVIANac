@@ -10,6 +10,19 @@ import { CentroTrabajo, CentroTrabajoRequest } from './produccion.model';
   imports: [CommonModule, RouterLink, ReactiveFormsModule, DecimalPipe],
   template: `
     <div class="feature-container">
+      <!-- NAVEGACIÓN ESTANDARIZADA & BREADCRUMB (Pilar 1) -->
+      <div class="view-back-nav">
+        <a routerLink="/produccion" class="btn-back-nav">
+          <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+          Volver a Órdenes
+        </a>
+        <div class="breadcrumb-trail">
+          <a routerLink="/produccion">Producción & Planta</a>
+          <span class="separator">/</span>
+          <span class="current">Centros de Trabajo</span>
+        </div>
+      </div>
+
       <div class="page-header">
         <div>
           <div class="badge badge-warning">PRODUCCIÓN & PLANTA</div>
@@ -17,11 +30,11 @@ import { CentroTrabajo, CentroTrabajoRequest } from './produccion.model';
           <p class="subtitle">Capacidades nominales, tarifas operativas por hora y monitoreo de líneas de procesamiento</p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-primary" (click)="abrirModalNuevo()">
-            <span class="material-symbols-outlined icon-inline">add_circle</span> Nuevo Centro de Trabajo
+          <button class="btn btn-glacier-primary" (click)="abrirModalNuevo()">
+            <span class="material-symbols-outlined icon-inline">add_circle</span> + Nuevo Centro de Trabajo
           </button>
-          <a routerLink="/produccion" class="btn btn-secondary">← Órdenes de Planta</a>
-          <button class="btn btn-secondary" (click)="cargarDatos()" title="Actualizar">
+          <a routerLink="/produccion" class="btn btn-neutral-secondary">← Órdenes de Planta</a>
+          <button class="btn btn-neutral-secondary" (click)="cargarDatos()" title="Actualizar">
             <span class="material-symbols-outlined" style="vertical-align: middle;">refresh</span>
           </button>
         </div>

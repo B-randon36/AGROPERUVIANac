@@ -43,6 +43,10 @@ export class VentaReporteComponent implements OnInit {
   // Paginación
   protected readonly pageIndex = signal(0);
   protected readonly pageSize = signal(10);
+
+  // Modal tranquilizador de anulación (Pilar 2)
+  protected readonly ventaParaAnular = signal<number | null>(null);
+  protected readonly mostrarModalAnularVenta = signal(false);
   protected readonly totalElements = signal(0);
   protected readonly totalPages = signal(0);
 
@@ -137,14 +141,35 @@ export class VentaReporteComponent implements OnInit {
     this.cargar();
   }
 
-  anular(id: number): void {
-    if (!confirm('¿Anular esta venta? El stock de sus productos se restaurará.')) {
-      return;
-    }
+  solicitarAnularVenta(id: number): void {
+    this.ventaParaAnular.set(id);
+    this.mostrarModalAnularVenta.set(true);
+  }
+
+  cancelarAnularVenta(): void {
+    this.mostrarModalAnularVenta.set(false);
+    this.ventaParaAnular.set(null);
+  }
+
+  confirmarAnularVenta(): void {
+    const id = this.ventaParaAnular();
+    if (!id) return;
+    this.mostrarModalAnularVenta.set(false);
+    this.loading.set(true);
     this.ventaService.anular(id).subscribe({
-      next: () => this.cargar(),
-      error: () => this.error.set('No se pudo anular la venta seleccionada.'),
+      next: () => {
+        this.ventaParaAnular.set(null);
+        this.cargar();
+      },
+      error: () => {
+        this.error.set('No se pudo anular la venta seleccionada.');
+        this.loading.set(false);
+      },
     });
+  }
+
+  anular(id: number): void {
+    this.solicitarAnularVenta(id);
   }
 
   eliminarTodas(): void {

@@ -1,4 +1,12 @@
-<h2>Categorías Financieras (Módulo Finanzas)</h2>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+  <div>
+    <div class="breadcrumb" style="font-size: 0.8125rem; color: #64748B; margin-bottom: 0.25rem;">Finanzas / Categorías</div>
+    <h2 style="margin: 0;">Categorías Financieras</h2>
+  </div>
+  <a routerLink="/finanzas/categorias/nueva" class="btn btn-glacier-primary">
+    <span class="material-symbols-outlined icon-inline">add_circle</span> + Nueva Categoría
+  </a>
+</div>
 
 @if (loading()) {
   <p>Cargando categorías financieras...</p>
@@ -8,41 +16,42 @@
   <p class="error" style="color: red;">{{ error() }}</p>
 }
 
-<p>
-  <a routerLink="/finanzas/categorias/nueva">+ Nueva categoría financiera</a>
-</p>
-
-<table border="1" cellpadding="8" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+<table class="card" style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
   <thead>
-    <tr style="background-color: #f2f2f2;">
-      <th>ID</th>
-      <th>Nombre</th>
-      <th>Tipo Default</th>
-      <th>Descripción</th>
-      <th>Acciones</th>
+    <tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; text-align: left;">
+      <th style="padding: 0.75rem 1rem;">ID</th>
+      <th style="padding: 0.75rem 1rem;">Nombre</th>
+      <th style="padding: 0.75rem 1rem;">Tipo Default</th>
+      <th style="padding: 0.75rem 1rem;">Descripción</th>
+      <th style="padding: 0.75rem 1rem; text-align: right;">Acciones</th>
     </tr>
   </thead>
   <tbody>
     @for (cat of categorias(); track cat.id) {
-      <tr>
-        <td>{{ cat.id }}</td>
-        <td><strong>{{ cat.nombre }}</strong></td>
-        <td>
-          <span [style.color]="cat.tipoDefault === 'INGRESO' ? 'green' : 'crimson'" style="font-weight: bold;">
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 0.75rem 1rem;">{{ cat.id }}</td>
+        <td style="padding: 0.75rem 1rem;"><strong>{{ cat.nombre }}</strong></td>
+        <td style="padding: 0.75rem 1rem;">
+          <span [style.color]="cat.tipoDefault === 'INGRESO' ? '#10B981' : '#EF4444'" style="font-weight: bold;">
             {{ cat.tipoDefault }}
           </span>
         </td>
-        <td>{{ cat.descripcion }}</td>
-        <td>
-          <a [routerLink]="['/finanzas/categorias', cat.id, 'editar']">Editar</a>
-          &nbsp;|&nbsp;
-          <button (click)="eliminar(cat.id!)">Eliminar</button>
+        <td style="padding: 0.75rem 1rem;">{{ cat.descripcion || '—' }}</td>
+        <td style="padding: 0.75rem 1rem; text-align: right;">
+          <div style="display: inline-flex; align-items: center; gap: 0.5rem;">
+            <a [routerLink]="['/finanzas/categorias', cat.id, 'editar']" class="btn btn-neutral-secondary btn-sm" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">
+              Editar
+            </a>
+            <button class="btn-action-discreet-danger" (click)="eliminar(cat.id!)" title="Eliminar categoría">
+              Eliminar
+            </button>
+          </div>
         </td>
       </tr>
     } @empty {
       @if (!loading() && !error()) {
         <tr>
-          <td colspan="5">No hay categorías financieras registradas.</td>
+          <td colspan="5" style="padding: 1.5rem; text-align: center; color: #64748B;">No hay categorías financieras registradas.</td>
         </tr>
       }
     }

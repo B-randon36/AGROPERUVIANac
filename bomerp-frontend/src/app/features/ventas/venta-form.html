@@ -1,17 +1,32 @@
 <div class="transaccion-container">
+  <!-- NAVEGACIÓN ESTANDARIZADA & BREADCRUMB (Pilar 1) -->
+  <div class="view-back-nav">
+    <a routerLink="/ventas/reporte" class="btn-back-nav">
+      <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+      Volver al Reporte
+    </a>
+    <div class="breadcrumb-trail">
+      <a routerLink="/ventas/reporte">Ventas & Comercial</a>
+      <span class="separator">/</span>
+      <a routerLink="/ventas/reporte">Reporte de Ventas</a>
+      <span class="separator">/</span>
+      <span class="current">Nueva Venta POS</span>
+    </div>
+  </div>
+
   <div class="header-section">
     <div>
       <span class="badge badge-primary">PUNTO DE VENTA · POS</span>
       <h2>Emitir Nueva Venta POS</h2>
       <p class="subtitle">
-        Punto de Venta transaccional conectado en tiempo real con Lotes FEFO, Kardex Físico, Sesión de Caja Activa y Cuentas por Cobrar .
+        Punto de Venta transaccional conectado con stock FEFO, sesión de caja y comprobantes
       </p>
     </div>
     <div class="header-actions">
       <a
         href="/codigos-barras.html"
         target="_blank"
-        class="btn btn-secondary"
+        class="btn btn-neutral-secondary"
         style="display: inline-flex; align-items: center; gap: 0.4rem;"
         title="Abrir hoja de códigos de barras y QR para escanear"
       >
@@ -20,18 +35,26 @@
       </a>
       <button
         type="button"
-        class="btn btn-primary"
+        class="btn btn-neutral-secondary"
         (click)="abrirEscanerCamara()"
-        style="display: inline-flex; align-items: center; gap: 0.4rem; background: #0284c7; border: 1px solid #0369a1;"
+        style="display: inline-flex; align-items: center; gap: 0.4rem;"
         title="Abrir cámara de laptop o celular para leer códigos de barra"
       >
-        <span class="material-symbols-outlined" style="font-size: 1.15rem;">barcode_scanner</span>
+        <span class="material-symbols-outlined" style="font-size: 1.15rem; color: #0284c7;">barcode_scanner</span>
         Escanear Código (Cámara)
       </button>
-      <a routerLink="/ventas/reporte" class="btn btn-secondary">
+      <a routerLink="/ventas/reporte" class="btn btn-neutral-secondary">
         <span class="material-symbols-outlined icon-inline">bar_chart</span>
         Ir a Reporte de Ventas
       </a>
+    </div>
+  </div>
+
+  <!-- NOTA AMABLE TRANQUILIZADORA (Pilar 2) -->
+  <div class="friendly-help-note">
+    <span class="material-symbols-outlined note-icon">lightbulb</span>
+    <div>
+      💡 <strong>Emisión Segura de Comprobante:</strong> Puedes buscar clientes por DNI/RUC y agregar productos por escáner o selección en lista. El stock FEFO y el vuelto se calculan en vivo antes de emitir.
     </div>
   </div>
 

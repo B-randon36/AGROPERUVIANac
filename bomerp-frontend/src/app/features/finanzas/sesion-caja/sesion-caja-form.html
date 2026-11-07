@@ -11,11 +11,34 @@
   <!-- MODO 1: APERTURA DE TURNO DE CAJA (SI NO HAY TURNO ABIERTO) -->
   <!-- ========================================================================= -->
   @if (modoApertura()) {
+    <!-- NAVEGACIÓN ESTANDARIZADA & BREADCRUMB (Pilar 1) -->
+    <div class="view-back-nav">
+      <a routerLink="/finanzas/sesiones" class="btn-back-nav">
+        <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+        Volver al Listado
+      </a>
+      <div class="breadcrumb-trail">
+        <a routerLink="/finanzas/sesiones">Finanzas</a>
+        <span class="separator">/</span>
+        <a routerLink="/finanzas/sesiones">Sesiones de Caja</a>
+        <span class="separator">/</span>
+        <span class="current">Apertura de Turno</span>
+      </div>
+    </div>
+
     <div class="form-card max-w-600">
       <div class="form-header">
         <span class="badge-agro">Agro Peruvian Foods</span>
         <h2>Apertura de Turno de Caja Diario</h2>
         <p class="subtitle">Registra el saldo inicial en efectivo para habilitar las operaciones del punto de venta en mostrador o ferias comerciales.</p>
+      </div>
+
+      <!-- NOTA DE AYUDA AMABLE (Pilar 2) -->
+      <div class="friendly-help-note">
+        <span class="material-symbols-outlined note-icon">lightbulb</span>
+        <div>
+          💡 <strong>Fondo de Apertura:</strong> Ingresa el efectivo inicial disponible en la gaveta física para dar vuelto. Puedes tomar automáticamente el saldo del cierre anterior.
+        </div>
       </div>
 
       @if (turnoActivoExistente(); as activa) {
@@ -24,15 +47,15 @@
             <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
               <span class="material-symbols-outlined" style="font-size: 1.75rem; color: #991b1b;">warning</span>
               <div>
-                <h4 style="margin: 0 0 0.25rem 0; font-weight: 700; color: #991b1b;">¡Atención! Turno Abierto de Jornada Anterior Detectado</h4>
+                <h4 style="margin: 0 0 0.25rem 0; font-weight: 700; color: #991b1b;">¡Atención! Turno Abierto de Jornada Anterior</h4>
                 <p style="margin: 0 0 0.5rem 0; font-size: 0.875rem;">
                   El turno <strong>{{ activa.codigoSesion }}</strong> fue aperturado en una fecha previa ({{ activa.fechaApertura | date:'dd/MM/yyyy HH:mm' }}) y no fue cerrado formalmente al culminar el día.
                 </p>
                 <p style="margin: 0 0 0.75rem 0; font-size: 0.8125rem;">
-                  Por normativa de auditoría y cuadre diario de Agro Peruvian Foods, es imperativo realizar el <strong>arqueo físico</strong> de dicho turno para consolidar los ingresos antes de aperturar la jornada de hoy.
+                  Por control y orden contable diario, realiza el <strong>arqueo físico</strong> de dicho turno para consolidar los ingresos antes de aperturar la nueva jornada.
                 </p>
                 <button type="button" class="btn btn-danger btn-sm" (click)="irATurnoActivo()">
-                  Ir al Arqueo Físico de Turno Pendiente &rarr;
+                  Ir al Arqueo de Turno Pendiente &rarr;
                 </button>
               </div>
             </div>
@@ -47,10 +70,10 @@
                   Ya existe una sesión de caja abierta: <strong>{{ activa.codigoSesion }}</strong> (Cajero: <strong>{{ activa.cajero }}</strong>) iniciada el {{ activa.fechaApertura | date:'dd/MM/yyyy HH:mm' }}.
                 </p>
                 <p style="margin: 0 0 0.75rem 0; font-size: 0.8125rem; color: #92400e;">
-                  <strong>Regla de Negocio RN-FIN-02:</strong> Los turnos de caja operan bajo ciclo diario correlativo. Para aperturar el nuevo turno diario, primero debe efectuarse el arqueo físico y cierre del turno actual.
+                  <strong>Control Operativo:</strong> Los turnos de caja operan bajo ciclo correlativo. Para aperturar el nuevo turno, primero debe efectuarse el arqueo y cierre del turno actual.
                 </p>
                 <button type="button" class="btn btn-primary btn-sm" (click)="irATurnoActivo()">
-                  Ir a Cerrar Turno Activo (Arqueo Físico) &rarr;
+                  Ir a Gestionar Turno Activo &rarr;
                 </button>
               </div>
             </div>
@@ -107,10 +130,24 @@
     <!-- MODO 2: GESTIÓN DE TURNO ACTIVO / AUDITORÍA DE TURNO -->
     <!-- ========================================================================= -->
     <div class="shift-dashboard">
+      <!-- NAVEGACIÓN ESTANDARIZADA & BREADCRUMB (Pilar 1) -->
+      <div class="view-back-nav">
+        <a routerLink="/finanzas/sesiones" class="btn-back-nav">
+          <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+          Volver al Listado
+        </a>
+        <div class="breadcrumb-trail">
+          <a routerLink="/finanzas/sesiones">Finanzas</a>
+          <span class="separator">/</span>
+          <a routerLink="/finanzas/sesiones">Sesiones de Caja</a>
+          <span class="separator">/</span>
+          <span class="current">Turno {{ s.codigoSesion }}</span>
+        </div>
+      </div>
+
       <!-- Barra Superior -->
       <div class="shift-topbar">
         <div>
-          <button class="btn-back" (click)="volver()">&larr; Volver al Listado</button>
           <h2>Turno: <span class="font-mono text-primary">{{ s.codigoSesion }}</span></h2>
           <p class="subtitle">
             Cajero: <strong>{{ s.cajero }}</strong>
@@ -275,6 +312,14 @@
             </h3>
             <p class="subtitle text-xs mb-3">Conteo físico de gaveta para cuadre y cierre de turno.</p>
 
+            <!-- NOTA AMABLE EN FORMULARIO CRÍTICO DE ARQUEO (Pilar 2) -->
+            <div class="friendly-help-note" style="margin-bottom: 0.85rem;">
+              <span class="material-symbols-outlined note-icon">lightbulb</span>
+              <div>
+                💡 <strong>Conteo Asistido:</strong> Puedes revisar y ajustar las cantidades de monedas y billetes antes de confirmar; el total físico y el descuadre se calcularán automáticamente.
+              </div>
+            </div>
+
             <div class="denominaciones-grid">
               <!-- Billetes -->
               <div class="deno-col">
@@ -336,13 +381,14 @@
             <!-- Botón de Cierre si la sesión está abierta -->
             @if (s.estado === 'ABIERTA') {
               <div class="mt-3">
-                <form [formGroup]="formCierre" (ngSubmit)="cerrarTurnoCaja()">
+                <form [formGroup]="formCierre" (ngSubmit)="solicitarCierreTurno()">
                   <div class="form-group">
-                    <label class="text-xs">Observaciones de Cierre / Justificación de Descuadre:</label>
-                    <textarea formControlName="observaciones" rows="2" placeholder="Notas sobre el corte de caja..." class="form-control text-xs"></textarea>
+                    <label class="text-xs">Observaciones de Cierre / Justificación de Descuadre (Opcional):</label>
+                    <textarea formControlName="observaciones" rows="2" placeholder="Notas sobre el corte de caja o arqueo..." class="form-control text-xs"></textarea>
                   </div>
                   <button type="submit" class="btn btn-danger w-full" [disabled]="loading()">
-                    {{ loading() ? 'Cerrando y Persistiendo Arqueo...' : 'Finalizar y Sellar Turno de Caja' }}
+                    <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">lock</span>
+                    {{ loading() ? 'Procesando...' : 'Cerrar Turno de Caja' }}
                   </button>
                 </form>
               </div>
@@ -350,7 +396,7 @@
               <!-- Turno Cerrado: opción para abrir el siguiente turno diario -->
               <div class="closed-shift-banner mt-3 p-3">
                 <p class="text-xs text-muted mb-2">Este turno diario se encuentra cerrado y conciliado con arqueo físico.</p>
-                <button type="button" class="btn btn-success w-full" (click)="abrirNuevoTurnoDiario()">
+                <button type="button" class="btn btn-glacier-primary w-full" (click)="abrirNuevoTurnoDiario()">
                   + Abrir Siguiente Turno Diario
                 </button>
               </div>
@@ -426,5 +472,54 @@
         </div>
       </div>
     </div>
+
+    <!-- MODAL TRANQUILIZADOR DE CONFIRMACIÓN DE CIERRE (Pilar 2) -->
+    @if (mostrarModalConfirmarCierre()) {
+      <div class="safe-modal-backdrop" (click)="cancelarCierreTurno()">
+        <div class="safe-modal-dialog" (click)="$event.stopPropagation()">
+          <div class="safe-modal-header">
+            <span class="material-symbols-outlined" style="font-size: 1.5rem; color: #0284c7;">lock_clock</span>
+            <h3>¿Deseas cerrar el Turno de Caja?</h3>
+          </div>
+
+          <div class="safe-modal-body">
+            <p style="margin-bottom: 0.75rem;">
+              Estás a punto de cerrar la sesión <strong>{{ s.codigoSesion }}</strong> (Cajero: {{ s.cajero }}).
+            </p>
+
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 0.85rem; margin-bottom: 0.85rem; font-size: 0.825rem;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+                <span style="color: #64748B;">Saldo esperado en sistema:</span>
+                <strong>S/ {{ s.saldoEsperadoEfectivo | number:'1.2-2' }}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+                <span style="color: #64748B;">Arqueo físico contado:</span>
+                <strong style="color: #0284C7;">S/ {{ saldoRealArqueado() | number:'1.2-2' }}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding-top: 0.35rem; border-top: 1px dashed #CBD5E1;">
+                <span style="font-weight: 600;">Diferencia:</span>
+                <strong [style.color]="diferenciaArqueo() === 0 ? '#10B981' : (diferenciaArqueo() > 0 ? '#0284C7' : '#EF4444')">
+                  {{ diferenciaArqueo() >= 0 ? '+' : '' }}S/ {{ diferenciaArqueo() | number:'1.2-2' }}
+                </strong>
+              </div>
+            </div>
+
+            <p style="font-size: 0.8125rem; color: #64748B; margin: 0;">
+              Esta acción consolidará las ventas y movimientos del turno para auditoría. Podrás abrir un nuevo turno de caja cuando lo necesites.
+            </p>
+          </div>
+
+          <div class="safe-modal-footer">
+            <button type="button" class="btn btn-neutral-secondary" (click)="cancelarCierreTurno()" [disabled]="loading()">
+              ← Cancelar / Volver seguro
+            </button>
+            <button type="button" class="btn btn-dark" (click)="cerrarTurnoCaja()" [disabled]="loading()">
+              <span class="material-symbols-outlined icon-mini">check_circle</span>
+              {{ loading() ? 'Cerrando turno...' : 'Confirmar Cierre de Turno' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   }
 </div>

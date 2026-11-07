@@ -4,15 +4,15 @@
       <div class="breadcrumb">
         <span>Finanzas</span> / <strong>Rendiciones de Caja Chica</strong>
       </div>
-      <h2>Reporte y Consulta Transaccional: Rendiciones</h2>
-      <p class="subtitle">Consulta de operaciones con detalle profundo, métricas agregadas y transición de estado</p>
+      <h2>Rendiciones y Fondos de Caja Chica</h2>
+      <p class="subtitle">Control de gastos operativos, presupuestos por área y comprobantes</p>
     </div>
     <div class="header-actions">
-      <button class="btn btn-secondary" (click)="abrirModalCajaChica()">
-        + Nueva Caja Chica (Fondo Fijo)
+      <button class="btn btn-neutral-secondary" (click)="abrirModalCajaChica()">
+        <span class="material-symbols-outlined icon-inline">account_balance_wallet</span> + Nueva Caja Chica
       </button>
-      <a routerLink="/finanzas/rendiciones/nueva" class="btn btn-primary">
-        + Nueva Rendición (Cabecera-Detalle)
+      <a routerLink="/finanzas/rendiciones/nueva" class="btn btn-glacier-primary">
+        <span class="material-symbols-outlined icon-inline">add_circle</span> + Nueva Rendición
       </a>
     </div>
   </div>
@@ -32,18 +32,26 @@
             <span class="chip-limit">/ S/ {{ c.limiteMaximo | number:'1.2-2' }}</span>
           </div>
 
-          <!-- Barra de Consumo por Centro de Costo (M:N) -->
+          <!-- Tarjetas Visuales de Presupuesto por Centro de Costo (Pilar 4) -->
           @if (presupuestosPorCaja()[c.id]; as asigs) {
             @if (asigs.length > 0) {
-              <div class="chip-cc-list">
+              <div class="cc-budget-list">
                 @for (asig of asigs; track asig.centroCostoId) {
-                  <div class="mini-progress-row" [title]="asig.nombreArea + ': S/ ' + asig.saldoDisponible + ' disponibles de S/ ' + asig.presupuestoAsignado">
-                    <div class="mini-progress-labels">
-                      <span class="mini-cc-name">{{ asig.codigoCc }}</span>
-                      <span class="mini-cc-vals">S/ {{ asig.saldoDisponible | number:'1.0-0' }}/{{ asig.presupuestoAsignado | number:'1.0-0' }}</span>
+                  <div class="cc-budget-card" [title]="(asig.nombreArea || asig.codigoCc) + ': S/ ' + asig.saldoDisponible + ' disponible de S/ ' + asig.presupuestoAsignado">
+                    <div class="cc-budget-header">
+                      <span class="cc-budget-name">{{ asig.nombreArea || asig.codigoCc }}</span>
+                      <span class="cc-budget-pct">{{ getConsumoPorcentaje(asig) | number:'1.0-0' }}% usado</span>
                     </div>
-                    <div class="mini-progress-track">
-                      <div class="mini-progress-fill" [style.width.%]="(asig.saldoDisponible / asig.presupuestoAsignado) * 100" [class.low]="(asig.saldoDisponible / asig.presupuestoAsignado) < 0.2"></div>
+                    <div class="cc-budget-values">
+                      <span class="cc-budget-disp">Disponible: <strong>S/ {{ asig.saldoDisponible | number:'1.2-2' }}</strong></span>
+                      <span class="cc-budget-tope">Tope: S/ {{ asig.presupuestoAsignado | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="cc-progress-bar-bg">
+                      <div
+                        class="cc-progress-bar-fill"
+                        [ngClass]="getSemaforoColorClass(asig)"
+                        [style.width.%]="getConsumoPorcentaje(asig) > 100 ? 100 : (getConsumoPorcentaje(asig) < 6 ? 6 : getConsumoPorcentaje(asig))">
+                      </div>
                     </div>
                   </div>
                 }
@@ -52,7 +60,7 @@
           }
 
           <button type="button" class="btn-manage-cc" (click)="$event.stopPropagation(); abrirGestionPresupuestos(c)">
-            <span class="material-symbols-outlined icon-inline">settings</span> Presupuestos CC (M:N)
+            <span class="material-symbols-outlined icon-inline">tune</span> + Presupuesto CC
           </button>
         </div>
       }
@@ -199,28 +207,28 @@
                   </span>
                 </td>
                 <td style="text-align: center;">
-                  <div class="btn-group">
+                  <div class="table-actions-container">
                     <button
                       type="button"
                       class="btn-action btn-view"
                       (click)="verDetalle(r)"
-                      title="Ver detalle completo de líneas"
+                      title="Ver detalle completo de comprobantes y líneas"
                     >
-                      Detalle
+                      <span class="material-symbols-outlined icon-mini">visibility</span> Detalle
                     </button>
 
-                    <!-- TRANSICIÓN DE ESTADO (ANULAR) CONDICIONADA AL ESTADO ACTUAL -->
+                    <!-- ACCIÓN DISCRETA: ANULAR COMPROBANTE (DISEÑO SIN MIEDO) -->
                     @if (r.estado !== 'ANULADO') {
                       <button
                         type="button"
-                        class="btn-action btn-anular"
+                        class="btn-action-discreet-danger"
                         (click)="abrirModalAnular(r)"
-                        title="Anular rendición y revertir saldo a caja chica"
+                        title="Anular rendición y reintegrar saldo disponible a la caja chica"
                       >
-                        Anular
+                        <span class="material-symbols-outlined icon-mini">cancel</span> Anular
                       </button>
                     } @else {
-                      <span class="badge-disabled" title="Operación ya anulada (irreversible)">
+                      <span class="badge-disabled" title="Comprobante ya anulado">
                         Anulada
                       </span>
                     }
@@ -316,47 +324,42 @@
     </div>
   }
 
-  <!-- MODAL DE TRANSICIÓN DE ESTADO (ANULAR) CON REGLA DE NEGOCIO -->
+  <!-- MODAL TRANQUILIZADOR DE CONFIRMACIÓN: ANULAR RENDICIÓN (DISEÑO SIN MIEDO) -->
   @if (mostrarModalAnular() && rendicionParaAnular(); as rendAnular) {
-    <div class="modal-backdrop">
-      <div class="modal-dialog">
-        <div class="modal-header modal-header-danger">
-          <h3>Transición de Estado: Anular Rendición</h3>
-          <button type="button" class="close-btn" (click)="cerrarModalAnular()">×</button>
+    <div class="safe-modal-backdrop" (click)="cerrarModalAnular()">
+      <div class="safe-modal-dialog" (click)="$event.stopPropagation()">
+        <div class="safe-modal-header">
+          <span class="material-symbols-outlined" style="font-size: 1.5rem; color: #dc2626;">info</span>
+          <h3>¿Deseas anular esta rendición de gastos?</h3>
         </div>
 
-        <div class="modal-body">
-          <div class="alert alert-solvencia" style="margin-bottom: 1rem;">
-            <span class="alert-icon">[!]</span>
+        <div class="safe-modal-body">
+          <p style="margin-bottom: 0.75rem;">
+            Estás a punto de anular el comprobante <strong>{{ rendAnular.codigo }}</strong> (Responsable: {{ rendAnular.responsable }}).
+          </p>
+
+          <div class="friendly-help-note" style="margin-bottom: 0.85rem;">
+            <span class="material-symbols-outlined note-icon">savings</span>
             <div>
-              <strong>ADVERTENCIA DE INTEGRIDAD TRANSACCIONAL</strong>
-              <p>Esta acción es definitiva e irreversible. Cambiará el estado de la rendición a <strong>ANULADO</strong>.</p>
+              <strong>Reintegro automático de dinero:</strong>
+              <p style="margin: 0.2rem 0 0 0;">
+                Se devolverán <strong>S/ {{ rendAnular.montoTotal | number:'1.2-2' }}</strong> al saldo disponible de la Caja Chica <strong>{{ getCajaNombre(rendAnular.cajaChicaId) }}</strong>.
+              </p>
             </div>
           </div>
 
-          <p>Detalles de la operación a anular:</p>
-          <ul style="line-height: 1.8;">
-            <li><strong>Código:</strong> {{ rendAnular.codigo }}</li>
-            <li><strong>Responsable:</strong> {{ rendAnular.responsable }}</li>
-            <li><strong>Caja Chica Afectada:</strong> {{ getCajaNombre(rendAnular.cajaChicaId) }}</li>
-            <li><strong>Importe Total:</strong> S/ {{ rendAnular.montoTotal | number:'1.2-2' }}</li>
-          </ul>
-
-          <div class="alerta-impacto" style="margin-top: 1rem;">
-            <strong>Efecto Colateral Financiero:</strong> Se reintegrarán automáticamente <strong>S/ {{ rendAnular.montoTotal | number:'1.2-2' }}</strong> al saldo disponible de la Caja Chica en una transacción atómica de compensación.
-          </div>
+          <p style="font-size: 0.8125rem; color: #64748b; margin: 0;">
+            El registro quedará archivado con estado <strong>Anulado</strong> para tu auditoría contable y control histórico.
+          </p>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="cerrarModalAnular()" [disabled]="loadingAnular()">
-            Cancelar
+        <div class="safe-modal-footer">
+          <button type="button" class="btn btn-neutral-secondary" (click)="cerrarModalAnular()" [disabled]="loadingAnular()">
+            ← Cancelar / Volver seguro
           </button>
-          <button type="button" class="btn btn-danger" (click)="confirmarAnulacion()" [disabled]="loadingAnular()">
-            @if (loadingAnular()) {
-              Procesando anulación...
-            } @else {
-              Confirmar Anulación y Revertir Saldo
-            }
+          <button type="button" class="btn-action-discreet-danger" (click)="confirmarAnulacion()" [disabled]="loadingAnular()">
+            <span class="material-symbols-outlined icon-mini">check</span>
+            {{ loadingAnular() ? 'Procesando anulación...' : 'Sí, anular rendición' }}
           </button>
         </div>
       </div>
@@ -410,118 +413,127 @@
     </div>
   }
 
-  <!-- MODAL: GESTIÓN PRESUPUESTAL POR CENTRO DE COSTO (M:N ASIGNACION_CAJA_CENTRO_COSTO) -->
+  <!-- MODAL: GESTIÓN DE PRESUPUESTOS POR CENTRO DE COSTO (+ Presupuesto CC) -->
   @if (mostrarModalPresupuestos() && cajaParaPresupuesto(); as cajaP) {
-    <div class="modal-backdrop" (click)="cerrarModalPresupuestos()">
-      <div class="modal-dialog" (click)="$event.stopPropagation()" style="max-width: 680px;">
-        <div class="modal-header">
+    <div class="safe-modal-backdrop" (click)="cerrarModalPresupuestos()">
+      <div class="modal-dialog" (click)="$event.stopPropagation()" style="max-width: 680px; border-radius: 12px; overflow: hidden; background: #fff;">
+        <div class="modal-header" style="background: #1A2438; color: #fff; padding: 1.25rem 1.5rem;">
           <div>
-            <h3>Gestión Presupuestal por Centro de Costo (M:N)</h3>
-            <p class="subtitle" style="margin: 0; font-size: 0.8125rem; color: #64748b;">
-              Caja Chica: <strong>{{ cajaP.codigo }}</strong> | Responsable: {{ cajaP.responsable }} | Saldo Total Caja: <strong>S/ {{ cajaP.saldoDisponible | number:'1.2-2' }}</strong>
+            <h3 style="margin: 0; color: #fff; font-size: 1.15rem;">Asignación de Presupuesto por Área o Línea</h3>
+            <p class="subtitle" style="margin: 0.25rem 0 0 0; font-size: 0.8125rem; color: #88B4CC;">
+              Caja Chica: <strong>{{ cajaP.codigo }}</strong> ({{ cajaP.responsable }}) &bull; Saldo Disponible Caja: <strong>S/ {{ cajaP.saldoDisponible | number:'1.2-2' }}</strong>
             </p>
           </div>
-          <button type="button" class="btn-close" (click)="cerrarModalPresupuestos()">&times;</button>
+          <button type="button" class="btn-close" (click)="cerrarModalPresupuestos()" style="color: #fff; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
         </div>
 
-        <div class="modal-body">
+        <div class="modal-body" style="padding: 1.5rem;">
           @if (mensajeExitoPresupuesto()) {
-            <div class="alert alert-success" style="padding: 0.6rem 0.85rem; margin-bottom: 0.85rem;">
+            <div class="alert alert-success" style="padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 8px;">
               <span class="alert-icon">[OK]</span>
               <div>{{ mensajeExitoPresupuesto() }}</div>
             </div>
           }
 
-          <!-- Formulario de Asignación / Actualización -->
-          <div class="card p-3 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem;">
-            <h4 style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #1e293b;">
-              Asignar / Incrementar Techo Presupuestal a Línea de Costo
-            </h4>
-            <div style="display: grid; grid-template-columns: 2fr 1.2fr auto; gap: 0.5rem; align-items: flex-end;">
+          <!-- Formulario amigable con inputs grandes y etiquetas en lenguaje simple (Pilar 4) -->
+          <div class="card p-3 mb-4" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 1.25rem;">
+            <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 1rem; margin-bottom: 1.25rem;">
               <div>
-                <label style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">Centro de Costo *</label>
+                <label style="font-size: 0.875rem; font-weight: 700; color: #1E293B; display: block; margin-bottom: 0.4rem;">
+                  ¿A qué área o línea se asignará? *
+                </label>
                 <select
                   class="form-control"
-                  style="font-size: 0.8125rem; padding: 0.4rem 0.6rem;"
+                  style="font-size: 0.95rem; padding: 0.65rem 0.85rem; height: auto; border-radius: 8px; border: 1.5px solid #CBD5E1;"
                   [ngModel]="formPresupuestoCentroCostoId()"
                   (ngModelChange)="formPresupuestoCentroCostoId.set($event)"
                 >
                   @for (cc of centrosCosto(); track cc.id) {
-                    <option [ngValue]="cc.id">{{ cc.codigoCc }} - {{ cc.nombreArea }}</option>
+                    <option [ngValue]="cc.id">{{ cc.nombreArea || cc.codigoCc }} ({{ cc.codigoCc }})</option>
                   }
                 </select>
               </div>
 
               <div>
-                <label style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">Monto Techo (S/) *</label>
+                <label style="font-size: 0.875rem; font-weight: 700; color: #1E293B; display: block; margin-bottom: 0.4rem;">
+                  Monto máximo permitido (S/) *
+                </label>
                 <input
                   type="number"
                   min="1"
                   step="50"
                   class="form-control"
-                  style="font-size: 0.8125rem; padding: 0.4rem 0.6rem;"
+                  style="font-size: 0.95rem; padding: 0.65rem 0.85rem; height: auto; border-radius: 8px; border: 1.5px solid #CBD5E1;"
                   [ngModel]="formPresupuestoMonto()"
                   (ngModelChange)="formPresupuestoMonto.set($event)"
+                  placeholder="Ej: 500.00"
                 />
               </div>
+            </div>
 
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
               <button
                 type="button"
-                class="btn btn-primary"
-                style="padding: 0.45rem 0.85rem; font-size: 0.8125rem;"
+                class="btn btn-neutral-secondary"
+                (click)="cerrarModalPresupuestos()"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="btn btn-glacier-primary"
+                style="padding: 0.65rem 1.25rem;"
                 (click)="guardarPresupuesto()"
                 [disabled]="loadingPresupuestos()"
               >
-                {{ loadingPresupuestos() ? 'Guardando...' : 'Asignar' }}
+                <span class="material-symbols-outlined icon-inline">check_circle</span>
+                {{ loadingPresupuestos() ? 'Guardando Asignación...' : 'Guardar Asignación' }}
               </button>
             </div>
           </div>
 
-          <!-- Tabla de Asignaciones Actuales -->
-          <h4 style="margin: 0.75rem 0 0.5rem 0; font-size: 0.875rem; color: #1e293b;">
-            Líneas Asignadas a esta Caja Chica ({{ asignaciones().length }})
+          <!-- Tabla de Áreas / Líneas con Presupuesto Activo -->
+          <h4 style="margin: 0.5rem 0 0.5rem 0; font-size: 0.9rem; color: #1E293B; font-weight: 700;">
+            Presupuestos por Área configurados en esta Caja Chica ({{ asignaciones().length }})
           </h4>
           <div class="table-responsive">
             <table class="table-modal-detalle">
               <thead>
                 <tr>
-                  <th>Código CC</th>
                   <th>Área / Línea</th>
-                  <th style="text-align: right;">Presupuesto</th>
+                  <th style="text-align: right;">Presupuesto (Tope)</th>
                   <th style="text-align: right;">Disponible</th>
-                  <th style="width: 25%;">Consumo</th>
+                  <th style="width: 30%;">Consumo</th>
                 </tr>
               </thead>
               <tbody>
                 @for (asig of asignaciones(); track asig.centroCostoId) {
                   <tr>
                     <td>
-                      <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700;">
-                        {{ asig.codigoCc }}
-                      </span>
+                      <strong>{{ asig.nombreArea || asig.codigoCc }}</strong>
+                      <span style="font-size: 0.75rem; color: #64748B; margin-left: 0.35rem;">({{ asig.codigoCc }})</span>
                     </td>
-                    <td style="font-size: 0.8125rem;">{{ asig.nombreArea }}</td>
                     <td style="text-align: right; font-weight: 600;">S/ {{ asig.presupuestoAsignado | number:'1.2-2' }}</td>
-                    <td style="text-align: right; font-weight: 700; color: #15803d;">
+                    <td style="text-align: right; font-weight: 700; color: #0284C7;">
                       S/ {{ asig.saldoDisponible | number:'1.2-2' }}
                     </td>
                     <td>
-                      @let porcentaje = asig.presupuestoAsignado > 0 ? ((asig.presupuestoAsignado - asig.saldoDisponible) / asig.presupuestoAsignado) * 100 : 0;
-                      <div style="background: #e2e8f0; border-radius: 9999px; height: 8px; width: 100%; overflow: hidden;">
+                      @let pct = getConsumoPorcentaje(asig);
+                      <div class="cc-progress-bar-bg" style="height: 8px;">
                         <div
-                          style="height: 100%; border-radius: 9999px; transition: width 0.3s;"
-                          [style.width.%]="porcentaje > 100 ? 100 : (porcentaje < 0 ? 0 : porcentaje)"
-                          [style.background]="porcentaje > 80 ? '#dc2626' : (porcentaje > 50 ? '#f59e0b' : '#16a34a')"
+                          class="cc-progress-bar-fill"
+                          [ngClass]="getSemaforoColorClass(asig)"
+                          [style.width.%]="pct > 100 ? 100 : (pct < 6 ? 6 : pct)"
                         ></div>
                       </div>
-                      <span style="font-size: 0.7rem; color: #64748b;">{{ porcentaje | number:'1.0-0' }}% consumido</span>
+                      <span style="font-size: 0.7rem; color: #64748B;">{{ pct | number:'1.0-0' }}% consumido</span>
                     </td>
                   </tr>
                 }
                 @empty {
                   <tr>
-                    <td colspan="5" class="text-center" style="padding: 1rem; color: #64748b;">
-                      No hay centros de costo asignados a esta caja chica. Utilice el formulario superior para crear la primera asignación.
+                    <td colspan="4" class="text-center" style="padding: 1.25rem; color: #64748B;">
+                      No hay áreas asignadas a esta caja chica aún. Usa el formulario superior para asignar el primer presupuesto.
                     </td>
                   </tr>
                 }
@@ -530,9 +542,9 @@
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="cerrarModalPresupuestos()">
-            Cerrar
+        <div class="modal-footer" style="padding: 0.85rem 1.5rem; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end;">
+          <button type="button" class="btn btn-neutral-secondary" (click)="cerrarModalPresupuestos()">
+            Cerrar Ventana
           </button>
         </div>
       </div>

@@ -220,7 +220,7 @@
                         title="Registrar cobro o amortización"
                         (click)="abrirModalAbono(cred)"
                       >
-                        <span class="material-symbols-outlined icon-inline">credit_card</span> Cobrar / Abonar
+                        <span class="material-symbols-outlined icon-inline">payments</span> Cobrar / Abonar
                       </button>
                     }
                     <button
@@ -268,6 +268,14 @@
             <div class="debt-item debt-item-highlight">
               <span class="lbl">Saldo Pendiente a Cobrar</span>
               <span class="val text-danger">S/ {{ cred.saldoPendiente | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <!-- NOTA AMABLE TRANQUILIZADORA (Pilar 2) -->
+          <div class="friendly-help-note" style="margin-bottom: 1rem;">
+            <span class="material-symbols-outlined note-icon">lightbulb</span>
+            <div>
+              💡 <strong>Cobro Seguro:</strong> Puedes registrar un pago parcial o total. El saldo restante se calculará automáticamente y se sincronizará con tu turno de caja activo.
             </div>
           </div>
 

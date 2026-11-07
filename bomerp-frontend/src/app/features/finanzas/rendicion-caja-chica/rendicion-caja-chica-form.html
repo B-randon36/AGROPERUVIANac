@@ -1,14 +1,32 @@
 <div class="page-container">
+  <!-- NAVEGACIÓN ESTANDARIZADA & BREADCRUMB (Pilar 1) -->
+  <div class="view-back-nav">
+    <a routerLink="/finanzas/rendiciones" class="btn-back-nav">
+      <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+      Volver al Listado
+    </a>
+    <div class="breadcrumb-trail">
+      <a routerLink="/finanzas/rendiciones">Finanzas</a>
+      <span class="separator">/</span>
+      <a routerLink="/finanzas/rendiciones">Rendición Caja Chica</a>
+      <span class="separator">/</span>
+      <span class="current">Nueva Rendición</span>
+    </div>
+  </div>
+
   <div class="header-section">
     <div>
-      <div class="breadcrumb">
-        <a routerLink="/finanzas/rendiciones">Finanzas</a> / <span>Rendiciones de Caja Chica</span> / <strong>Nueva Operación</strong>
-      </div>
-      <h2>Formulario Transaccional: Rendición de Caja Chica</h2>
-      <p class="subtitle">Operación Cabecera-Detalle con detalle dinámico, autocompletado de catálogo y control de liquidez</p>
+      <h2>Registrar Rendición de Caja Chica</h2>
+      <p class="subtitle">Comprobantes y gastos operativos por fondo fijo y centro de costo</p>
     </div>
+  </div>
+
+  <!-- NOTA DE AYUDA AMABLE (Pilar 2) -->
+  <div class="friendly-help-note">
+    <span class="material-symbols-outlined note-icon">lightbulb</span>
     <div>
-      <a routerLink="/finanzas/rendiciones" class="btn btn-secondary">← Volver al Listado</a>
+      <strong>💡 Gestión de comprobantes asistida:</strong>
+      El selector de Centro de Costo te muestra cuánto saldo disponible le queda a cada área o línea. Si un comprobante sobrepasa el presupuesto disponible, te avisaremos de inmediato.
     </div>
   </div>
 
@@ -20,12 +38,12 @@
     </div>
   }
 
-  <!-- ALERTAS DE ERRORES REALES DEL BACKEND -->
+  <!-- ALERTAS AMABLES DE VALIDACIÓN (Pilar 5) -->
   @if (errorSolvencia()) {
     <div class="alert alert-solvencia">
       <span class="alert-icon">[!]</span>
       <div>
-        <strong>FALLO DE REGLA DE NEGOCIO EN EL SERVIDOR</strong>
+        <strong>Aviso de Fondo Insuficiente</strong>
         <p>{{ errorSolvencia() }}</p>
       </div>
     </div>
@@ -35,7 +53,7 @@
     <div class="alert alert-solvencia" style="border-left: 4px solid #ea580c; background: #fff7ed; color: #9a3412;">
       <span class="material-symbols-outlined alert-icon" style="color: #ea580c;">warning</span>
       <div>
-        <strong>ALERTA PREVENTIVA DE TECHO PRESUPUESTAL (RN-FIN-06)</strong>
+        <strong>Aviso de Presupuesto Asignado</strong>
         <p>{{ alertaRnFin06() }}</p>
       </div>
     </div>
@@ -45,7 +63,7 @@
     <div class="alert alert-duplicidad">
       <span class="alert-icon">[!]</span>
       <div>
-        <strong>ERROR DE RESTRICCIÓN DE INTEGRIDAD (BACKEND)</strong>
+        <strong>Comprobante ya registrado</strong>
         <p>{{ errorDuplicidad() }}</p>
       </div>
     </div>
@@ -233,20 +251,25 @@
                   }
                 </td>
 
-                <!-- COLUMNA 2: CENTRO DE COSTO / LÍNEA IMPUTADA -->
+                <!-- COLUMNA 2: CENTRO DE COSTO / LÍNEA ASISTIDA (Pilar 4) -->
                 <td>
                   <select
                     formControlName="centroCostoId"
                     class="form-control"
                     [class.is-invalid]="grupo.get('centroCostoId')?.touched && grupo.get('centroCostoId')?.invalid"
                   >
-                    <option [ngValue]="null" disabled>-- Centro Costo --</option>
+                    <option [ngValue]="null" disabled>-- Seleccionar Centro de Costo --</option>
                     @for (cc of centrosCosto(); track cc.id) {
-                      <option [ngValue]="cc.id">{{ cc.codigoCc }} - {{ cc.nombreArea }}</option>
+                      <option [ngValue]="cc.id">{{ getCentroCostoLabel(cc) }}</option>
                     }
                   </select>
                   @if (grupo.get('centroCostoId')?.touched && grupo.get('centroCostoId')?.invalid) {
-                    <div class="error-badge">CC requerido</div>
+                    <div class="error-badge">Centro de costo requerido</div>
+                  }
+                  @if (lineaSuperaPresupuesto($index)) {
+                    <div class="presupuesto-warning-inline">
+                      ⚠️ El monto supera el presupuesto disponible en este centro de costo
+                    </div>
                   }
                 </td>
 

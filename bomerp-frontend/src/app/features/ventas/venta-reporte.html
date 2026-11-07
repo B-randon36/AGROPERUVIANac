@@ -11,15 +11,15 @@
       @if (auth.tieneRol('SUPERVISOR', 'ADMIN') && ventas().length > 0) {
         <button
           type="button"
-          class="btn btn-danger"
+          class="btn btn-soft-danger"
           (click)="eliminarTodas()"
           title="Eliminar todas las ventas registradas del reporte"
         >
-          <span class="material-symbols-outlined icon-inline">delete_forever</span> Eliminar Todas las Ventas
+          <span class="material-symbols-outlined icon-inline">delete_sweep</span> Limpiar Historial
         </button>
       }
-      <a routerLink="/ventas/nueva" class="btn btn-primary">
-        <span class="material-symbols-outlined icon-inline">point_of_sale</span> Nueva Venta POS
+      <a routerLink="/ventas/nueva" class="btn btn-glacier-primary">
+        <span class="material-symbols-outlined icon-inline">point_of_sale</span> + Nueva Venta POS
       </a>
     </div>
   </div>
@@ -208,11 +208,11 @@
                     @if (venta.estado === 'REGISTRADA' && auth.tieneRol('SUPERVISOR', 'ADMIN')) {
                       <button
                         type="button"
-                        class="btn-anular"
-                        (click)="anular(venta.id)"
+                        class="btn-action-discreet-danger"
+                        (click)="solicitarAnularVenta(venta.id)"
                         title="Anular venta y restaurar stock en catálogo"
                       >
-                        <span class="material-symbols-outlined icon-inline">block</span> Anular
+                        <span class="material-symbols-outlined icon-inline" style="font-size: 0.95rem;">block</span> Anular
                       </button>
                     } @else if (venta.estado === 'ANULADA') {
                       <span class="badge-anulado-label">Anulada</span>
@@ -222,12 +222,12 @@
                     @if (auth.tieneRol('ADMIN', 'SUPERVISOR')) {
                       <button
                         type="button"
-                        class="btn btn-danger btn-sm"
-                        style="padding: 0.35rem 0.6rem; font-size: 0.75rem;"
+                        class="btn-action-discreet-danger"
+                        style="padding: 0.35rem 0.5rem;"
                         (click)="eliminar(venta.id)"
-                        title="Eliminar esta venta del reporte permanentemente"
+                        title="Eliminar registro de venta"
                       >
-                        <span class="material-symbols-outlined" style="font-size: 1rem; vertical-align: middle;">delete</span>
+                        <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
                       </button>
                     }
                   </div>
@@ -328,6 +328,48 @@
     <div class="loading-box">
       <div class="spinner"></div>
       <p>Consultando transacciones y agregados...</p>
+    </div>
+  }
+
+  <!-- MODAL TRANQUILIZADOR: ANULAR VENTA POS (Pilar 2) -->
+  @if (mostrarModalAnularVenta() && ventaParaAnular(); as vId) {
+    <div class="safe-modal-backdrop" (click)="cancelarAnularVenta()">
+      <div class="safe-modal-dialog" (click)="$event.stopPropagation()">
+        <div class="safe-modal-header">
+          <span class="material-symbols-outlined" style="font-size: 1.5rem; color: #dc2626;">warning</span>
+          <h3>¿Deseas anular la Venta #{{ vId }}?</h3>
+        </div>
+
+        <div class="safe-modal-body">
+          <p style="margin-bottom: 0.75rem;">
+            Estás a punto de anular el comprobante de venta número <strong>#{{ vId }}</strong>.
+          </p>
+
+          <div class="friendly-help-note" style="margin-bottom: 0.85rem;">
+            <span class="material-symbols-outlined note-icon">inventory_2</span>
+            <div>
+              <strong>Reintegro automático a inventario:</strong>
+              <p style="margin: 0.2rem 0 0 0;">
+                El stock de todos los productos incluidos en esta venta se repondrá automáticamente al almacén.
+              </p>
+            </div>
+          </div>
+
+          <p style="font-size: 0.8125rem; color: #64748b; margin: 0;">
+            El comprobante quedará marcado como <strong>Anulado</strong> para mantener la consistencia contable y auditoría.
+          </p>
+        </div>
+
+        <div class="safe-modal-footer">
+          <button type="button" class="btn btn-neutral-secondary" (click)="cancelarAnularVenta()" [disabled]="loading()">
+            ← Cancelar / Volver seguro
+          </button>
+          <button type="button" class="btn-action-discreet-danger" (click)="confirmarAnularVenta()" [disabled]="loading()">
+            <span class="material-symbols-outlined icon-mini">check</span>
+            {{ loading() ? 'Anulando...' : 'Sí, anular venta' }}
+          </button>
+        </div>
+      </div>
     </div>
   }
 </div>

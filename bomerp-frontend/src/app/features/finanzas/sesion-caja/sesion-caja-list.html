@@ -9,12 +9,12 @@
 
     <div class="header-actions">
       @if (sesionActiva()) {
-        <button class="btn btn-primary pulse-btn" (click)="verTurnoActivo()">
+        <button class="btn btn-glacier-primary pulse-btn" (click)="verTurnoActivo()">
           <span class="live-indicator"></span> Turno Activo: {{ sesionActiva()?.codigoSesion }}
         </button>
       } @else {
-        <button class="btn btn-success" (click)="abrirNuevoTurno()">
-          + Abrir Turno de Caja
+        <button class="btn btn-glacier-primary" (click)="abrirNuevoTurno()">
+          <span class="material-symbols-outlined icon-inline">lock_open</span> + Abrir Turno de Caja
         </button>
       }
     </div>
@@ -53,8 +53,9 @@
       </div>
 
       <div class="shift-action">
-        <button class="btn btn-outline" [routerLink]="['/finanzas/sesiones', activa.id]">
-          Gestionar Turno / Registrar Movimientos &rarr;
+        <button class="btn btn-glacier-primary" [routerLink]="['/finanzas/sesiones', activa.id]">
+          <span class="material-symbols-outlined icon-inline">point_of_sale</span>
+          Registrar Movimiento / Arqueo &rarr;
         </button>
       </div>
     </div>
@@ -239,7 +240,7 @@
           @if (sel.detallesArqueo && sel.detallesArqueo.length > 0) {
             <h4 style="margin: 1.5rem 0 0.5rem 0; color: #1e5a32; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
               <span class="material-symbols-outlined">payments</span>
-              <span>Desglose Físico de Arqueo de Caja (DetalleArqueoEfectivo M:N)</span>
+              <span>Desglose Físico de Arqueo de Caja (Monedas y Billetes Contados)</span>
             </h4>
             <div class="table-responsive modal-table">
               <table class="data-table">
@@ -271,9 +272,13 @@
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-outline" (click)="exportar(sel.id, 'PDF')">Descargar PDF</button>
-          <button class="btn btn-outline" (click)="exportar(sel.id, 'EXCEL')">Descargar Excel</button>
-          <button class="btn btn-primary" (click)="cerrarModal()">Cerrar</button>
+          <button class="btn btn-neutral-secondary" (click)="exportar(sel.id, 'PDF')">
+            <span class="material-symbols-outlined icon-inline">picture_as_pdf</span> Descargar PDF
+          </button>
+          <button class="btn btn-neutral-secondary" (click)="exportar(sel.id, 'EXCEL')">
+            <span class="material-symbols-outlined icon-inline">table_view</span> Descargar Excel
+          </button>
+          <button class="btn btn-glacier-primary" (click)="cerrarModal()">Cerrar</button>
         </div>
       </div>
     </div>

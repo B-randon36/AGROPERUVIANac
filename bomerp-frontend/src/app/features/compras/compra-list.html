@@ -9,13 +9,13 @@
       <p class="subtitle">Control de compras de materia prima, fletes, cuentas por pagar y conciliación de amortizaciones</p>
     </div>
     <div class="header-actions">
-      <a routerLink="/compras/nueva" class="btn btn-primary">
+      <a routerLink="/compras/nueva" class="btn btn-glacier-primary">
         <span class="material-symbols-outlined icon-inline">add_shopping_cart</span> Nueva Orden de Compra
       </a>
-      <a routerLink="/compras/proveedores" class="btn btn-secondary">
+      <a routerLink="/compras/proveedores" class="btn btn-neutral-secondary">
         <span class="material-symbols-outlined icon-inline">store</span> Directorio de Proveedores
       </a>
-      <button class="btn btn-secondary" (click)="cargarDatos()" title="Recargar">
+      <button class="btn btn-neutral-secondary" (click)="cargarDatos()" title="Recargar lista">
         <span class="material-symbols-outlined icon-inline">refresh</span>
       </button>
     </div>
@@ -194,20 +194,23 @@
                 </span>
               </td>
               <td class="text-center">
-                <div class="btn-group">
-                  <button class="btn-action" (click)="verDetalle(c)" title="Ver detalle de insumos y pagos">
-                    <span class="material-symbols-outlined icon-btn">visibility</span>
-                    <span>Detalle</span>
-                  </button>
-                  @if (c.saldoPendiente > 0 && c.estado !== 'ANULADA') {
-                    <button class="btn-action btn-action-pay" (click)="abrirAmortizar(c)" title="Registrar pago o amortización">
-                      <span class="material-symbols-outlined icon-btn">payments</span>
-                      <span>Pagar</span>
+                <div style="display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;">
+                  <div class="btn-group">
+                    <button class="btn-action" (click)="verDetalle(c)" title="Ver detalle de insumos y pagos">
+                      <span class="material-symbols-outlined icon-btn">visibility</span>
+                      <span>Detalle</span>
                     </button>
-                  }
+                    @if (c.saldoPendiente > 0 && c.estado !== 'ANULADA') {
+                      <button class="btn-action btn-action-pay" (click)="abrirAmortizar(c)" title="Registrar pago o amortización a proveedor">
+                        <span class="material-symbols-outlined icon-btn">payments</span>
+                        <span>Pagar</span>
+                      </button>
+                    }
+                  </div>
                   @if (c.estado !== 'ANULADA') {
-                    <button class="btn-action btn-action-cancel" (click)="anular(c)" title="Anular Compra">
+                    <button class="btn-action-discreet-danger" (click)="anular(c)" title="Anular orden de compra y revertir saldos">
                       <span class="material-symbols-outlined icon-btn">cancel</span>
+                      <span>Anular</span>
                     </button>
                   }
                 </div>

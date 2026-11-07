@@ -1,12 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CategoriaFinancieraService } from './categoria-financiera-service';
 import { TipoFinanciero } from './categoria-financiera.model';
 
 @Component({
   selector: 'app-categoria-financiera-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './categoria-financiera-form.html',
 })
 export class CategoriaFinancieraForm {

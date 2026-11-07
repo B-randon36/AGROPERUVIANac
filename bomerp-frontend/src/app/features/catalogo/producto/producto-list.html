@@ -103,10 +103,10 @@
               <td class="text-center">
                 <div class="btn-group">
                   @if (auth.tieneRol('ADMIN')) {
-                    <a [routerLink]="['/catalogo/productos', producto.id, 'editar']" class="btn btn-secondary btn-sm">
+                    <a [routerLink]="['/catalogo/productos', producto.id, 'editar']" class="btn btn-neutral-secondary btn-sm">
                       <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">edit</span> Editar
                     </a>
-                    <button class="btn btn-danger btn-sm" (click)="eliminar(producto)">
+                    <button class="btn-action-discreet-danger" (click)="eliminar(producto)" title="Eliminar producto">
                       <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">delete</span> Eliminar
                     </button>
                   } @else {

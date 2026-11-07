@@ -512,52 +512,117 @@
   color: #1e3a8a;
 }
 
-.chip-cc-list {
-  margin-top: 0.5rem;
-  padding-top: 0.4rem;
+/* =========================================================================
+   TARJETAS VISUALES DE PRESUPUESTO POR CENTRO DE COSTO (Pilar 4 Glacier)
+   ========================================================================= */
+.cc-budget-list {
+  margin-top: 0.65rem;
+  padding-top: 0.5rem;
   border-top: 1px dashed #cbd5e1;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.5rem;
 }
 
-.mini-progress-row {
+.cc-budget-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 7px;
+  padding: 0.45rem 0.6rem;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.25rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
-.mini-progress-labels {
+.cc-budget-header {
   display: flex;
   justify-content: space-between;
-  font-size: 0.65rem;
-  color: #475569;
+  align-items: center;
 }
 
-.mini-cc-name {
+.cc-budget-name {
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: #1E293B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+.cc-budget-pct {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.cc-budget-values {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.7rem;
+}
+
+.cc-budget-disp {
+  color: #0369A1;
+  font-size: 0.725rem;
+}
+
+.cc-budget-disp strong {
+  font-size: 0.8rem;
+  color: #0284C7;
   font-weight: 700;
 }
 
-.mini-cc-vals {
-  font-family: monospace;
+.cc-budget-tope {
+  color: #64748B;
+  font-size: 0.675rem;
 }
 
-.mini-progress-track {
+.cc-progress-bar-bg {
   width: 100%;
-  height: 5px;
-  background: #e2e8f0;
+  height: 6px;
+  background: #E2E8F0;
   border-radius: 999px;
   overflow: hidden;
 }
 
-.mini-progress-fill {
+.cc-progress-bar-fill {
   height: 100%;
-  background: #10b981;
   border-radius: 999px;
   transition: width 0.3s ease;
 }
 
-.mini-progress-fill.low {
-  background: #ef4444;
+/* Colores Semafóricos (Pilar 4):
+   - Celeste #7DD3FC si tiene buen saldo (<75% consumido)
+   - Ámbar #F59E0B si ya consumió más del 75%
+   - Rojo #EF4444 si está al límite (>=90% consumido o sin saldo)
+*/
+.semaforo-celeste {
+  background-color: #7DD3FC !important;
+  box-shadow: 0 0 6px rgba(125, 211, 252, 0.6);
 }
+
+.semaforo-ambar {
+  background-color: #F59E0B !important;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+}
+
+.semaforo-rojo {
+  background-color: #EF4444 !important;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+}
+
+.table-actions-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.icon-mini {
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
 

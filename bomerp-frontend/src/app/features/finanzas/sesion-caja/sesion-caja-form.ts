@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { SesionCajaService } from './sesion-caja-service';
@@ -27,7 +27,7 @@ export interface ItemArqueo {
 @Component({
   selector: 'app-sesion-caja-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe, DatePipe],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe, DatePipe, RouterLink],
   templateUrl: './sesion-caja-form.html',
   styleUrls: ['./sesion-caja-form.css'],
 })
@@ -50,6 +50,7 @@ export class SesionCajaForm implements OnInit {
   protected readonly turnoActivoExistente = signal<SesionCaja | null>(null);
   protected readonly esTurnoJornadaAnterior = signal(false);
   protected readonly saldoSugeridoTurnoAnterior = signal<number | null>(null);
+  protected readonly mostrarModalConfirmarCierre = signal(false);
 
   // Denominaciones de Arqueo Físico M:N (Cargadas dinámicamente desde el backend)
   protected readonly billetes = signal<ItemArqueo[]>([
@@ -385,16 +386,21 @@ export class SesionCajaForm implements OnInit {
     this.monedas.set(lista);
   }
 
+  solicitarCierreTurno(): void {
+    this.mostrarModalConfirmarCierre.set(true);
+  }
+
+  cancelarCierreTurno(): void {
+    this.mostrarModalConfirmarCierre.set(false);
+  }
+
   cerrarTurnoCaja(): void {
+    this.mostrarModalConfirmarCierre.set(false);
     const id = this.sesionId();
     if (!id) return;
 
     const saldoReal = this.saldoRealArqueado();
     const obs = this.formCierre.controls.observaciones.value;
-
-    if (!confirm(`¿Confirmas el cierre del turno con un arqueo físico de S/ ${saldoReal.toFixed(2)}?`)) {
-      return;
-    }
 
     this.loading.set(true);
     this.error.set(null);
@@ -420,7 +426,7 @@ export class SesionCajaForm implements OnInit {
       })
       .subscribe({
         next: (cerrada) => {
-          this.exitoMensaje.set(`Turno ${cerrada.codigoSesion} cerrado exitosamente.`);
+          this.exitoMensaje.set(`¡Turno ${cerrada.codigoSesion} cerrado exitosamente! Registro consolidado para auditoría.`);
           this.cargarDetalle(id);
         },
         error: (err) => {

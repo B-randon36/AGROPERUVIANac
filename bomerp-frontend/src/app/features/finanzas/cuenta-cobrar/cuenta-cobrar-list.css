@@ -423,12 +423,17 @@
 }
 
 .btn-cobrar {
-  background-color: #059669;
-  color: white;
+  background-color: #7DD3FC;
+  color: #1A2438;
+  font-weight: 700;
+  border: 1px solid rgba(125, 211, 252, 0.6);
+  box-shadow: 0 2px 6px rgba(125, 211, 252, 0.4);
 }
 
 .btn-cobrar:hover {
-  background-color: #047857;
+  background-color: #38BDF8;
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.45);
+  transform: translateY(-1px);
 }
 
 .btn-outline {

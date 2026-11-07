@@ -1,4 +1,12 @@
-<h2>Transacciones Financieras (Agro Peruvian Foods)</h2>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <div class="breadcrumb" style="font-size: 0.8125rem; color: #64748B; margin-bottom: 0.25rem;">Finanzas / Movimientos</div>
+    <h2 style="margin: 0;">Transacciones Financieras</h2>
+  </div>
+  <a routerLink="/finanzas/transacciones/nueva" class="btn btn-glacier-primary">
+    <span class="material-symbols-outlined icon-inline">add_circle</span> + Nueva Transacción
+  </a>
+</div>
 
 @if (loading()) {
   <p>Cargando transacciones financieras...</p>
@@ -8,12 +16,10 @@
   <p class="error" style="color: red;">{{ error() }}</p>
 }
 
-<div style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-  <a routerLink="/finanzas/transacciones/nueva">+ Nueva transacción financiera</a>
-
-  <label style="font-weight: 500;">
-    Filtrar por Categoría Financiera:
-    <select #filtro (change)="filtrar(+filtro.value)" style="padding: 0.35rem 0.5rem; margin-left: 0.5rem;">
+<div style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 1rem;">
+  <label style="font-weight: 500; font-size: 0.875rem; color: #334155;">
+    Filtrar por Categoría:
+    <select #filtro (change)="filtrar(+filtro.value)" style="padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid #CBD5E1; margin-left: 0.5rem;">
       <option value="0">Todas las categorías</option>
       @for (categoria of categorias(); track categoria.id) {
         <option [value]="categoria.id">{{ categoria.nombre }} ({{ categoria.tipoDefault }})</option>
@@ -22,61 +28,66 @@
   </label>
 </div>
 
-<table border="1" cellpadding="8" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+<table class="card" style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
   <thead>
-    <tr style="background-color: #f2f2f2;">
-      <th>Código</th>
-      <th>Concepto</th>
-      <th>Categoría Financiera (Padre)</th>
-      <th>Tipo</th>
-      <th>Monto</th>
-      <th>Fecha</th>
-      <th>Estado</th>
-      <th>Comprobante</th>
-      <th>Acciones</th>
+    <tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; text-align: left; font-size: 0.825rem; color: #475569;">
+      <th style="padding: 0.75rem 1rem;">Código</th>
+      <th style="padding: 0.75rem 1rem;">Concepto</th>
+      <th style="padding: 0.75rem 1rem;">Categoría</th>
+      <th style="padding: 0.75rem 1rem;">Tipo</th>
+      <th style="padding: 0.75rem 1rem; text-align: right;">Monto</th>
+      <th style="padding: 0.75rem 1rem;">Fecha</th>
+      <th style="padding: 0.75rem 1rem;">Estado</th>
+      <th style="padding: 0.75rem 1rem;">Comprobante</th>
+      <th style="padding: 0.75rem 1rem; text-align: right;">Acciones</th>
     </tr>
   </thead>
   <tbody>
     @for (trx of transacciones(); track trx.id) {
-      <tr>
-        <td><strong>{{ trx.codigo }}</strong></td>
-        <td>{{ trx.concepto }}</td>
-        <td>
-          <span style="background-color: #e8eaf6; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 500;">
+      <tr style="border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;">
+        <td style="padding: 0.75rem 1rem;"><strong>{{ trx.codigo }}</strong></td>
+        <td style="padding: 0.75rem 1rem;">{{ trx.concepto }}</td>
+        <td style="padding: 0.75rem 1rem;">
+          <span style="background-color: #e0f2fe; color: #0369a1; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.775rem;">
             {{ trx.categoriaFinanciera.nombre }}
           </span>
         </td>
-        <td>
-          <span [style.color]="trx.tipo === 'INGRESO' ? 'green' : 'crimson'" style="font-weight: bold;">
+        <td style="padding: 0.75rem 1rem;">
+          <span [style.color]="trx.tipo === 'INGRESO' ? '#10B981' : '#EF4444'" style="font-weight: 700;">
             {{ trx.tipo }}
           </span>
         </td>
-        <td style="font-weight: bold;">
+        <td style="padding: 0.75rem 1rem; text-align: right; font-weight: 700;" class="tabular-nums">
           {{ trx.monto | currency: 'PEN' : 'S/ ' }}
         </td>
-        <td>{{ trx.fechaTransaccion | date: 'dd/MM/yyyy' }}</td>
-        <td>
-          <span [style.color]="trx.estado === 'PAGADO' ? '#2e7d32' : (trx.estado === 'PENDIENTE' ? '#e65100' : '#c62828')">
+        <td style="padding: 0.75rem 1rem;">{{ trx.fechaTransaccion | date: 'dd/MM/yyyy' }}</td>
+        <td style="padding: 0.75rem 1rem;">
+          <span [style.color]="trx.estado === 'PAGADO' ? '#10B981' : (trx.estado === 'PENDIENTE' ? '#F59E0B' : '#EF4444')" style="font-weight: 600;">
             {{ trx.estado }}
           </span>
         </td>
-        <td>
+        <td style="padding: 0.75rem 1rem;">
           @if (trx.tipoComprobante) {
             {{ trx.tipoComprobante }}: {{ trx.numeroComprobante }}
           } @else {
-            <em>Sin comprobante</em>
+            <em style="color: #94A3B8;">Sin comprobante</em>
           }
         </td>
-        <td>
-          <a [routerLink]="['/finanzas/transacciones', trx.id, 'editar']">Editar</a>
-          &nbsp;|&nbsp;
-          <button (click)="eliminar(trx.id)">Eliminar</button>
+        <td style="padding: 0.75rem 1rem; text-align: right;">
+          <div style="display: inline-flex; align-items: center; gap: 0.5rem;">
+            <a [routerLink]="['/finanzas/transacciones', trx.id, 'editar']" class="btn btn-neutral-secondary btn-sm" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">
+              Editar
+            </a>
+            <button class="btn-action-discreet-danger" (click)="eliminar(trx.id)" title="Eliminar transacción">
+              Eliminar
+            </button>
+          </div>
         </td>
       </tr>
     } @empty {
       @if (!loading() && !error()) {
         <tr>
-          <td colspan="9">No hay transacciones financieras registradas.</td>
+          <td colspan="9" style="padding: 1.5rem; text-align: center; color: #64748B;">No hay transacciones financieras registradas.</td>
         </tr>
       }
     }

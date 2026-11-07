@@ -98,7 +98,7 @@ export class RendicionCajaChicaForm implements OnInit {
     return caja.saldoDisponible - this.totalGeneral();
   });
 
-  // Alerta preventiva reactiva RN-FIN-06 en el cliente
+  // Alerta preventiva reactiva de techo presupuestal
   protected readonly alertaRnFin06 = computed(() => {
     const presupuestos = this.presupuestosCaja();
     if (!presupuestos || presupuestos.length === 0) return null;
@@ -110,12 +110,37 @@ export class RendicionCajaChicaForm implements OnInit {
         const asig = presupuestos.find((p) => p.centroCostoId === Number(l.centroCostoId));
         const subtotal = (Number(l.cantidad) || 0) * (Number(l.precioUnitario) || 0);
         if (asig && subtotal > asig.saldoDisponible) {
-          return `RN-FIN-06 (Control Presupuestal): El importe de la línea #${i + 1} (S/ ${subtotal.toFixed(2)}) supera el saldo disponible de ${asig.codigoCc} (S/ ${asig.saldoDisponible.toFixed(2)}).`;
+          return `Aviso de Presupuesto: El importe en la línea #${i + 1} (S/ ${subtotal.toFixed(2)}) supera el disponible asignado a ${asig.nombreArea || asig.codigoCc} (S/ ${asig.saldoDisponible.toFixed(2)}).`;
         }
       }
     }
     return null;
   });
+
+  // Selector Asistido y Verificación Instantánea de Presupuesto (Pilar 4)
+  getCentroCostoLabel(cc: import('./rendicion-caja-chica.model').CentroCosto): string {
+    const asig = this.presupuestosCaja().find((p) => p.centroCostoId === cc.id);
+    if (asig) {
+      return `${cc.nombreArea || cc.codigoCc} — Disponible: S/ ${asig.saldoDisponible.toFixed(2)}`;
+    }
+    return `${cc.nombreArea || cc.codigoCc}`;
+  }
+
+  getSaldoDisponibleCC(centroCostoId: any): number | null {
+    if (!centroCostoId) return null;
+    const asig = this.presupuestosCaja().find((p) => p.centroCostoId === Number(centroCostoId));
+    return asig ? asig.saldoDisponible : null;
+  }
+
+  lineaSuperaPresupuesto(index: number): boolean {
+    const lineas = this.lineasSignal();
+    const l = lineas[index];
+    if (!l || !l.centroCostoId) return false;
+    const asig = this.presupuestosCaja().find((p) => p.centroCostoId === Number(l.centroCostoId));
+    if (!asig) return false;
+    const subtotal = (Number(l.cantidad) || 0) * (Number(l.precioUnitario) || 0);
+    return subtotal > asig.saldoDisponible;
+  }
 
   get detallesArray(): FormArray<FormGroup> {
     return this.form.get('detalles') as FormArray<FormGroup>;

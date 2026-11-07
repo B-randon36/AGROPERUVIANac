@@ -1,27 +1,50 @@
 <div class="feature-container">
+  <!-- NAVEGACIÓN ESTANDARIZADA & BREADCRUMB (Pilar 1) -->
+  <div class="view-back-nav">
+    <a routerLink="/" class="btn-back-nav">
+      <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+      Volver al Inicio
+    </a>
+    <div class="breadcrumb-trail">
+      <a routerLink="/">Principal</a>
+      <span class="separator">/</span>
+      <a routerLink="/finanzas/sesiones">Gestión Financiera</a>
+      <span class="separator">/</span>
+      <span class="current">Arqueo de Turno Operativo</span>
+    </div>
+  </div>
+
   <!-- Page Header -->
   <div class="page-header">
     <div>
       <div class="badge badge-success">GESTIÓN FINANCIERA & CAJA</div>
       <h1>Gestión Financiera de Caja y Arqueos</h1>
-      <p class="subtitle">Control de turno operativo, arqueo BCRP y conciliación de caja</p>
+      <p class="subtitle">Control de turno operativo, arqueo de billetes y conciliación de caja</p>
     </div>
     <div class="header-actions">
       @if (sesionActiva(); as sesion) {
-        <a [routerLink]="['/finanzas/sesiones', sesion.id]" class="btn btn-secondary">
-          <span class="material-symbols-outlined icon-inline">payments</span> Arqueo por Billetes BCRP
+        <a [routerLink]="['/finanzas/sesiones', sesion.id]" class="btn btn-neutral-secondary">
+          <span class="material-symbols-outlined icon-inline">payments</span> Arqueo por Billetes
         </a>
-        <button class="btn btn-primary" (click)="modalMovimiento.set(true)">
+        <button class="btn btn-glacier-primary" (click)="modalMovimiento.set(true)">
           <span class="material-symbols-outlined icon-inline">add_circle</span> Registrar Movimiento
         </button>
-        <button class="btn btn-danger" (click)="modalCierre.set(true)">
+        <button class="btn btn-action-discreet-danger" (click)="modalCierre.set(true)">
           <span class="material-symbols-outlined icon-inline">lock</span> Cerrar Turno / Arqueo
         </button>
       } @else {
-        <button class="btn btn-primary" (click)="modalApertura.set(true)">
+        <button class="btn btn-glacier-primary" (click)="modalApertura.set(true)">
           <span class="material-symbols-outlined icon-inline">lock_open</span> Aperturar Turno de Caja
         </button>
       }
+    </div>
+  </div>
+
+  <!-- NOTA AMABLE TRANQUILIZADORA (Pilar 2) -->
+  <div class="friendly-help-note">
+    <span class="material-symbols-outlined note-icon">lightbulb</span>
+    <div>
+      💡 <strong>Operación Segura de Caja:</strong> Puedes registrar ingresos y egresos en tiempo real. Al finalizar la jornada, realiza el arqueo físico para conciliar el dinero en gaveta con total tranquilidad.
     </div>
   </div>
 

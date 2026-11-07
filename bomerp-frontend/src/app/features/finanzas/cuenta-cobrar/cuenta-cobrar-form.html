@@ -1,16 +1,35 @@
 <div class="page-container">
+  <!-- NAVEGACIÓN ESTANDARIZADA & BREADCRUMB (Pilar 1) -->
+  <div class="view-back-nav">
+    <a routerLink="/finanzas/creditos" class="btn-back-nav">
+      <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+      Volver al Listado
+    </a>
+    <div class="breadcrumb-trail">
+      <a routerLink="/finanzas/creditos">Finanzas</a>
+      <span class="separator">/</span>
+      <a routerLink="/finanzas/creditos">Cuentas por Cobrar</a>
+      <span class="separator">/</span>
+      <span class="current">{{ modoEdicion() ? 'Detalle de Cuenta' : 'Nuevo Crédito' }}</span>
+    </div>
+  </div>
+
   <div class="header-section">
     <div>
-      <div class="breadcrumb">
-        <a routerLink="/finanzas/creditos">Cuentas por Cobrar</a> &gt;
-        {{ modoEdicion() ? 'Detalle de Crédito' : 'Nuevo Crédito' }}
-      </div>
       <h2 class="title">
         {{ modoEdicion() ? 'Detalle de Crédito: ' + codigo() : 'Registrar Venta al Fiado / Crédito' }}
       </h2>
       <p class="subtitle">
         Crea un nuevo crédito comercial para clientes de Agro Peruvian Foods
       </p>
+    </div>
+  </div>
+
+  <!-- NOTA AMABLE TRANQUILIZADORA (Pilar 2) -->
+  <div class="friendly-help-note">
+    <span class="material-symbols-outlined note-icon">lightbulb</span>
+    <div>
+      💡 <strong>Venta al Fiado / Crédito:</strong> Puedes revisar los montos y fechas de vencimiento antes de guardar. Las amortizaciones se podrán registrar en cualquier momento desde el listado.
     </div>
   </div>
 
@@ -135,11 +154,11 @@
         }
 
         <div class="form-actions">
-          <a routerLink="/finanzas/creditos" class="btn btn-secondary">
+          <a routerLink="/finanzas/creditos" class="btn btn-neutral-secondary">
             Volver a la Lista
           </a>
           @if (!modoEdicion()) {
-            <button type="submit" class="btn btn-primary" [disabled]="guardando()">
+            <button type="submit" class="btn btn-glacier-primary" [disabled]="guardando()">
               @if (guardando()) {
                 Guardando...
               } @else {

@@ -443,3 +443,206 @@ tr:hover td {
 .text-right { text-align: right !important; }
 .text-center { text-align: center !important; }
 .text-left { text-align: left !important; }
+
+/* =========================================================================
+   MEJORAS GLOBALES DE USABILIDAD, PREVENCIÓN DE ERRORES Y NAVEGACIÓN GLACIER
+   ========================================================================= */
+
+/* 1. NAVEGACIÓN ESTANDARIZADA & BREADCRUMBS */
+.view-back-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.15rem;
+  flex-wrap: wrap;
+}
+
+.btn-back-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0.85rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #334155;
+  background-color: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 7px;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-back-nav:hover {
+  background-color: #F1F5F9;
+  border-color: #94A3B8;
+  color: #0F172A;
+  transform: translateX(-2px);
+}
+
+.breadcrumb-trail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.825rem;
+  color: #64748B;
+}
+
+.breadcrumb-trail a {
+  color: #0284C7;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.breadcrumb-trail a:hover {
+  color: #0369A1;
+  text-decoration: underline;
+}
+
+.breadcrumb-trail .separator {
+  color: #94A3B8;
+  font-size: 0.75rem;
+}
+
+.breadcrumb-trail .current {
+  color: #1E293B;
+  font-weight: 600;
+}
+
+/* 2. DISEÑO SIN MIEDO: BOTONES DE ANULAR/ELIMINAR DISCRETOS */
+.btn-action-discreet-danger,
+.btn-soft-danger {
+  background-color: #FEF2F2 !important;
+  color: #DC2626 !important;
+  border: 1px solid #FECACA !important;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.775rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.btn-action-discreet-danger:hover,
+.btn-soft-danger:hover {
+  background-color: #FEE2E2 !important;
+  border-color: #FCA5A5 !important;
+  color: #B91C1C !important;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.15);
+}
+
+/* 2. MENSAJES DE AYUDA AMABLES Y TRANQUILIZADORES */
+.friendly-help-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  background: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.825rem;
+  color: #0369A1;
+  margin-bottom: 1.25rem;
+  line-height: 1.45;
+}
+
+.friendly-help-note .note-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  color: #0284C7;
+}
+
+/* 3. BOTÓN PRIMARIO GLACIER STANDOUT */
+.btn-glacier-primary {
+  background: #7DD3FC !important;
+  color: #1A2438 !important;
+  font-weight: 700 !important;
+  border: 1px solid rgba(125, 211, 252, 0.6) !important;
+  box-shadow: 0 2px 8px rgba(125, 211, 252, 0.45) !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.btn-glacier-primary:hover:not(:disabled) {
+  background: #38BDF8 !important;
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.5) !important;
+  transform: translateY(-1px);
+}
+
+.btn-neutral-secondary {
+  background: #FFFFFF !important;
+  color: #334155 !important;
+  border: 1px solid #CBD5E1 !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.btn-neutral-secondary:hover:not(:disabled) {
+  background: #F8FAFC !important;
+  border-color: #94A3B8 !important;
+  color: #0F172A !important;
+}
+
+/* 4. MODAL TRANQUILIZADOR GENÉRICO (CONFIRMACIÓN SIN MIEDO) */
+.safe-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 1rem;
+}
+
+.safe-modal-dialog {
+  background: #FFFFFF;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid #E2E8F0;
+  overflow: hidden;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.safe-modal-header {
+  padding: 1.15rem 1.35rem;
+  border-bottom: 1px solid #F1F5F9;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.safe-modal-header h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+}
+
+.safe-modal-body {
+  padding: 1.25rem 1.35rem;
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.safe-modal-footer {
+  padding: 0.9rem 1.35rem;
+  background: #F8FAFC;
+  border-top: 1px solid #E2E8F0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+

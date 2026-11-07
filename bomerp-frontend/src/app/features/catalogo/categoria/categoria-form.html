@@ -1,4 +1,19 @@
 <div class="feature-container">
+  <!-- NAVEGACIÓN ESTANDARIZADA & BREADCRUMB (Pilar 1) -->
+  <div class="view-back-nav">
+    <a routerLink="/catalogo/categorias" class="btn-back-nav">
+      <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+      Volver al Listado
+    </a>
+    <div class="breadcrumb-trail">
+      <a routerLink="/catalogo/categorias">Catálogo</a>
+      <span class="separator">/</span>
+      <a routerLink="/catalogo/categorias">Categorías</a>
+      <span class="separator">/</span>
+      <span class="current">{{ id() ? 'Editar Categoría' : 'Nueva Categoría' }}</span>
+    </div>
+  </div>
+
   <div class="page-header">
     <div>
       <div class="badge badge-warning">CATÁLOGO DE PRODUCTOS</div>
@@ -8,7 +23,7 @@
       </p>
     </div>
     <div class="header-actions">
-      <a routerLink="/catalogo/categorias" class="btn btn-secondary">← Volver a la Lista</a>
+      <a routerLink="/catalogo/categorias" class="btn btn-neutral-secondary">← Volver a la Lista</a>
     </div>
   </div>
 
@@ -50,11 +65,11 @@
       </div>
 
       <div class="form-actions mt-4">
-        <button type="submit" class="btn btn-primary" [disabled]="loading() || errorCarga()">
+        <button type="submit" class="btn btn-glacier-primary" [disabled]="loading() || errorCarga()">
           <span class="material-symbols-outlined icon-inline">{{ id() ? 'save' : 'add_circle' }}</span>
           {{ loading() ? 'Guardando...' : (id() ? 'Actualizar Categoría' : 'Guardar Categoría') }}
         </button>
-        <a routerLink="/catalogo/categorias" class="btn btn-secondary">Cancelar</a>
+        <a routerLink="/catalogo/categorias" class="btn btn-neutral-secondary">Cancelar</a>
       </div>
     </form>
   </div>

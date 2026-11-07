@@ -1,4 +1,19 @@
 <div class="feature-container">
+  <!-- NAVEGACIÓN ESTANDARIZADA & BREADCRUMB (Pilar 1) -->
+  <div class="view-back-nav">
+    <a routerLink="/compras" class="btn-back-nav">
+      <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+      Volver al Historial
+    </a>
+    <div class="breadcrumb-trail">
+      <a routerLink="/compras">Compras & Abastecimiento</a>
+      <span class="separator">/</span>
+      <a routerLink="/compras">Órdenes de Compra</a>
+      <span class="separator">/</span>
+      <span class="current">Nueva Compra</span>
+    </div>
+  </div>
+
   <div class="page-header">
     <div>
       <div class="badge-module">
@@ -9,12 +24,20 @@
       <p class="subtitle">Adquisición de materias primas con trazabilidad por lote, factor de conversión y flete</p>
     </div>
     <div class="header-actions">
-      <a routerLink="/compras/proveedores/nuevo" class="btn btn-secondary">
+      <a routerLink="/compras/proveedores/nuevo" class="btn btn-neutral-secondary">
         <span class="material-symbols-outlined icon-inline">person_add</span> Nuevo Proveedor
       </a>
-      <a routerLink="/compras" class="btn btn-secondary">
+      <a routerLink="/compras" class="btn btn-neutral-secondary">
         <span class="material-symbols-outlined icon-inline">arrow_back</span> Volver al Historial
       </a>
+    </div>
+  </div>
+
+  <!-- NOTA AMABLE TRANQUILIZADORA (Pilar 2) -->
+  <div class="friendly-help-note">
+    <span class="material-symbols-outlined note-icon">lightbulb</span>
+    <div>
+      💡 <strong>Registro Seguro de Insumos:</strong> Puedes revisar los montos, cantidades y fechas antes de confirmar; el subtotal, impuestos y saldo pendiente se calcularán automáticamente.
     </div>
   </div>
 

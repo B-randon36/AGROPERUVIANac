@@ -446,38 +446,8 @@
         }
       </div>
 
-      <!-- COLUMNA DERECHA (4 COLS): TARJETA DARK SURFACE + ESTADO TESORERÍA & FEFO -->
+      <!-- COLUMNA DERECHA (4 COLS): ESTADO TESORERÍA, RENDICIONES & FEFO -->
       <div class="side-treasury-panel">
-        <!-- TARJETA DARK CORPORATIVA (TAILADMIN "MY CARD") -->
-        <div class="corporate-card">
-          <div class="corp-card-glare"></div>
-          <div class="corp-card-top">
-            <div class="corp-brand">
-              <span class="corp-brand-dot"></span>
-              <span class="corp-brand-name">AGRO PERUVIAN FOODS</span>
-            </div>
-            <div class="corp-card-chip-icon">
-              <span class="material-symbols-outlined">contactless</span>
-            </div>
-          </div>
-
-          <div class="corp-card-middle">
-            <div class="corp-chip-graphic"></div>
-            <div class="corp-balance-label">CAJA OPERATIVA EN GAVETA</div>
-            <div class="corp-balance-amount tabular-nums">
-              {{ d.saldoCajaDiariaActiva | currency:'PEN':'S/ ':'1.2-2' }}
-            </div>
-          </div>
-
-          <div class="corp-card-bottom">
-            <div class="corp-card-number">•••• •••• •••• 5026</div>
-            <div class="corp-card-meta">
-              <span class="corp-holder">TESORERÍA CENTRAL</span>
-              <span class="corp-exp">EXP 12/28</span>
-            </div>
-          </div>
-        </div>
-
         <!-- FAST STATUS: RESUMEN SEMÁFORO FEFO -->
         @if (semaforo(); as sf) {
           <div class="quick-fefo-card">

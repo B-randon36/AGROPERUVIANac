@@ -1,3 +1,17 @@
+<div class="view-back-nav">
+  <a routerLink="/finanzas/transacciones" class="btn-back-nav">
+    <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+    Volver al Listado
+  </a>
+  <div class="breadcrumb-trail">
+    <a routerLink="/finanzas/transacciones">Finanzas</a>
+    <span class="separator">/</span>
+    <a routerLink="/finanzas/transacciones">Transacciones</a>
+    <span class="separator">/</span>
+    <span class="current">{{ id() ? 'Editar Transacción' : 'Nueva Transacción' }}</span>
+  </div>
+</div>
+
 <h2>{{ id() ? 'Editar Transacción Financiera' : 'Nueva Transacción Financiera' }}</h2>
 
 <form [formGroup]="form" (ngSubmit)="guardar()" style="max-width: 500px; display: flex; flex-direction: column; gap: 1rem;">
@@ -116,11 +130,11 @@
     </p>
   }
 
-  <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-    <button type="submit" [disabled]="loading() || errorCarga() || categorias().length === 0" style="padding: 0.5rem 1rem;">
-      Guardar
+  <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem;">
+    <button type="submit" class="btn btn-glacier-primary" [disabled]="loading() || errorCarga() || categorias().length === 0">
+      Guardar Transacción
     </button>
-    <button type="button" (click)="cancelar()" style="padding: 0.5rem 1rem;">
+    <button type="button" class="btn btn-neutral-secondary" (click)="cancelar()">
       Cancelar
     </button>
   </div>

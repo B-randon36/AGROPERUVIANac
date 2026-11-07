@@ -12,6 +12,19 @@ import { Producto } from '../catalogo/producto/producto.model';
   imports: [CommonModule, RouterLink, ReactiveFormsModule, DecimalPipe],
   template: `
     <div class="feature-container">
+      <!-- NAVEGACIÓN ESTANDARIZADA & BREADCRUMB (Pilar 1) -->
+      <div class="view-back-nav">
+        <a routerLink="/produccion" class="btn-back-nav">
+          <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+          Volver a Órdenes
+        </a>
+        <div class="breadcrumb-trail">
+          <a routerLink="/produccion">Producción & Planta</a>
+          <span class="separator">/</span>
+          <span class="current">Recetas Maestras BOM</span>
+        </div>
+      </div>
+
       <div class="page-header">
         <div>
           <div class="badge badge-warning">PRODUCCIÓN & RECETAS BOM</div>
@@ -19,11 +32,11 @@ import { Producto } from '../catalogo/producto/producto.model';
           <p class="subtitle">Estructura persistente de materiales, mermas y componentes estándar por producto terminado</p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-primary" (click)="abrirModalNueva()">
-            <span class="material-symbols-outlined icon-inline">add_circle</span> Nueva Receta BOM
+          <button class="btn btn-glacier-primary" (click)="abrirModalNueva()">
+            <span class="material-symbols-outlined icon-inline">add_circle</span> + Nueva Receta BOM
           </button>
-          <a routerLink="/produccion" class="btn btn-secondary">← Órdenes de Planta</a>
-          <button class="btn btn-secondary" (click)="cargarDatos()" title="Actualizar">
+          <a routerLink="/produccion" class="btn btn-neutral-secondary">← Órdenes de Planta</a>
+          <button class="btn btn-neutral-secondary" (click)="cargarDatos()" title="Actualizar">
             <span class="material-symbols-outlined" style="vertical-align: middle;">refresh</span>
           </button>
         </div>

@@ -1,4 +1,19 @@
 <div class="feature-container">
+  <!-- NAVEGACIÓN ESTANDARIZADA & BREADCRUMB (Pilar 1) -->
+  <div class="view-back-nav">
+    <a routerLink="/compras/proveedores" class="btn-back-nav">
+      <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+      Volver al Directorio
+    </a>
+    <div class="breadcrumb-trail">
+      <a routerLink="/compras">Compras & Abastecimiento</a>
+      <span class="separator">/</span>
+      <a routerLink="/compras/proveedores">Proveedores</a>
+      <span class="separator">/</span>
+      <span class="current">Registrar Proveedor</span>
+    </div>
+  </div>
+
   <div class="page-header">
     <div>
       <div class="badge badge-success">DIRECTORIO DE PROVEEDORES</div>
@@ -6,7 +21,7 @@
       <p class="subtitle">Alta en el maestro de terceros y proveedores con validación oficial SUNAT (APIsPERU)</p>
     </div>
     <div class="header-actions">
-      <a routerLink="/compras/proveedores" class="btn btn-secondary">← Volver al Directorio</a>
+      <a routerLink="/compras/proveedores" class="btn btn-neutral-secondary">← Volver al Directorio</a>
     </div>
   </div>
 

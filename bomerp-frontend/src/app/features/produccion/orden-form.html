@@ -1,12 +1,35 @@
 <div class="feature-container">
+  <!-- NAVEGACIÓN ESTANDARIZADA & BREADCRUMB (Pilar 1) -->
+  <div class="view-back-nav">
+    <a routerLink="/produccion" class="btn-back-nav">
+      <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+      Volver a Órdenes
+    </a>
+    <div class="breadcrumb-trail">
+      <a routerLink="/produccion">Producción & Planta</a>
+      <span class="separator">/</span>
+      <a routerLink="/produccion">Órdenes de Planta</a>
+      <span class="separator">/</span>
+      <span class="current">Planificar Orden</span>
+    </div>
+  </div>
+
   <div class="page-header">
     <div>
       <div class="badge badge-warning">PRODUCCIÓN & PLANTA</div>
       <h1>Planificar Nueva Orden de Producción</h1>
-      <p class="subtitle">Receta estándar Bill of Materials (BOM) conectada al catálogo oficial y centros de trabajo</p>
+      <p class="subtitle">Receta estándar (BOM) conectada al catálogo y centros de trabajo</p>
     </div>
     <div class="header-actions">
-      <a routerLink="/produccion" class="btn btn-secondary">← Volver al Listado</a>
+      <a routerLink="/produccion" class="btn btn-neutral-secondary">← Volver al Listado</a>
+    </div>
+  </div>
+
+  <!-- NOTA AMABLE TRANQUILIZADORA (Pilar 2) -->
+  <div class="friendly-help-note">
+    <span class="material-symbols-outlined note-icon">lightbulb</span>
+    <div>
+      💡 <strong>Planificación Asistida:</strong> Selecciona el producto y la cantidad programada. La receta estándar (BOM) calculará los insumos necesarios automáticamente para tu revisión.
     </div>
   </div>
 

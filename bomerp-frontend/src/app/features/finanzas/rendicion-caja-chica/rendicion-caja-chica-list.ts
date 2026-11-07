@@ -335,11 +335,26 @@ export class RendicionCajaChicaList implements OnInit {
             `Presupuesto asignado a ${asig.codigoCc} (${asig.nombreArea}): S/ ${asig.presupuestoAsignado.toFixed(2)}`
           );
           this.cargarPresupuestosCaja(caja.id);
+          this.cargarCajasChicas();
         },
         error: (err) => {
           this.mensajeError.set(err?.error?.message || 'Error al asignar presupuesto.');
           this.loadingPresupuestos.set(false);
         },
       });
+  }
+
+  // --- Helpers Visuales Semafóricos para Usabilidad ---
+  getConsumoPorcentaje(asig: AsignacionCajaCentroCosto): number {
+    if (!asig.presupuestoAsignado || asig.presupuestoAsignado <= 0) return 0;
+    const consumido = asig.presupuestoAsignado - asig.saldoDisponible;
+    return Math.max(0, Math.min(100, (consumido / asig.presupuestoAsignado) * 100));
+  }
+
+  getSemaforoColorClass(asig: AsignacionCajaCentroCosto): string {
+    const pct = this.getConsumoPorcentaje(asig);
+    if (pct >= 90 || asig.saldoDisponible <= 0) return 'semaforo-rojo';
+    if (pct >= 75) return 'semaforo-ambar';
+    return 'semaforo-celeste';
   }
 }
