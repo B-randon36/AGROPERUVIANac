@@ -1,3 +1,4 @@
+@import 'material-symbols/outlined.css';
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 
@@ -409,10 +410,10 @@ tr:hover td {
 
 /* Material Symbols Vector Icons */
 .material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
+  font-family: 'Material Symbols Outlined' !important;
   font-weight: normal;
   font-style: normal;
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   line-height: 1;
   letter-spacing: normal;
   text-transform: none;
@@ -423,14 +424,21 @@ tr:hover td {
   white-space: nowrap;
   word-wrap: normal;
   direction: ltr;
+  font-feature-settings: 'liga';
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  user-select: none;
 }
 
 .icon-inline {
-  font-size: 1.1em;
+  font-size: 1.15em;
   margin-right: 0.35rem;
-  vertical-align: -2px;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 /* Clases de texto semántico */

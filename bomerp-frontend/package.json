@@ -24,6 +24,7 @@
     "@zxing/library": "^0.23.0",
     "chart.js": "^4.6.1",
     "leaflet": "^1.9.4",
+    "material-symbols": "^0.48.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

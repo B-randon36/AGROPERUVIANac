@@ -125,8 +125,14 @@
 }
 
 .nav-icon {
-  font-size: 1.15rem;
+  font-size: 1.25rem;
+  min-width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0.85;
+  flex-shrink: 0;
 }
 
 .nav-item.active .nav-icon {
