@@ -50,8 +50,30 @@ export class AuthService {
     if (!token) return null;
     const payload = decodeJwtPayload(token);
     if (!payload) return null;
-    return { nombre: payload.name ?? payload.preferred_username ?? 'Usuario', email: payload.email ?? '' };
+    return {
+      nombre: payload.name ?? payload.preferred_username ?? 'Usuario',
+      email: payload.email ?? '',
+      username: payload.preferred_username ?? '',
+      sub: payload.sub ?? '',
+    };
   });
+
+  usuarioId(): number {
+    const u = this.usuario();
+    if (!u) return 1;
+    const roles = this.roles().map((r) => r.toUpperCase());
+    const texto = `${u.username} ${u.nombre} ${u.email}`.toLowerCase();
+    if (roles.includes('VENDEDOR') || roles.includes('ROLE_VENDEDOR') || texto.includes('vendedor')) {
+      return 2;
+    }
+    if (roles.includes('CAJERO') || roles.includes('ROLE_CAJERO') || texto.includes('cajero')) {
+      return 3;
+    }
+    if (roles.includes('OPERADOR') || roles.includes('ROLE_OPERADOR') || texto.includes('operador')) {
+      return 4;
+    }
+    return 1;
+  }
 
   tieneRol(...rolesPermitidos: string[]): boolean {
     const actuales = this.roles().map((r) => r.trim().toUpperCase());

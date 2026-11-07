@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CajaService } from './caja.service';
 import { SesionCaja, CajaReporte } from './caja.model';
+import { AuthService } from '../../core/auth/auth-service';
 
 @Component({
   selector: 'app-caja-dashboard',
@@ -14,6 +15,7 @@ import { SesionCaja, CajaReporte } from './caja.model';
 export class CajaDashboard implements OnInit {
   private readonly cajaService = inject(CajaService);
   private readonly fb = inject(FormBuilder);
+  protected readonly authService = inject(AuthService);
 
   protected readonly sesionActiva = signal<SesionCaja | null>(null);
   protected readonly historial = signal<SesionCaja[]>([]);
@@ -38,7 +40,7 @@ export class CajaDashboard implements OnInit {
 
   protected readonly formApertura = this.fb.nonNullable.group({
     cajeroNombre: ['Cajero de Turno', [Validators.required]],
-    montoApertura: [500, [Validators.required, Validators.min(0)]],
+    montoApertura: [350, [Validators.required, Validators.min(0)]],
     observaciones: ['Apertura de turno de caja diaria'],
   });
 
@@ -48,6 +50,12 @@ export class CajaDashboard implements OnInit {
   });
 
   ngOnInit(): void {
+    const usuario = this.authService.usuario();
+    if (usuario?.nombre) {
+      this.formApertura.patchValue({
+        cajeroNombre: usuario.nombre,
+      });
+    }
     this.cargarDatos();
   }
 
@@ -69,7 +77,10 @@ export class CajaDashboard implements OnInit {
 
     this.cajaService.listarHistorial().subscribe({
       next: (hist) => this.historial.set(hist),
-      error: () => this.error.set('No se pudo cargar el historial de sesiones de caja.'),
+      error: (err) => {
+        console.error('Error al cargar historial de caja:', err);
+        this.error.set('No se pudo cargar el historial de sesiones de caja.');
+      },
     });
 
     this.cajaService.obtenerResumen().subscribe({
@@ -120,14 +131,25 @@ export class CajaDashboard implements OnInit {
     }
 
     this.loading.set(true);
-    this.cajaService.abrirCaja(this.formApertura.getRawValue()).subscribe({
+    this.error.set(null);
+
+    const val = this.formApertura.getRawValue();
+    const usuarioId = this.authService.usuarioId();
+    const roles = this.authService.roles() || [];
+    const rol = roles.includes('VENDEDOR') ? 'VENDEDOR, CAJERO' : (roles[0] || 'CAJERO');
+
+    this.cajaService.abrirCaja({
+      ...val,
+      usuarioId,
+      cajeroRol: rol,
+    }).subscribe({
       next: () => {
         this.successMsg.set('Nuevo turno de caja aperturado con éxito.');
         this.modalApertura.set(false);
         this.cargarDatos();
       },
       error: (err) => {
-        this.error.set(err?.error?.message || 'Error al aperturar caja.');
+        this.error.set(err?.error?.message || err?.message || 'Error al aperturar caja.');
         this.loading.set(false);
       },
     });

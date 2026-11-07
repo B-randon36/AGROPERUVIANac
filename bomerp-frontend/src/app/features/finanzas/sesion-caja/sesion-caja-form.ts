@@ -143,7 +143,10 @@ export class SesionCajaForm implements OnInit {
     // Auto-asignación de cajero y rol desde la sesión Keycloak / JWT activa
     const usuarioAuth = this.authService.usuario();
     if (usuarioAuth?.nombre) {
-      this.formApertura.patchValue({ cajero: usuarioAuth.nombre });
+      this.formApertura.patchValue({
+        cajero: usuarioAuth.nombre,
+        usuarioId: this.authService.usuarioId(),
+      });
     }
     const roles = this.authService.roles();
     if (roles && roles.length > 0) {

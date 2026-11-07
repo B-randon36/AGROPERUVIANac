@@ -118,9 +118,9 @@ export class CajaService {
 
   abrirCaja(request: AperturaCajaRequest): Observable<SesionCaja> {
     const payload = {
-      usuarioId: 1,
+      usuarioId: request.usuarioId ?? 1,
       cajero: request.cajeroNombre,
-      cajeroRol: 'ADMIN, CAJERO',
+      cajeroRol: request.cajeroRol ?? 'CAJERO',
       saldoInicial: request.montoApertura,
     };
     return this.http

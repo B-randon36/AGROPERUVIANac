@@ -224,7 +224,7 @@ export class VentaForm implements OnInit, OnDestroy {
 
     this.sesionCajaService
       .abrir({
-        usuarioId: 1,
+        usuarioId: this.authService.usuarioId(),
         cajero: cajeroNombre,
         cajeroRol: rol,
         saldoInicial: saldo,

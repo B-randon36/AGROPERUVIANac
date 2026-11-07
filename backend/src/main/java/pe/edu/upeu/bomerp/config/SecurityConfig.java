@@ -89,7 +89,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/ventas/**").hasAnyRole("ADMIN", "VENDEDOR", "SUPERVISOR")
 
                         // 4. Finanzas (Brandon): Habilitado para ADMIN normal, ADMIN_FINANZAS, SUPERVISOR, CAJERO y VENDEDOR para control de caja en POS
-                        .requestMatchers("/api/v1/finanzas/sesiones/**").hasAnyRole("ADMIN", "ADMIN_FINANZAS", "SUPERVISOR", "CAJERO", "VENDEDOR")
+                        .requestMatchers("/api/v1/finanzas/sesiones", "/api/v1/finanzas/sesiones/**", "/api/v1/finanzas/denominaciones").hasAnyRole("ADMIN", "ADMIN_FINANZAS", "SUPERVISOR", "CAJERO", "VENDEDOR")
                         .requestMatchers(HttpMethod.GET, "/api/v1/finanzas/**", "/api/v1/cajas-chicas/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/finanzas/**", "/api/v1/cajas-chicas/**").hasAnyRole("ADMIN", "ADMIN_FINANZAS", "SUPERVISOR", "CAJERO")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/finanzas/**", "/api/v1/cajas-chicas/**").hasAnyRole("ADMIN", "ADMIN_FINANZAS", "SUPERVISOR")

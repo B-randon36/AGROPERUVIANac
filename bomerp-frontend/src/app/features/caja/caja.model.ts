@@ -35,6 +35,8 @@ export interface AperturaCajaRequest {
   cajeroNombre: string;
   montoApertura: number;
   observaciones?: string;
+  usuarioId?: number;
+  cajeroRol?: string;
 }
 
 export interface CierreCajaRequest {
