@@ -2,9 +2,9 @@
   <div class="header-section">
     <div>
       <span class="badge badge-primary">REPORTE ANALÍTICO DE VENTAS</span>
-      <h2>Reporte de Ventas POS y Detalle de Líneas</h2>
+      <h2>Reporte Analítico de Ventas POS</h2>
       <p class="subtitle">
-        Consulta analítica con agregados reactivos en vivo, detalle línea por línea continuo y anulación transaccional con reversión de inventario.
+        Consulta analítica con agregados reactivos en vivo, conciliación de métodos de pago y auditoría de transacciones.
       </p>
     </div>
     <div class="header-actions">
@@ -193,19 +193,22 @@
               <th>Fecha y Hora</th>
               <th>Estado</th>
               <th>Método de Pago</th>
-              <th>Líneas</th>
-              <th>Total de Venta</th>
+              <th style="text-align: center;">Ítems</th>
+              <th style="text-align: right;">Total de Venta</th>
               <th style="text-align: center;">Acciones</th>
             </tr>
           </thead>
           <tbody>
             @for (venta of ventas(); track venta.id) {
-              <!-- Fila 1: Cabecera de la Venta -->
+              <!-- Fila: Registro de Venta -->
               <tr class="fila-venta">
                 <td>
                   <strong>{{ venta.fecha | date: 'dd/MM/yyyy, hh:mm a' }}</strong>
                   @if (venta.numeroTicket) {
                     <div class="ticket-subtext">Ticket: {{ venta.numeroTicket }}</div>
+                  }
+                  @if (venta.clienteNombre) {
+                    <div class="cliente-subtext">{{ venta.clienteNombre }}</div>
                   }
                 </td>
                 <td>
@@ -223,14 +226,29 @@
                     {{ getEtiquetaMetodoPago(venta.metodoPago) }}
                   </span>
                 </td>
-                <td>
-                  <span class="badge badge-info">{{ venta.detalles.length }} línea(s)</span>
+                <td style="text-align: center;">
+                  <button
+                    type="button"
+                    class="badge badge-info btn-badge-link"
+                    (click)="verDetalle(venta)"
+                    title="Click para ver detalle del ticket"
+                  >
+                    {{ venta.detalles.length }} ítem(s)
+                  </button>
                 </td>
-                <td class="col-total-venta">
+                <td class="col-total-venta" style="text-align: right;">
                   {{ venta.total | currency: 'PEN' : 'S/ ' }}
                 </td>
                 <td style="text-align: center;">
                   <div style="display: inline-flex; gap: 0.5rem; align-items: center; justify-content: center;">
+                    <button
+                      type="button"
+                      class="btn-ver-ticket"
+                      (click)="verDetalle(venta)"
+                      title="Ver comprobante y detalle de venta"
+                    >
+                      <span class="material-symbols-outlined icon-inline" style="font-size: 0.95rem;">receipt_long</span> Ver Ticket
+                    </button>
                     @if (venta.estado === 'REGISTRADA' && auth.tieneRol('SUPERVISOR', 'ADMIN')) {
                       <button
                         type="button"
@@ -242,8 +260,6 @@
                       </button>
                     } @else if (venta.estado === 'ANULADA') {
                       <span class="badge-anulado-label">Anulada</span>
-                    } @else {
-                      <span style="color:#94a3b8;font-size:0.75rem;font-weight:600;">Solo Supervisor</span>
                     }
                     @if (auth.tieneRol('ADMIN', 'SUPERVISOR')) {
                       <button
@@ -257,40 +273,6 @@
                       </button>
                     }
                   </div>
-                </td>
-              </tr>
-
-              <!-- Fila 2: Subtabla con el Detalle Real de Líneas -->
-              <tr class="fila-detalle">
-                <td colspan="6">
-                  <table class="tabla-detalle">
-                    <thead>
-                      <tr>
-                        <th>Producto del Catálogo</th>
-                        <th style="text-align: center;">Cantidad</th>
-                        <th style="text-align: right;">Precio Unitario</th>
-                        <th style="text-align: right;">Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (detalle of venta.detalles; track detalle.productoId) {
-                        <tr>
-                          <td>
-                            <strong>{{ detalle.nombreProducto }}</strong>
-                          </td>
-                          <td style="text-align: center;">
-                            <span class="cantidad-badge">{{ detalle.cantidad }} un.</span>
-                          </td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">
-                            {{ detalle.precioUnitario | currency: 'PEN' : 'S/ ' }}
-                          </td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
-                            {{ detalle.subtotal | currency: 'PEN' : 'S/ ' }}
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
                 </td>
               </tr>
             } @empty {
@@ -393,6 +375,116 @@
           <button type="button" class="btn-action-discreet-danger" (click)="confirmarAnularVenta()" [disabled]="loading()">
             <span class="material-symbols-outlined icon-mini">check</span>
             {{ loading() ? 'Anulando...' : 'Sí, anular venta' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL DE DETALLE Y TICKET DE VENTA (ESC/POS) -->
+  @if (mostrarModalDetalle() && ventaSeleccionada(); as ticket) {
+    <div class="safe-modal-backdrop" (click)="cerrarModalDetalle()">
+      <div class="safe-modal-dialog modal-ticket-dialog" (click)="$event.stopPropagation()">
+        <!-- Header del Modal -->
+        <div class="safe-modal-header no-print" style="justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="material-symbols-outlined" style="font-size: 1.4rem; color: var(--primary);">receipt_long</span>
+            <div>
+              <h3 style="margin: 0; font-size: 1.05rem;">Detalle de Comprobante</h3>
+              <small style="color: #64748b;">{{ ticket.numeroTicket || ('Venta #' + ticket.id) }}</small>
+            </div>
+          </div>
+          <button type="button" class="btn-action-discreet-danger" style="padding: 0.2rem 0.5rem;" (click)="cerrarModalDetalle()" title="Cerrar modal">&times;</button>
+        </div>
+
+        <div class="safe-modal-body" style="padding: 1rem 1.25rem;">
+          <!-- Papel Térmico ESC/POS 80mm -->
+          <div class="ticket-paper printable-ticket ticket-pos">
+            <div class="ticket-header">
+              <div class="ticket-logo-brand">AGRO PERUVIAN FOODS S.A.C.</div>
+              <p class="ticket-sub">RUC: 20608974512</p>
+              <p class="ticket-sub">Derivados de Cacao y Aceite de Coco Prensado en Frío</p>
+              <p class="ticket-sub">Av. Manuel Prado 1050, Lurigancho - Lima</p>
+              <div class="ticket-divider">========================================</div>
+              <h4 class="ticket-number">
+                {{ 'TICKET DE VENTA N° ' + (ticket.numeroTicket || ('TKT-' + ticket.id)) }}
+              </h4>
+              <div class="ticket-meta-grid">
+                <div><strong>FECHA:</strong> {{ ticket.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</div>
+                <div><strong>CLIENTE:</strong> {{ ticket.clienteNombre || 'Cliente General' }}</div>
+                <div><strong>PAGO:</strong> {{ getEtiquetaMetodoPago(ticket.metodoPago) }}</div>
+                <div><strong>ESTADO:</strong> {{ ticket.estado }}</div>
+              </div>
+              <div class="ticket-divider">----------------------------------------</div>
+            </div>
+
+            <div class="ticket-body">
+              <table class="ticket-table">
+                <thead>
+                  <tr>
+                    <th style="text-align: left;">DESCRIPCIÓN</th>
+                    <th style="text-align: center;">CANT</th>
+                    <th style="text-align: right;">P.UNIT</th>
+                    <th style="text-align: right;">TOTAL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (det of ticket.detalles; track det.productoId || $index) {
+                    <tr>
+                      <td class="td-prod">
+                        {{ det.nombreProducto }}
+                        @if (det.loteId) {
+                          <small style="display: block; font-size: 0.68rem; opacity: 0.75;">[Lote FEFO #{{ det.loteId }}]</small>
+                        }
+                      </td>
+                      <td class="td-cant text-center">{{ det.cantidad }}</td>
+                      <td class="td-price text-right">{{ (det.precioUnitario || 0) | currency:'PEN':'S/ ' }}</td>
+                      <td class="td-subtotal text-right"><strong>{{ (det.subtotal || 0) | currency:'PEN':'S/ ' }}</strong></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              <div class="ticket-divider">----------------------------------------</div>
+            </div>
+
+            <div class="ticket-totals">
+              @if (ticket.subtotal) {
+                <div class="tot-row">
+                  <span>OP. GRAVADA (SUBTOTAL):</span>
+                  <span>{{ ticket.subtotal | currency:'PEN':'S/ ' }}</span>
+                </div>
+              }
+              @if (ticket.igv) {
+                <div class="tot-row">
+                  <span>I.G.V. (18%):</span>
+                  <span>{{ ticket.igv | currency:'PEN':'S/ ' }}</span>
+                </div>
+              }
+              <div class="tot-row tot-highlight">
+                <span>TOTAL A PAGAR:</span>
+                <span class="total-big">{{ ticket.total | currency:'PEN':'S/ ' }}</span>
+              </div>
+            </div>
+
+            <div class="ticket-footer">
+              <div class="ticket-divider">----------------------------------------</div>
+              <p class="ticket-thanks">¡Gracias por apoyar la agricultura sostenible!</p>
+              <p class="ticket-hash">* HASH: {{ ticket.numeroTicket || ('TKT-' + ticket.id) }} *</p>
+              <div class="barcode-simulator">
+                <span class="barcode-lines">||||| | |||| |||| | ||||| | |||| | |||||</span>
+                <small class="barcode-legend">Representación física de ticket POS - Agro Peruvian Foods</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer de Acciones del Modal -->
+        <div class="safe-modal-footer no-print" style="display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" class="btn btn-neutral-secondary" (click)="cerrarModalDetalle()">
+            Cerrar
+          </button>
+          <button type="button" class="btn btn-glacier-primary" (click)="imprimirTicket()">
+            <span class="material-symbols-outlined icon-inline">print</span> Imprimir Ticket (ESC/POS)
           </button>
         </div>
       </div>

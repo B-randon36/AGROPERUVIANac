@@ -51,6 +51,10 @@ export class VentaReporteComponent implements OnInit {
   protected readonly totalElements = signal(0);
   protected readonly totalPages = signal(0);
 
+  // Modal de Detalle / Ticket de Venta
+  protected readonly ventaSeleccionada = signal<VentaResponse | null>(null);
+  protected readonly mostrarModalDetalle = signal(false);
+
   // Estado UI
   protected readonly error = signal<string | null>(null);
   protected readonly loading = signal(false);
@@ -184,6 +188,20 @@ export class VentaReporteComponent implements OnInit {
 
   anular(id: number): void {
     this.solicitarAnularVenta(id);
+  }
+
+  verDetalle(venta: VentaResponse): void {
+    this.ventaSeleccionada.set(venta);
+    this.mostrarModalDetalle.set(true);
+  }
+
+  cerrarModalDetalle(): void {
+    this.mostrarModalDetalle.set(false);
+    this.ventaSeleccionada.set(null);
+  }
+
+  imprimirTicket(): void {
+    window.print();
   }
 
   eliminarTodas(): void {
