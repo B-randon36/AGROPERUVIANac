@@ -46,20 +46,25 @@ public interface VentaService {
     default VentaResponse solicitarAnulacion(Long id, String motivo) {
         return solicitarAnulacion(id, motivo, null);
     }
-    VentaResponse solicitarAnulacion(Long id, String motivo, String vendedorId);
+    default VentaResponse solicitarAnulacion(Long id, String motivo, String vendedorId) {
+        return solicitarAnulacion(id, motivo, vendedorId, vendedorId);
+    }
+    VentaResponse solicitarAnulacion(Long id, String motivo, String actor, String vendedorIdRestringido);
 
     default VentaResponse rechazarAnulacion(Long id) {
         return rechazarAnulacion(id, null);
     }
     VentaResponse rechazarAnulacion(Long id, String actor);
 
-    VentaReporte reporte(EstadoVenta estado, MetodoPagoVenta metodoPago, LocalDateTime desde, LocalDateTime hasta);
+    VentaReporte reporte(EstadoVenta estado, MetodoPagoVenta metodoPago, LocalDateTime desde, LocalDateTime hasta, String vendedorId);
+
+    default VentaReporte reporte(EstadoVenta estado, MetodoPagoVenta metodoPago, LocalDateTime desde, LocalDateTime hasta) {
+        return reporte(estado, metodoPago, desde, hasta, null);
+    }
 
     default VentaReporte reporte(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta) {
         return reporte(estado, null, desde, hasta);
     }
 
     ReporteOmnicanalResponse obtenerReporteOmnicanal();
-    void eliminarTodas();
-    void eliminar(Long id);
 }

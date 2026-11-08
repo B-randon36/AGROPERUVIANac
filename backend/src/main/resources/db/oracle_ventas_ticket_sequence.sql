@@ -1,0 +1,38 @@
+-- Ejecutar como BOM_VENTAS o un usuario autorizado antes de iniciar la versión corregida.
+-- No reiniciar ni eliminar esta secuencia en una base con ventas registradas.
+DECLARE
+    cantidad NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO cantidad FROM ALL_SEQUENCES
+    WHERE SEQUENCE_OWNER = 'BOM_VENTAS' AND SEQUENCE_NAME = 'SEQ_TICKET_VENTA';
+    IF cantidad = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BOM_VENTAS.SEQ_TICKET_VENTA START WITH 1 INCREMENT BY 1 MAXVALUE 999999999999999999 NOCYCLE CACHE 20';
+    END IF;
+END;
+/
+GRANT SELECT ON BOM_VENTAS.SEQ_TICKET_VENTA TO BOMERP_APP;
+
+-- Asegurar unicidad también en instalaciones existentes. Si hay duplicados históricos,
+-- Oracle rechazará la creación; revisarlos manualmente, sin eliminar ventas automáticamente.
+DECLARE
+    cantidad NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO cantidad
+    FROM ALL_CONSTRAINTS c
+    JOIN ALL_CONS_COLUMNS col ON col.OWNER = c.OWNER AND col.CONSTRAINT_NAME = c.CONSTRAINT_NAME
+    WHERE c.OWNER = 'BOM_VENTAS' AND c.TABLE_NAME = 'VENTAS'
+      AND c.CONSTRAINT_TYPE = 'U' AND c.STATUS = 'ENABLED' AND col.COLUMN_NAME = 'NUMERO_TICKET'
+      AND (SELECT COUNT(*) FROM ALL_CONS_COLUMNS cc
+           WHERE cc.OWNER = c.OWNER AND cc.CONSTRAINT_NAME = c.CONSTRAINT_NAME) = 1;
+    IF cantidad = 0 THEN
+        EXECUTE IMMEDIATE 'ALTER TABLE BOM_VENTAS.VENTAS ADD CONSTRAINT UK_VENTAS_TICKET UNIQUE (NUMERO_TICKET)';
+    END IF;
+END;
+/
+
+-- Verificación final:
+SELECT c.CONSTRAINT_NAME, c.STATUS
+FROM ALL_CONSTRAINTS c
+JOIN ALL_CONS_COLUMNS col ON col.OWNER = c.OWNER AND col.CONSTRAINT_NAME = c.CONSTRAINT_NAME
+WHERE c.OWNER = 'BOM_VENTAS' AND c.TABLE_NAME = 'VENTAS'
+  AND c.CONSTRAINT_TYPE = 'U' AND col.COLUMN_NAME = 'NUMERO_TICKET';

@@ -382,8 +382,8 @@ export class VentaForm implements OnInit, OnDestroy {
     });
 
     const tot = this.total();
-    const igv = Math.round(tot * 0.18 * 100) / 100;
-    const sub = Math.round((tot - igv) * 100) / 100;
+    const sub = Math.round((tot / 1.18) * 100) / 100;
+    const igv = Math.round((tot - sub) * 100) / 100;
 
     this.ticketMontoRecibido.set(this.esEfectivo() ? this.montoRecibido() : null);
     this.ticketCambio.set(this.esEfectivo() ? this.cambio() : null);

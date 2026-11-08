@@ -86,11 +86,4 @@ export class VentaService {
     return this.http.get<VentaReporte>(this.api.buildUrl(`${this.resource}/resumen`), { params });
   }
 
-  eliminarTodas(): Observable<void> {
-    return this.http.delete<void>(this.api.buildUrl(this.resource));
-  }
-
-  eliminar(id: number): Observable<void> {
-    return this.http.delete<void>(this.api.buildUrl(`${this.resource}/${id}`));
-  }
 }

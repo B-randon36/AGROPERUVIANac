@@ -12,6 +12,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import pe.edu.upeu.bomerp.ventas.dto.ReporteOmnicanalResponse;
@@ -22,12 +23,7 @@ import pe.edu.upeu.bomerp.ventas.entity.EstadoVenta;
 import pe.edu.upeu.bomerp.ventas.service.VentaService;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Tag(name = "Ventas - Punto de Venta POS", description = "Transacciones comerciales, emisión de tickets y salida por lote (Zaggy Morales)")
 @RestController
@@ -46,15 +42,15 @@ public class VentaController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta,
             @PageableDefault(size = 20, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable,
-            @AuthenticationPrincipal Jwt jwt) {
-        String vendedorId = esVendedorRestringido(jwt) ? jwt.getSubject() : null;
+            @AuthenticationPrincipal Jwt jwt, Authentication authentication) {
+        String vendedorId = esVendedorRestringido(authentication) ? jwt.getSubject() : null;
         return ResponseEntity.ok(ventaService.buscar(estado, metodoPago, desde, hasta, vendedorId, pageable));
     }
 
     @Operation(summary = "Consultar una venta por ID con validación de propiedad RN8 (VENDEDOR solo ve sus ventas)")
     @GetMapping("/{id}")
-    public ResponseEntity<VentaResponse> obtener(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
-        String vendedorId = esVendedorRestringido(jwt) ? jwt.getSubject() : null;
+    public ResponseEntity<VentaResponse> obtener(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt, Authentication authentication) {
+        String vendedorId = esVendedorRestringido(authentication) ? jwt.getSubject() : null;
         return ResponseEntity.ok(ventaService.obtener(id, vendedorId));
     }
 
@@ -62,14 +58,14 @@ public class VentaController {
     @PostMapping
     public ResponseEntity<VentaResponse> crear(
             @Valid @RequestBody VentaRequest request,
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthenticationPrincipal Jwt jwt, Authentication authentication) {
         String vendedorId = (jwt != null) ? jwt.getSubject() : null;
         return ResponseEntity.status(HttpStatus.CREATED).body(ventaService.crear(request, vendedorId));
     }
 
     @Operation(summary = "Anula una venta registrada, restaurando el stock de sus productos y auditando al actor")
     @RequestMapping(value = "/{id}/anular", method = { RequestMethod.PATCH, RequestMethod.PUT })
-    public ResponseEntity<VentaResponse> anular(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<VentaResponse> anular(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt, Authentication authentication) {
         String actor = (jwt != null) ? jwt.getSubject() : "ANONYMOUS";
         return ResponseEntity.ok(ventaService.anular(id, actor));
     }
@@ -79,16 +75,17 @@ public class VentaController {
     public ResponseEntity<VentaResponse> solicitarAnulacion(
             @PathVariable Long id,
             @RequestParam(required = false) String motivo,
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthenticationPrincipal Jwt jwt, Authentication authentication) {
         String actor = (jwt != null) ? jwt.getSubject() : "VENDEDOR";
-        return ResponseEntity.ok(ventaService.solicitarAnulacion(id, motivo, actor));
+        return ResponseEntity.ok(ventaService.solicitarAnulacion(id, motivo, actor,
+                esVendedorRestringido(authentication) ? jwt.getSubject() : null));
     }
 
     @Operation(summary = "Administrador o Supervisor rechaza la solicitud de anulación y mantiene la venta registrada")
     @RequestMapping(value = "/{id}/rechazar-anulacion", method = { RequestMethod.PATCH, RequestMethod.POST, RequestMethod.PUT })
     public ResponseEntity<VentaResponse> rechazarAnulacion(
             @PathVariable Long id,
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthenticationPrincipal Jwt jwt, Authentication authentication) {
         String actor = (jwt != null) ? jwt.getSubject() : "ADMIN";
         return ResponseEntity.ok(ventaService.rechazarAnulacion(id, actor));
     }
@@ -105,8 +102,10 @@ public class VentaController {
             @RequestParam(required = false) EstadoVenta estado,
             @RequestParam(required = false) pe.edu.upeu.bomerp.ventas.entity.MetodoPagoVenta metodoPago,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime desde,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta) {
-        return ResponseEntity.ok(ventaService.reporte(estado, metodoPago, desde, hasta));
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta,
+            @AuthenticationPrincipal Jwt jwt, Authentication authentication) {
+        String vendedorId = esVendedorRestringido(authentication) ? jwt.getSubject() : null;
+        return ResponseEntity.ok(ventaService.reporte(estado, metodoPago, desde, hasta, vendedorId));
     }
 
     @Operation(summary = "Generar reporte omnicanal consolidado y ranking de rentabilidad de productos")
@@ -115,37 +114,10 @@ public class VentaController {
         return ResponseEntity.ok(ventaService.obtenerReporteOmnicanal());
     }
 
-    @Operation(summary = "Eliminar todas las ventas del reporte transaccional")
-    @DeleteMapping
-    public ResponseEntity<Void> eliminarTodas() {
-        ventaService.eliminarTodas();
-        return ResponseEntity.noContent().build();
-    }
-
-    @Operation(summary = "Eliminar una venta individual por ID")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        ventaService.eliminar(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    private boolean esVendedorRestringido(Jwt jwt) {
-        if (jwt == null)
-            return false;
-        Map<String, Object> realmAccess = jwt.getClaim("realm_access");
-        Object roles = realmAccess == null ? null : realmAccess.get("roles");
-        if (!(roles instanceof Collection<?> lista)) {
-            return false;
-        }
-        Set<String> normalizados = lista.stream()
-                .filter(Objects::nonNull)
-                .map(r -> r.toString().trim().toUpperCase())
-                .collect(Collectors.toSet());
-
-        if (normalizados.contains("ADMIN") || normalizados.contains("ROLE_ADMIN")
-                || normalizados.contains("SUPERVISOR") || normalizados.contains("ROLE_SUPERVISOR")) {
-            return false;
-        }
-        return normalizados.contains("VENDEDOR") || normalizados.contains("ROLE_VENDEDOR");
+    private boolean esVendedorRestringido(Authentication authentication) {
+        // Usa las mismas autoridades normalizadas que SecurityConfig, incluidos roles de cliente.
+        return authentication.getAuthorities().stream()
+                .noneMatch(a -> a.getAuthority().equals("ROLE_ADMIN")
+                        || a.getAuthority().equals("ROLE_SUPERVISOR"));
     }
 }

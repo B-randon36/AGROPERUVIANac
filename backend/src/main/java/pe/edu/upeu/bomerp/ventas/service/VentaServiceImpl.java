@@ -27,9 +27,13 @@ import pe.edu.upeu.bomerp.ventas.repository.VentaRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +45,7 @@ public class VentaServiceImpl implements VentaService {
     private final InventarioService inventarioService;
     private final FinanzasApi finanzasApi;
     private final AuditoriaService auditoriaService;
+    private final NumeroTicketService numeroTicketService;
 
     @Override
     @Transactional(readOnly = true)
@@ -80,8 +85,7 @@ public class VentaServiceImpl implements VentaService {
     @Override
     @Transactional
     public VentaResponse crear(VentaRequest request, String vendedorId) {
-        String ticket = "TKT-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
-                + "-" + (int) (Math.random() * 900 + 100);
+        String ticket = numeroTicketService.siguiente();
 
         MetodoPagoVenta metodoVenta = request.getMetodoPago() != null ? request.getMetodoPago() : MetodoPagoVenta.EFECTIVO;
         String cliente = (request.getClienteNombre() != null && !request.getClienteNombre().isBlank())
@@ -137,8 +141,10 @@ public class VentaServiceImpl implements VentaService {
             total = total.add(subtotalItem);
         }
 
-        BigDecimal igv = total.multiply(new BigDecimal("0.18")).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal subtotal = total.subtract(igv);
+        // Los precios del catálogo son precios finales con IGV incluido.
+        total = total.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal subtotal = total.divide(new BigDecimal("1.18"), 2, RoundingMode.HALF_UP);
+        BigDecimal igv = total.subtract(subtotal);
 
         venta.setSubtotal(subtotal);
         venta.setIgv(igv);
@@ -219,9 +225,13 @@ public class VentaServiceImpl implements VentaService {
 
     @Override
     @Transactional
-    public VentaResponse solicitarAnulacion(Long id, String motivo, String vendedorId) {
+    public VentaResponse solicitarAnulacion(Long id, String motivo, String actor, String vendedorIdRestringido) {
         Venta venta = ventaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + id));
+
+        if (vendedorIdRestringido != null && !vendedorIdRestringido.equals(venta.getVendedorId())) {
+            throw new AccesoDenegadoException("No puedes solicitar la anulación de una venta de otro vendedor.");
+        }
 
         if (venta.getEstado() == EstadoVenta.ANULADA) {
             throw new VentaYaAnuladaException("La venta " + id + " ya está anulada.");
@@ -232,7 +242,7 @@ public class VentaServiceImpl implements VentaService {
 
         venta.setEstado(EstadoVenta.SOLICITADA_ANULACION);
         Venta guardada = ventaRepository.save(venta);
-        auditoriaService.registrar(vendedorId, "SOLICITAR_ANULACION", "VENTA", guardada.getId(),
+        auditoriaService.registrar(actor, "SOLICITAR_ANULACION", "VENTA", guardada.getId(),
                 "ticket=" + guardada.getNumeroTicket() + (motivo != null && !motivo.isBlank() ? "; motivo=" + motivo : ""));
         return toResponse(guardada);
     }
@@ -269,10 +279,10 @@ public class VentaServiceImpl implements VentaService {
 
     @Override
     @Transactional(readOnly = true)
-    public VentaReporte reporte(EstadoVenta estado, MetodoPagoVenta metodoPago, LocalDateTime desde, LocalDateTime hasta) {
-        VentaAgregado agregado = ventaRepository.agregados(estado, metodoPago, desde, hasta);
+    public VentaReporte reporte(EstadoVenta estado, MetodoPagoVenta metodoPago, LocalDateTime desde, LocalDateTime hasta, String vendedorId) {
+        VentaAgregado agregado = ventaRepository.agregados(estado, metodoPago, desde, hasta, vendedorId);
         Sort sort = Sort.by(Sort.Direction.DESC, "fecha");
-        List<VentaResumen> resumenes = ventaRepository.buscarResumen(estado, metodoPago, desde, hasta, sort);
+        List<VentaResumen> resumenes = ventaRepository.buscarResumen(estado, metodoPago, desde, hasta, vendedorId, sort);
         return new VentaReporte(agregado, resumenes);
     }
 
@@ -307,164 +317,59 @@ public class VentaServiceImpl implements VentaService {
     @Override
     @Transactional(readOnly = true)
     public ReporteOmnicanalResponse obtenerReporteOmnicanal() {
-        List<Venta> todasVentas = ventaRepository.findAll();
-        List<Venta> ventasValidas = todasVentas.stream()
-                .filter(v -> v.getEstado() != EstadoVenta.ANULADA)
-                .toList();
+        List<Venta> ventas = ventaRepository.findAll().stream()
+                .filter(v -> v.getEstado() != EstadoVenta.ANULADA).toList();
+        List<PedidoDelivery> pedidos = deliveryRepository.findAll().stream()
+                .filter(d -> d.getEstadoDelivery() != EstadoDelivery.CANCELADO).toList();
 
-        List<PedidoDelivery> deliveries = deliveryRepository.findAll();
-        List<PedidoDelivery> deliveriesValidos = deliveries.stream()
-                .filter(d -> d.getEstadoDelivery() != EstadoDelivery.CANCELADO)
-                .toList();
-
-        BigDecimal totalVentasPos = ventasValidas.stream()
-                .map(Venta::getTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        long transaccionesPos = ventasValidas.size();
-
-        BigDecimal totalVentasDelivery = deliveriesValidos.stream()
-                .map(d -> d.getMontoTotal() != null ? d.getMontoTotal() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        long transaccionesDelivery = deliveriesValidos.size();
-
-        // Baseline comercial para Agro Peruvian Foods si recién inicia
-        if (transaccionesPos == 0 && totalVentasPos.compareTo(BigDecimal.ZERO) == 0) {
-            totalVentasPos = new BigDecimal("1064.25");
-            transaccionesPos = 6L;
-        }
-
-        BigDecimal totalVentasFeria = new BigDecimal("580.50");
-        long transaccionesFeria = 4L;
-
-        BigDecimal totalOmnicanal = totalVentasPos.add(totalVentasDelivery).add(totalVentasFeria);
-        long totalTransacciones = transaccionesPos + transaccionesDelivery + transaccionesFeria;
-
-        BigDecimal pctPos = totalOmnicanal.compareTo(BigDecimal.ZERO) > 0
-                ? totalVentasPos.multiply(BigDecimal.valueOf(100)).divide(totalOmnicanal, 1, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO;
-        BigDecimal pctDelivery = totalOmnicanal.compareTo(BigDecimal.ZERO) > 0
-                ? totalVentasDelivery.multiply(BigDecimal.valueOf(100)).divide(totalOmnicanal, 1, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO;
-        BigDecimal pctFeria = totalOmnicanal.compareTo(BigDecimal.ZERO) > 0
-                ? totalVentasFeria.multiply(BigDecimal.valueOf(100)).divide(totalOmnicanal, 1, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO;
-
-        BigDecimal ticketPos = transaccionesPos > 0
-                ? totalVentasPos.divide(BigDecimal.valueOf(transaccionesPos), 2, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO;
-        BigDecimal ticketDelivery = transaccionesDelivery > 0
-                ? totalVentasDelivery.divide(BigDecimal.valueOf(transaccionesDelivery), 2, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO;
-        BigDecimal ticketFeria = transaccionesFeria > 0
-                ? totalVentasFeria.divide(BigDecimal.valueOf(transaccionesFeria), 2, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO;
-
-        List<CanalVentaResumenDto> canales = List.of(
-                CanalVentaResumenDto.builder()
-                        .canal("TIENDA_MOSTRADOR")
-                        .canalNombre("Tienda Física / Mostrador")
-                        .totalVentas(totalVentasPos)
-                        .cantidadTransacciones(transaccionesPos)
-                        .ticketPromedio(ticketPos)
-                        .porcentaje(pctPos)
-                        .build(),
-                CanalVentaResumenDto.builder()
-                        .canal("DELIVERY")
-                        .canalNombre("Canal Delivery / Envíos")
-                        .totalVentas(totalVentasDelivery)
-                        .cantidadTransacciones(transaccionesDelivery)
-                        .ticketPromedio(ticketDelivery)
-                        .porcentaje(pctDelivery)
-                        .build(),
-                CanalVentaResumenDto.builder()
-                        .canal("FERIA_COMERCIAL")
-                        .canalNombre("Feria Agropecuaria / Eventos")
-                        .totalVentas(totalVentasFeria)
-                        .cantidadTransacciones(transaccionesFeria)
-                        .ticketPromedio(ticketFeria)
-                        .porcentaje(pctFeria)
-                        .build()
-        );
-
-        List<ProductoRentabilidadDto> ranking = List.of(
-                ProductoRentabilidadDto.builder()
-                        .productoId(4L)
-                        .productoNombre("Aceite de Coco Virgen 460 ml")
-                        .categoria("Aceites Prensados")
-                        .unidadesVendidas(new BigDecimal("18"))
-                        .totalIngresos(new BigDecimal("864.00"))
-                        .costoEstimado(new BigDecimal("475.20"))
-                        .utilidadBruta(new BigDecimal("388.80"))
-                        .margenContribucion(new BigDecimal("45.0"))
-                        .clasificacionAbc("A")
-                        .build(),
-                ProductoRentabilidadDto.builder()
-                        .productoId(1L)
-                        .productoNombre("Cacao Grano Entero Orgánico 1kg")
-                        .categoria("Derivados de Cacao")
-                        .unidadesVendidas(new BigDecimal("16"))
-                        .totalIngresos(new BigDecimal("512.00"))
-                        .costoEstimado(new BigDecimal("281.60"))
-                        .utilidadBruta(new BigDecimal("230.40"))
-                        .margenContribucion(new BigDecimal("45.0"))
-                        .clasificacionAbc("A")
-                        .build(),
-                ProductoRentabilidadDto.builder()
-                        .productoId(2L)
-                        .productoNombre("Cacao en Polvo Alcalinizado 250g")
-                        .categoria("Derivados de Cacao")
-                        .unidadesVendidas(new BigDecimal("14"))
-                        .totalIngresos(new BigDecimal("252.00"))
-                        .costoEstimado(new BigDecimal("138.60"))
-                        .utilidadBruta(new BigDecimal("113.40"))
-                        .margenContribucion(new BigDecimal("45.0"))
-                        .clasificacionAbc("B")
-                        .build(),
-                ProductoRentabilidadDto.builder()
-                        .productoId(3L)
-                        .productoNombre("Manteca de Cacao Prensada 500g")
-                        .categoria("Derivados de Cacao")
-                        .unidadesVendidas(new BigDecimal("7"))
-                        .totalIngresos(new BigDecimal("203.00"))
-                        .costoEstimado(new BigDecimal("121.80"))
-                        .utilidadBruta(new BigDecimal("81.20"))
-                        .margenContribucion(new BigDecimal("40.0"))
-                        .clasificacionAbc("B")
-                        .build(),
-                ProductoRentabilidadDto.builder()
-                        .productoId(5L)
-                        .productoNombre("Nibs de Cacao Horneados 200g")
-                        .categoria("Snacks Saludables")
-                        .unidadesVendidas(new BigDecimal("7"))
-                        .totalIngresos(new BigDecimal("105.00"))
-                        .costoEstimado(new BigDecimal("68.25"))
-                        .utilidadBruta(new BigDecimal("36.75"))
-                        .margenContribucion(new BigDecimal("35.0"))
-                        .clasificacionAbc("C")
-                        .build()
-        );
+        // Una venta vinculada a delivery se cuenta una sola vez, usando el importe de la venta.
+        Set<Long> ventasDelivery = pedidos.stream().map(PedidoDelivery::getVentaId)
+                .filter(java.util.Objects::nonNull).collect(Collectors.toSet());
+        List<Venta> mostrador = ventas.stream().filter(v -> !ventasDelivery.contains(v.getId())).toList();
+        List<Venta> vinculadas = ventas.stream().filter(v -> ventasDelivery.contains(v.getId())).toList();
+        // Los pedidos independientes se reconocen al entregar, como en DeliveryServiceImpl.
+        List<PedidoDelivery> independientes = pedidos.stream()
+                .filter(d -> d.getVentaId() == null && d.getEstadoDelivery() == EstadoDelivery.ENTREGADO).toList();
+        BigDecimal totalPos = mostrador.stream().map(Venta::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalDelivery = vinculadas.stream().map(Venta::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add)
+                .add(independientes.stream().map(PedidoDelivery::getMontoTotal)
+                        .filter(java.util.Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+        BigDecimal total = totalPos.add(totalDelivery);
+        long cantidadDelivery = vinculadas.size() + independientes.size();
 
         return ReporteOmnicanalResponse.builder()
-                .totalVentasOmnicanal(totalOmnicanal)
-                .totalTransacciones(totalTransacciones)
-                .canales(canales)
-                .rankingProductos(ranking)
+                .totalVentasOmnicanal(total)
+                .totalTransacciones(mostrador.size() + cantidadDelivery)
+                .canales(List.of(
+                        canal("TIENDA_MOSTRADOR", "Tienda Física / Mostrador", totalPos, mostrador.size(), total),
+                        canal("DELIVERY", "Canal Delivery / Envíos", totalDelivery, cantidadDelivery, total)))
+                .rankingProductos(rankingProductos(ventas))
                 .build();
     }
 
-    @Override
-    @Transactional
-    public void eliminarTodas() {
-        ventaRepository.deleteAll();
+    private CanalVentaResumenDto canal(String codigo, String nombre, BigDecimal monto, long cantidad, BigDecimal total) {
+        return CanalVentaResumenDto.builder().canal(codigo).canalNombre(nombre).totalVentas(monto)
+                .cantidadTransacciones(cantidad)
+                .ticketPromedio(cantidad == 0 ? BigDecimal.ZERO : monto.divide(BigDecimal.valueOf(cantidad), 2, RoundingMode.HALF_UP))
+                .porcentaje(total.signum() == 0 ? BigDecimal.ZERO : monto.multiply(BigDecimal.valueOf(100)).divide(total, 1, RoundingMode.HALF_UP))
+                .build();
     }
 
-    @Override
-    @Transactional
-    public void eliminar(Long id) {
-        Venta v = ventaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + id));
-        ventaRepository.delete(v);
+    private List<ProductoRentabilidadDto> rankingProductos(List<Venta> ventas) {
+        Map<Long, ProductoRentabilidadDto> productos = new LinkedHashMap<>();
+        for (Venta venta : ventas) {
+            for (DetalleVenta detalle : venta.getDetalles()) {
+                ProductoRentabilidadDto fila = productos.computeIfAbsent(detalle.getProductoId(), id ->
+                        ProductoRentabilidadDto.builder().productoId(id).productoNombre(detalle.getNombreProducto())
+                                .unidadesVendidas(BigDecimal.ZERO).totalIngresos(BigDecimal.ZERO).build());
+                fila.setUnidadesVendidas(fila.getUnidadesVendidas().add(BigDecimal.valueOf(detalle.getCantidad())));
+                fila.setTotalIngresos(fila.getTotalIngresos().add(detalle.getSubtotal()));
+            }
+        }
+        // No hay un costo histórico por venta: no se inventan utilidades, márgenes ni categorías.
+        return productos.values().stream()
+                .sorted(Comparator.comparing(ProductoRentabilidadDto::getTotalIngresos).reversed()
+                        .thenComparing(ProductoRentabilidadDto::getProductoId))
+                .toList();
     }
 }

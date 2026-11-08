@@ -23,7 +23,7 @@ import {
 Chart.register(...registerables);
 
 export type TipoGraficoVista = 'OMNICANAL_BARRAS' | 'FINANZAS_PASTEL';
-export type MetricaRanking = 'INGRESOS' | 'UNIDADES' | 'MARGEN';
+export type MetricaRanking = 'INGRESOS' | 'UNIDADES';
 export type MetricaPastel = 'ESTRUCTURA' | 'CATEGORIAS' | 'METODOS';
 
 @Component({
@@ -68,8 +68,8 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
     return oc.rankingProductos.filter(
       (p) =>
         p.productoNombre.toLowerCase().includes(q) ||
-        p.categoria.toLowerCase().includes(q) ||
-        p.clasificacionAbc.toLowerCase().includes(q)
+        (p.categoria ?? '').toLowerCase().includes(q) ||
+        (p.clasificacionAbc ?? '').toLowerCase().includes(q)
     );
   });
 
@@ -92,7 +92,7 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
   // Computed: Margen Operativo %
   protected readonly margenOperativo = computed(() => {
     const d = this.dashboard();
-    if (!d || d.totalIngresos <= 0) return 28.4;
+    if (!d || d.totalIngresos <= 0) return 0;
     const margin = (d.balanceNeto / d.totalIngresos) * 100;
     return Number(margin.toFixed(1));
   });
@@ -125,6 +125,8 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
   cargarDatos(): void {
     this.loading.set(true);
     this.error.set(null);
+    this.omnicanal.set(null);
+    this.destruirGraficos();
 
     // 1. Dashboard Financiero
     this.reporteService.obtenerDashboard().subscribe({
@@ -147,7 +149,10 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
       },
       error: (err) => {
         console.warn('Error al cargar métricas omnicanal:', err);
-        this.generarFallbackOmnicanal();
+        this.omnicanal.set(null);
+        this.error.set(err?.status === 403
+          ? 'El reporte omnicanal requiere acceso de administrador o supervisor.'
+          : 'No se pudo cargar el reporte omnicanal. Intenta nuevamente.');
       },
     });
 
@@ -312,14 +317,10 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
       dataVals = productos.map((p) => p.totalIngresos);
       labelDs = 'Ingresos Totales (S/)';
       bgColor = '#7DD3FC';
-    } else if (metrica === 'UNIDADES') {
+    } else {
       dataVals = productos.map((p) => p.unidadesVendidas);
       labelDs = 'Unidades Vendidas';
       bgColor = '#88B4CC';
-    } else {
-      dataVals = productos.map((p) => p.margenContribucion);
-      labelDs = 'Margen de Contribución (%)';
-      bgColor = '#C8A0F0';
     }
 
     const ctx = this.productosCanvas.nativeElement.getContext('2d');
@@ -355,7 +356,6 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
             callbacks: {
               label: (context) => {
                 if (metrica === 'INGRESOS') return ` Ingresos: S/ ${Number(context.raw).toFixed(2)}`;
-                if (metrica === 'MARGEN') return ` Margen: ${Number(context.raw).toFixed(1)}%`;
                 return ` Unidades: ${context.raw}`;
               },
             },
@@ -366,7 +366,6 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
             ticks: {
               callback: (val) => {
                 if (metrica === 'INGRESOS') return `S/ ${val}`;
-                if (metrica === 'MARGEN') return `${val}%`;
                 return `${val}`;
               },
               font: { family: "'Inter', sans-serif", size: 11 },
@@ -412,53 +411,22 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
     ];
 
     if (tipo === 'ESTRUCTURA') {
-      labels = [
-        'Ganancia Neta Disponible',
-        'Costos de Mercadería (COGS)',
-        'Gastos y Egresos Operativos',
-        'Rendiciones de Caja Chica',
-      ];
-      const gananciaNeta = Math.max(0, dash.balanceNeto);
-      const costosEst = Number((dash.totalIngresos * 0.45).toFixed(2));
-      const egresos = Number(dash.totalEgresos.toFixed(2));
-      const rendiciones = dash.reporteRendiciones?.totalMonto ?? 0;
-      dataVals = [gananciaNeta, costosEst, egresos, rendiciones];
-      bgColors = [paletaGlacier[0], paletaGlacier[1], paletaGlacier[5], paletaGlacier[2]];
+      labels = ['Ingresos registrados', 'Egresos registrados'];
+      dataVals = [dash.totalIngresos, dash.totalEgresos];
+      bgColors = [paletaGlacier[0], paletaGlacier[5]];
     } else if (tipo === 'CATEGORIAS') {
-      labels = [
-        'Derivados de Cacao (Pasta & Nibs)',
-        'Aceites de Coco Prensados en Frío',
-        'Empaques e Insumos de Planta',
-      ];
-      let cacaoTot = 0;
-      let cocoTot = 0;
-      let otrosTot = 0;
-      if (oc && oc.rankingProductos) {
-        for (const p of oc.rankingProductos) {
-          if (p.productoNombre.toLowerCase().includes('cacao') || p.productoNombre.toLowerCase().includes('nibs')) {
-            cacaoTot += p.totalIngresos;
-          } else if (p.productoNombre.toLowerCase().includes('coco')) {
-            cocoTot += p.totalIngresos;
-          } else {
-            otrosTot += p.totalIngresos;
-          }
-        }
+      const porCategoria = new Map<string, number>();
+      for (const producto of oc?.rankingProductos ?? []) {
+        const categoria = producto.categoria ?? 'Sin categoría histórica';
+        porCategoria.set(categoria, (porCategoria.get(categoria) ?? 0) + producto.totalIngresos);
       }
-      if (cacaoTot === 0 && cocoTot === 0) {
-        cacaoTot = dash.totalIngresos * 0.52;
-        cocoTot = dash.totalIngresos * 0.38;
-        otrosTot = dash.totalIngresos * 0.10;
-      }
-      dataVals = [
-        Number(cacaoTot.toFixed(2)),
-        Number(cocoTot.toFixed(2)),
-        Number(otrosTot.toFixed(2)),
-      ];
-      bgColors = [paletaGlacier[0], paletaGlacier[1], paletaGlacier[2]];
+      labels = [...porCategoria.keys()];
+      dataVals = [...porCategoria.values()];
+      bgColors = labels.map((_, i) => paletaGlacier[i % paletaGlacier.length]);
     } else {
       labels = dash.resumenPorMetodo.map((m) => m.metodoPago);
       dataVals = dash.resumenPorMetodo.map((m) => m.totalIngresos);
-      bgColors = paletaGlacier.slice(0, labels.length);
+      bgColors = labels.map((_, i) => paletaGlacier[i % paletaGlacier.length]);
     }
 
     const ctx = this.pieCanvas.nativeElement.getContext('2d');
@@ -520,102 +488,12 @@ export class ReporteFinancieroList implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private destruirGraficos(): void {
-    if (this.chartOmnicanal) this.chartOmnicanal.destroy();
-    if (this.chartProductos) this.chartProductos.destroy();
-    if (this.chartPie) this.chartPie.destroy();
-  }
-
-  private generarFallbackOmnicanal(): void {
-    const dash = this.dashboard();
-    const tot = dash ? dash.totalIngresos : 1935.0;
-    this.omnicanal.set({
-      totalVentasOmnicanal: tot,
-      totalTransacciones: 12,
-      canales: [
-        {
-          canal: 'TIENDA_MOSTRADOR',
-          canalNombre: 'Tienda Física / Mostrador',
-          totalVentas: Number((tot * 0.55).toFixed(2)),
-          cantidadTransacciones: 6,
-          ticketPromedio: Number(((tot * 0.55) / 6).toFixed(2)),
-          porcentaje: 55.0,
-        },
-        {
-          canal: 'FERIA_COMERCIAL',
-          canalNombre: 'Feria Agropecuaria / Eventos',
-          totalVentas: Number((tot * 0.3).toFixed(2)),
-          cantidadTransacciones: 4,
-          ticketPromedio: Number(((tot * 0.3) / 4).toFixed(2)),
-          porcentaje: 30.0,
-        },
-        {
-          canal: 'DELIVERY',
-          canalNombre: 'Canal Delivery / Envíos',
-          totalVentas: Number((tot * 0.15).toFixed(2)),
-          cantidadTransacciones: 2,
-          ticketPromedio: Number(((tot * 0.15) / 2).toFixed(2)),
-          porcentaje: 15.0,
-        },
-      ],
-      rankingProductos: [
-        {
-          productoId: 4,
-          productoNombre: 'Aceite de Coco Virgen 500ml',
-          categoria: 'Aceites Prensados',
-          unidadesVendidas: 18,
-          totalIngresos: 864.0,
-          costoEstimado: 475.2,
-          utilidadBruta: 388.8,
-          margenContribucion: 45.0,
-          clasificacionAbc: 'A',
-        },
-        {
-          productoId: 1,
-          productoNombre: 'Pasta Pura de Cacao 500g',
-          categoria: 'Derivados de Cacao',
-          unidadesVendidas: 16,
-          totalIngresos: 512.0,
-          costoEstimado: 281.6,
-          utilidadBruta: 230.4,
-          margenContribucion: 45.0,
-          clasificacionAbc: 'A',
-        },
-        {
-          productoId: 2,
-          productoNombre: 'Nibs de Cacao Horneados 200g',
-          categoria: 'Derivados de Cacao',
-          unidadesVendidas: 20,
-          totalIngresos: 370.0,
-          costoEstimado: 203.5,
-          utilidadBruta: 166.5,
-          margenContribucion: 45.0,
-          clasificacionAbc: 'B',
-        },
-        {
-          productoId: 3,
-          productoNombre: 'Aceite de Coco Virgen 250ml',
-          categoria: 'Aceites Prensados',
-          unidadesVendidas: 5,
-          totalIngresos: 140.0,
-          costoEstimado: 77.0,
-          utilidadBruta: 63.0,
-          margenContribucion: 45.0,
-          clasificacionAbc: 'B',
-        },
-        {
-          productoId: 5,
-          productoNombre: 'Frasco de Vidrio Hexagonal 250ml',
-          categoria: 'Empaques e Insumos',
-          unidadesVendidas: 20,
-          totalIngresos: 50.0,
-          costoEstimado: 27.5,
-          utilidadBruta: 22.5,
-          margenContribucion: 45.0,
-          clasificacionAbc: 'C',
-        },
-      ],
-    });
-    setTimeout(() => this.actualizarGraficos(), 100);
+    this.chartOmnicanal?.destroy();
+    this.chartProductos?.destroy();
+    this.chartPie?.destroy();
+    this.chartOmnicanal = undefined;
+    this.chartProductos = undefined;
+    this.chartPie = undefined;
   }
 
   calcularPorcentaje(monto: number): number {

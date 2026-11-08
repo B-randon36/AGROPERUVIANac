@@ -8,16 +8,6 @@
       </p>
     </div>
     <div class="header-actions">
-      @if (auth.tieneRol('SUPERVISOR', 'ADMIN') && ventas().length > 0) {
-        <button
-          type="button"
-          class="btn btn-soft-danger"
-          (click)="eliminarTodas()"
-          title="Eliminar todas las ventas registradas del reporte"
-        >
-          <span class="material-symbols-outlined icon-inline">delete_sweep</span> Limpiar Historial
-        </button>
-      }
       <a routerLink="/ventas/nueva" class="btn btn-glacier-primary">
         <span class="material-symbols-outlined icon-inline">point_of_sale</span> + Nueva Venta POS
       </a>
@@ -285,15 +275,6 @@
                       } @else if (venta.estado === 'ANULADA') {
                         <span class="badge-anulado-label">Anulada</span>
                       }
-                      <button
-                        type="button"
-                        class="btn-action-discreet-danger"
-                        style="padding: 0.35rem 0.5rem;"
-                        (click)="eliminar(venta.id)"
-                        title="Eliminar registro de venta"
-                      >
-                        <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
-                      </button>
                     } @else {
                       <!-- Rol VENDEDOR -->
                       @if (venta.estado === 'REGISTRADA') {

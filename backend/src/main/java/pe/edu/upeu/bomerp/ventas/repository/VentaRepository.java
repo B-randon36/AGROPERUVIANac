@@ -63,11 +63,13 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
           AND (:metodoPago IS NULL OR v.metodoPago = :metodoPago)
           AND (:desde IS NULL OR v.fecha >= :desde)
           AND (:hasta IS NULL OR v.fecha <= :hasta)
+          AND (:vendedorId IS NULL OR v.vendedorId = :vendedorId)
         """)
     List<VentaResumen> buscarResumen(@Param("estado") EstadoVenta estado,
                                      @Param("metodoPago") MetodoPagoVenta metodoPago,
                                      @Param("desde") LocalDateTime desde,
                                      @Param("hasta") LocalDateTime hasta,
+                                     @Param("vendedorId") String vendedorId,
                                      Sort sort);
 
     @Query("""
@@ -82,9 +84,11 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
           AND (:metodoPago IS NULL OR v.metodoPago = :metodoPago)
           AND (:desde IS NULL OR v.fecha >= :desde)
           AND (:hasta IS NULL OR v.fecha <= :hasta)
+          AND (:vendedorId IS NULL OR v.vendedorId = :vendedorId)
         """)
     VentaAgregado agregados(@Param("estado") EstadoVenta estado,
                             @Param("metodoPago") MetodoPagoVenta metodoPago,
                             @Param("desde") LocalDateTime desde,
-                            @Param("hasta") LocalDateTime hasta);
+                            @Param("hasta") LocalDateTime hasta,
+                            @Param("vendedorId") String vendedorId);
 }

@@ -30,11 +30,18 @@ class VentaEndToEndTest {
         @Autowired
         private MockMvc mockMvc;
 
+        @Autowired
+        private pe.edu.upeu.bomerp.catalogo.producto.service.ProductoService productos;
+
+        @Autowired
+        private pe.edu.upeu.bomerp.finanzas.repository.TransaccionFinancieraRepository transacciones;
+
         private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
         @Test
         @DisplayName("S14 E2E: Flujo integral crear venta, paginar, consultar agregado y anular con auditoría")
         void flujoCompleto_crearVentaPaginadaYAuditoria() throws Exception {
+                int stockInicial = productos.obtener(1L).getStock();
                 VentaRequest request = new VentaRequest();
                 request.setClienteNombre("Cliente E2E AgroPeruvian");
                 request.setClienteDocumento("77889900");
@@ -55,9 +62,17 @@ class VentaEndToEndTest {
                                 .andExpect(status().isCreated())
                                 .andExpect(jsonPath("$.id").isNumber())
                                 .andExpect(jsonPath("$.total").value(400.00))
+                                .andExpect(jsonPath("$.subtotal").value(338.98))
+                                .andExpect(jsonPath("$.igv").value(61.02))
                                 .andReturn().getResponse().getContentAsString();
 
                 Long id = objectMapper.readTree(json).get("id").asLong();
+                String ticket = objectMapper.readTree(json).get("numeroTicket").asText();
+                org.junit.jupiter.api.Assertions.assertTrue(ticket.startsWith("TKT-S-"));
+                org.junit.jupiter.api.Assertions.assertEquals(stockInicial - 2, productos.obtener(1L).getStock());
+                org.junit.jupiter.api.Assertions.assertEquals(
+                        pe.edu.upeu.bomerp.finanzas.entity.EstadoFinanciero.PAGADO,
+                        transacciones.findFirstByNumeroComprobante(ticket).orElseThrow().getEstado());
 
                 // 2. Consultar venta por ID
                 mockMvc.perform(get("/api/v1/ventas/" + id)
@@ -95,6 +110,11 @@ class VentaEndToEndTest {
                                                 .authorities(new SimpleGrantedAuthority("ROLE_SUPERVISOR"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.estado").value("ANULADA"));
+
+                org.junit.jupiter.api.Assertions.assertEquals(stockInicial, productos.obtener(1L).getStock());
+                org.junit.jupiter.api.Assertions.assertEquals(
+                        pe.edu.upeu.bomerp.finanzas.entity.EstadoFinanciero.ANULADO,
+                        transacciones.findFirstByNumeroComprobante(ticket).orElseThrow().getEstado());
 
                 // 5.1 Consultar agregado tras anulación: verifica que totalAnuladas >= 1 y
                 // refleja descuento contable

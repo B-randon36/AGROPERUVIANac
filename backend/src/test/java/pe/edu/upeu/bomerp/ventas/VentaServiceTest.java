@@ -50,6 +50,12 @@ class VentaServiceTest {
     @Mock
     private AuditoriaService auditoriaService;
 
+    @Mock
+    private pe.edu.upeu.bomerp.ventas.service.NumeroTicketService numeroTicketService;
+
+    @Mock
+    private pe.edu.upeu.bomerp.ventas.repository.PedidoDeliveryRepository deliveryRepository;
+
     @InjectMocks
     private VentaServiceImpl ventaService;
 
@@ -57,6 +63,7 @@ class VentaServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(numeroTicketService.siguiente()).thenReturn("TKT-S-0000000001");
         mockProducto = ProductoResponse.builder()
                 .id(13L)
                 .nombre("Aceite de Coco Virgen 460 ml | Prensado en Frío")
@@ -98,8 +105,8 @@ class VentaServiceTest {
         assertEquals(77L, response.getDetalles().get(0).getLoteId());
 
         assertEquals(new BigDecimal("20.00"), response.getTotal());
-        assertEquals(new BigDecimal("3.60"), response.getIgv());
-        assertEquals(new BigDecimal("16.40"), response.getSubtotal());
+        assertEquals(new BigDecimal("3.05"), response.getIgv());
+        assertEquals(new BigDecimal("16.95"), response.getSubtotal());
 
         verify(productoService, times(1)).descontarStock(13L, 2);
         verify(inventarioService, times(1)).registrarSalidaVentaFEFO(eq(13L), any(), eq(2), any());
@@ -224,6 +231,7 @@ class VentaServiceTest {
     void solicitarAnulacion_debeCambiarEstadoASolicitada() {
         Venta venta = Venta.builder()
                 .id(205L)
+                .vendedorId("vendedor-1")
                 .numeroTicket("TKT-20261021-005")
                 .estado(EstadoVenta.REGISTRADA)
                 .total(new BigDecimal("80.00"))
@@ -340,8 +348,8 @@ class VentaServiceTest {
         pe.edu.upeu.bomerp.ventas.dto.VentaAgregado mockAgregado =
                 new pe.edu.upeu.bomerp.ventas.dto.VentaAgregado(10L, new BigDecimal("1600.00"), 2L, new BigDecimal("400.00"));
 
-        when(ventaRepository.agregados(isNull(), isNull(), isNull(), isNull())).thenReturn(mockAgregado);
-        when(ventaRepository.buscarResumen(isNull(), isNull(), isNull(), isNull(), any())).thenReturn(List.of());
+        when(ventaRepository.agregados(isNull(), isNull(), isNull(), isNull(), isNull())).thenReturn(mockAgregado);
+        when(ventaRepository.buscarResumen(isNull(), isNull(), isNull(), isNull(), isNull(), any())).thenReturn(List.of());
 
         pe.edu.upeu.bomerp.ventas.dto.VentaReporte reporte = ventaService.reporte(null, null, null);
 
@@ -361,9 +369,9 @@ class VentaServiceTest {
         pe.edu.upeu.bomerp.ventas.dto.VentaAgregado mockAgregado =
                 new pe.edu.upeu.bomerp.ventas.dto.VentaAgregado(5L, new BigDecimal("800.00"), 0L, BigDecimal.ZERO);
 
-        when(ventaRepository.agregados(isNull(), org.mockito.ArgumentMatchers.eq(pe.edu.upeu.bomerp.ventas.entity.MetodoPagoVenta.YAPE), isNull(), isNull()))
+        when(ventaRepository.agregados(isNull(), org.mockito.ArgumentMatchers.eq(pe.edu.upeu.bomerp.ventas.entity.MetodoPagoVenta.YAPE), isNull(), isNull(), isNull()))
                 .thenReturn(mockAgregado);
-        when(ventaRepository.buscarResumen(isNull(), org.mockito.ArgumentMatchers.eq(pe.edu.upeu.bomerp.ventas.entity.MetodoPagoVenta.YAPE), isNull(), isNull(), any()))
+        when(ventaRepository.buscarResumen(isNull(), org.mockito.ArgumentMatchers.eq(pe.edu.upeu.bomerp.ventas.entity.MetodoPagoVenta.YAPE), isNull(), isNull(), isNull(), any()))
                 .thenReturn(List.of());
 
         pe.edu.upeu.bomerp.ventas.dto.VentaReporte reporte =
@@ -375,4 +383,83 @@ class VentaServiceTest {
         assertEquals(0L, reporte.getAgregado().getTotalAnuladas());
         assertEquals(new BigDecimal("800.00"), reporte.getAgregado().getMontoTotal());
     }
+    @Test
+    void solicitarAnulacionAjena_noModificaVentaNiAuditoria() {
+        Venta venta = Venta.builder().id(10L).vendedorId("otro").estado(EstadoVenta.REGISTRADA).build();
+        when(ventaRepository.findById(10L)).thenReturn(java.util.Optional.of(venta));
+        assertThrows(pe.edu.upeu.bomerp.exception.AccesoDenegadoException.class,
+                () -> ventaService.solicitarAnulacion(10L, "Error", "vendedor-1", "vendedor-1"));
+        assertEquals(EstadoVenta.REGISTRADA, venta.getEstado());
+        verify(ventaRepository, never()).save(any());
+        verifyNoInteractions(auditoriaService, productoService, finanzasApi);
+    }
+
+    @Test
+    void reporteFiltrado_transmiteVendedorAListaYTotales() {
+        when(ventaRepository.agregados(null, null, null, null, "vendedor-1"))
+                .thenReturn(new pe.edu.upeu.bomerp.ventas.dto.VentaAgregado(0L, BigDecimal.ZERO, 0L, BigDecimal.ZERO));
+        when(ventaRepository.buscarResumen(isNull(), isNull(), isNull(), isNull(), eq("vendedor-1"), any()))
+                .thenReturn(List.of());
+        ventaService.reporte(null, null, null, null, "vendedor-1");
+        verify(ventaRepository).agregados(null, null, null, null, "vendedor-1");
+        verify(ventaRepository).buscarResumen(isNull(), isNull(), isNull(), isNull(), eq("vendedor-1"), any());
+    }
+
+    @Test
+    void precioFinal118_desglosa100Mas18YUsaTicketDeSecuencia() {
+        mockProducto.setPrecio(new BigDecimal("118.00"));
+        when(productoService.obtener(13L)).thenReturn(mockProducto);
+        when(ventaRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        VentaRequest request = VentaRequest.builder().metodoPago(MetodoPagoVenta.EFECTIVO)
+                .detalles(List.of(DetalleVentaRequest.builder().productoId(13L).cantidad(1).build())).build();
+        VentaResponse respuesta = ventaService.crear(request, "vendedor-1");
+        assertEquals(new BigDecimal("118.00"), respuesta.getTotal());
+        assertEquals(new BigDecimal("100.00"), respuesta.getSubtotal());
+        assertEquals(new BigDecimal("18.00"), respuesta.getIgv());
+        assertEquals("TKT-S-0000000001", respuesta.getNumeroTicket());
+    }
+
+    @Test
+    void omnicanalVacio_noInventaVentasNiProductos() {
+        when(ventaRepository.findAll()).thenReturn(List.of());
+        when(deliveryRepository.findAll()).thenReturn(List.of());
+        var reporte = ventaService.obtenerReporteOmnicanal();
+        assertEquals(0, reporte.getTotalVentasOmnicanal().signum());
+        assertEquals(0L, reporte.getTotalTransacciones());
+        assertTrue(reporte.getRankingProductos().isEmpty());
+        assertTrue(reporte.getCanales().stream().allMatch(c -> c.getCantidadTransacciones() == 0));
+    }
+
+    @Test
+    void omnicanal_noDuplicaVentasVinculadasNiCuentaPedidosPendientes() {
+        var detalle = pe.edu.upeu.bomerp.ventas.entity.DetalleVenta.builder()
+                .productoId(13L).nombreProducto("Producto real").cantidad(2).subtotal(new BigDecimal("118.00")).build();
+        Venta venta = Venta.builder().id(10L).estado(EstadoVenta.REGISTRADA)
+                .total(new BigDecimal("118.00")).detalles(List.of(detalle)).build();
+        Venta anulada = Venta.builder().id(11L).estado(EstadoVenta.ANULADA).total(new BigDecimal("900.00")).build();
+        var vinculado = pedido(10L, "ENTREGADO", "118.00");
+        var duplicado = pedido(10L, "PENDIENTE", "118.00");
+        var pendiente = pedido(null, "PENDIENTE", "70.00");
+        var entregado = pedido(null, "ENTREGADO", "25.00");
+        var cancelado = pedido(null, "CANCELADO", "80.00");
+        when(ventaRepository.findAll()).thenReturn(List.of(venta, anulada));
+        when(deliveryRepository.findAll()).thenReturn(List.of(vinculado, duplicado, pendiente, entregado, cancelado));
+        var reporte = ventaService.obtenerReporteOmnicanal();
+        assertEquals(new BigDecimal("143.00"), reporte.getTotalVentasOmnicanal());
+        assertEquals(2L, reporte.getTotalTransacciones());
+        assertEquals(1, reporte.getRankingProductos().size());
+        var fila = reporte.getRankingProductos().get(0);
+        assertEquals(new BigDecimal("118.00"), fila.getTotalIngresos());
+        assertEquals(new BigDecimal("2"), fila.getUnidadesVendidas());
+        assertNull(fila.getCostoEstimado());
+        assertNull(fila.getUtilidadBruta());
+        assertNull(fila.getMargenContribucion());
+    }
+
+    private pe.edu.upeu.bomerp.ventas.entity.PedidoDelivery pedido(Long ventaId, String estado, String monto) {
+        return pe.edu.upeu.bomerp.ventas.entity.PedidoDelivery.builder().ventaId(ventaId)
+                .estadoDelivery(pe.edu.upeu.bomerp.ventas.entity.EstadoDelivery.valueOf(estado))
+                .montoTotal(new BigDecimal(monto)).build();
+    }
+
 }

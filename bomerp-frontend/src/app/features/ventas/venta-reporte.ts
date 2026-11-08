@@ -255,37 +255,6 @@ export class VentaReporteComponent implements OnInit {
     window.print();
   }
 
-  eliminarTodas(): void {
-    if (!confirm('¿Está seguro de eliminar todas las ventas del reporte? Esta acción vaciará el historial transaccional.')) {
-      return;
-    }
-    this.loading.set(true);
-    this.ventaService.eliminarTodas().subscribe({
-      next: () => {
-        this.pageIndex.set(0);
-        this.cargar();
-      },
-      error: () => {
-        this.error.set('No se pudieron eliminar las ventas del reporte.');
-        this.loading.set(false);
-      },
-    });
-  }
-
-  eliminar(id: number): void {
-    if (!confirm('¿Está seguro de eliminar permanentemente este registro de venta?')) {
-      return;
-    }
-    this.loading.set(true);
-    this.ventaService.eliminar(id).subscribe({
-      next: () => this.cargar(),
-      error: () => {
-        this.error.set('No se pudo eliminar la venta seleccionada.');
-        this.loading.set(false);
-      },
-    });
-  }
-
   getEtiquetaMetodoPago(metodo?: string): string {
     switch (metodo) {
       case 'EFECTIVO':

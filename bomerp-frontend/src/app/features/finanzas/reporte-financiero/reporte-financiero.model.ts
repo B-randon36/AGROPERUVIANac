@@ -47,13 +47,13 @@ export interface CanalVentaResumen {
 export interface ProductoRentabilidad {
   productoId: number;
   productoNombre: string;
-  categoria: string;
+  categoria: string | null;
   unidadesVendidas: number;
   totalIngresos: number;
-  costoEstimado: number;
-  utilidadBruta: number;
-  margenContribucion: number;
-  clasificacionAbc: 'A' | 'B' | 'C';
+  costoEstimado: number | null;
+  utilidadBruta: number | null;
+  margenContribucion: number | null;
+  clasificacionAbc: 'A' | 'B' | 'C' | null;
 }
 
 export interface ReporteOmnicanal {

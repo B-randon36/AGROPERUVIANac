@@ -72,7 +72,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // 1. Endpoints públicos
-                        .requestMatchers("/actuator/**", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/h2-console/**", "/api/v1/personas/**", "/api/v1/auth/login", "/api/v1/auth/usuarios-demo", "/api/v1/ventas/auditoria").permitAll()
+                        .requestMatchers("/actuator/**", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/h2-console/**", "/api/v1/personas/**", "/api/v1/auth/login", "/api/v1/auth/usuarios-demo").permitAll()
 
                         // 2. Catálogo (S08 / S10b): Consulta abierta a cualquier autenticado; Modificación para ADMIN
                         .requestMatchers(HttpMethod.GET, "/api/v1/productos/**", "/api/v1/categorias/**").authenticated()
@@ -81,6 +81,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/productos/**", "/api/v1/categorias/**").hasRole("ADMIN")
 
                         // 3. Ventas y Delivery: Habilitado completamente para ADMIN normal, además de VENDEDOR y SUPERVISOR
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/ventas", "/api/v1/ventas/**").denyAll()
+                        .requestMatchers("/api/v1/ventas/auditoria", "/api/v1/ventas/reporte-omnicanal").hasAnyRole("ADMIN", "SUPERVISOR")
                         .requestMatchers("/api/v1/ventas/delivery/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/ventas").hasAnyRole("ADMIN", "VENDEDOR", "SUPERVISOR")
                         .requestMatchers(HttpMethod.GET, "/api/v1/ventas/resumen").hasAnyRole("ADMIN", "VENDEDOR", "SUPERVISOR")

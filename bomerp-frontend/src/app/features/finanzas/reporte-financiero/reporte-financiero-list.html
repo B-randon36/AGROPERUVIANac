@@ -57,11 +57,11 @@
           </span>
         </div>
 
-        <!-- Badge de Margen Operativo -->
+        <!-- Badge de Balance / ingresos -->
         <div class="balance-margin-row">
           <div class="margin-pill">
             <span class="material-symbols-outlined icon-16 text-emerald-500">trending_up</span>
-            <span class="margin-pct">+{{ margenOperativo() }}% Margen Operativo</span>
+            <span class="margin-pct">+{{ margenOperativo() }}% Balance / ingresos</span>
           </div>
           <span class="text-xs text-muted">disponible vs egresos</span>
         </div>
@@ -195,7 +195,7 @@
         <div class="analytics-card-header">
           <div>
             <span class="card-eyebrow">Visualización Analítica</span>
-            <h3 class="analytics-title">Flujo de Facturación y Rentabilidad</h3>
+            <h3 class="analytics-title">Flujo de Ventas e Ingresos</h3>
           </div>
 
           <!-- Selector de Vistas: Barras vs Pastel -->
@@ -236,13 +236,6 @@
                 (click)="cambiarMetrica('UNIDADES')">
                 Unidades
               </button>
-              <button
-                type="button"
-                class="metric-btn"
-                [class.active]="metricaRanking() === 'MARGEN'"
-                (click)="cambiarMetrica('MARGEN')">
-                Margen (%)
-              </button>
             </div>
           } @else {
             <span class="text-xs text-muted font-medium">Segmentación Pastel:</span>
@@ -252,14 +245,14 @@
                 class="metric-btn"
                 [class.active]="metricaPastel() === 'ESTRUCTURA'"
                 (click)="cambiarMetricaPastel('ESTRUCTURA')">
-                Ganancias vs Gastos
+                Ingresos y egresos
               </button>
               <button
                 type="button"
                 class="metric-btn"
                 [class.active]="metricaPastel() === 'CATEGORIAS'"
                 (click)="cambiarMetricaPastel('CATEGORIAS')">
-                Líneas de Producción
+                Categorías registradas
               </button>
               <button
                 type="button"
@@ -289,7 +282,7 @@
             <div class="chart-container-box">
               <div class="chart-box-header">
                 <span class="chart-box-title">Top 5 Productos Agroindustriales</span>
-                <span class="text-xs text-muted">Matriz Pareto ABC</span>
+                <span class="text-xs text-muted">Ventas registradas</span>
               </div>
               <div class="canvas-wrapper">
                 <canvas #productosCanvas></canvas>
@@ -553,11 +546,11 @@
             <div class="section-header">
               <div>
                 <div class="header-badge-row">
-                  <span class="badge-glacier">Matriz Pareto ABC</span>
+                  <span class="badge-glacier">Ventas registradas</span>
                   <span class="text-xs text-muted font-medium">{{ rankingFiltrado().length }} productos</span>
                 </div>
-                <h3 class="section-title"><span class="material-symbols-outlined icon-inline text-sky-500">military_tech</span> Ranking de Rentabilidad y Margen ABC</h3>
-                <p class="section-subtitle">Productos de mayor impacto comercial y contribución unitaria de Agro Peruvian Foods.</p>
+                <h3 class="section-title"><span class="material-symbols-outlined icon-inline text-sky-500">military_tech</span> Ranking de productos por ingresos</h3>
+                <p class="section-subtitle">Ingresos y unidades de ventas registradas. No incluye pedidos independientes sin detalle de productos.</p>
               </div>
 
               <!-- Buscador de productos -->
@@ -565,7 +558,7 @@
                 <span class="material-symbols-outlined search-icon">search</span>
                 <input
                   type="text"
-                  placeholder="Buscar producto o categoría..."
+                  placeholder="Buscar producto..."
                   [ngModel]="busquedaRanking()"
                   (ngModelChange)="busquedaRanking.set($event)"
                   class="search-input" />
@@ -578,13 +571,8 @@
                   <tr>
                     <th style="width: 60px;" class="text-center">Rank</th>
                     <th>Producto Agroindustrial</th>
-                    <th class="text-center">Categoría</th>
                     <th class="text-right">Unid. Vendidas</th>
                     <th class="text-right">Ingresos (S/)</th>
-                    <th class="text-right">Costo Est. (S/)</th>
-                    <th class="text-right">Utilidad (S/)</th>
-                    <th class="text-center">Margen (%)</th>
-                    <th class="text-center">Matriz ABC</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -599,34 +587,12 @@
                         <div class="font-bold text-sm text-dark">{{ p.productoNombre }}</div>
                         <div class="text-xs text-muted">SKU: PROD-00{{ p.productoId }}</div>
                       </td>
-                      <td class="text-center">
-                        <span class="tag-category">{{ p.categoria }}</span>
-                      </td>
                       <td class="text-right font-bold tabular-nums">{{ p.unidadesVendidas | number:'1.0-2' }}</td>
                       <td class="text-right font-bold text-success tabular-nums">{{ p.totalIngresos | currency:'PEN':'S/ ':'1.2-2' }}</td>
-                      <td class="text-right text-muted tabular-nums">{{ p.costoEstimado | currency:'PEN':'S/ ':'1.2-2' }}</td>
-                      <td class="text-right font-bold text-primary tabular-nums">+{{ p.utilidadBruta | currency:'PEN':'S/ ':'1.2-2' }}</td>
-                      <td class="text-center">
-                        <div class="margin-badge">
-                          <span class="font-bold text-xs tabular-nums">{{ p.margenContribucion | number:'1.1-1' }}%</span>
-                          <div class="mini-bar-bg">
-                            <div class="mini-bar-fill" [style.width.%]="p.margenContribucion"></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="text-center">
-                        <span
-                          class="badge-abc"
-                          [class.abc-a]="p.clasificacionAbc === 'A'"
-                          [class.abc-b]="p.clasificacionAbc === 'B'"
-                          [class.abc-c]="p.clasificacionAbc === 'C'">
-                          Clase {{ p.clasificacionAbc }}
-                        </span>
-                      </td>
                     </tr>
                   } @empty {
                     <tr>
-                      <td colspan="9" class="text-center py-6 text-muted">No se encontraron productos con el filtro aplicado.</td>
+                      <td colspan="4" class="text-center py-6 text-muted">No se encontraron productos con el filtro aplicado.</td>
                     </tr>
                   }
                 </tbody>
@@ -741,7 +707,7 @@
                     </tr>
                   } @empty {
                     <tr>
-                      <td colspan="9" class="text-center py-6 text-muted">No se encontraron lotes con los criterios de búsqueda.</td>
+                      <td colspan="4" class="text-center py-6 text-muted">No se encontraron lotes con los criterios de búsqueda.</td>
                     </tr>
                   }
                 </tbody>
