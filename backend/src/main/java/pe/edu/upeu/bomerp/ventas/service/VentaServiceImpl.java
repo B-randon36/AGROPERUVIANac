@@ -1,6 +1,7 @@
 package pe.edu.upeu.bomerp.ventas.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -35,6 +36,7 @@ import java.util.Comparator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class VentaServiceImpl implements VentaService {
@@ -85,6 +87,16 @@ public class VentaServiceImpl implements VentaService {
     @Override
     @Transactional
     public VentaResponse crear(VentaRequest request, String vendedorId) {
+        // Control de idempotencia para prevenir ventas duplicadas por doble clic o reintentos de conexión
+        if (request.getOperacionId() != null && !request.getOperacionId().isBlank()) {
+            var existente = ventaRepository.findByOperacionId(request.getOperacionId().trim());
+            if (existente.isPresent()) {
+                log.warn("Operación duplicada detectada (operacionId={}). Se retorna la venta existente {}.",
+                        request.getOperacionId(), existente.get().getNumeroTicket());
+                return toResponse(existente.get());
+            }
+        }
+
         String ticket = numeroTicketService.siguiente();
 
         MetodoPagoVenta metodoVenta = request.getMetodoPago() != null ? request.getMetodoPago() : MetodoPagoVenta.EFECTIVO;
@@ -99,6 +111,8 @@ public class VentaServiceImpl implements VentaService {
                 .metodoPago(metodoVenta)
                 .clienteNombre(cliente)
                 .vendedorId(vendedorId)
+                .sesionCajaId(request.getSesionCajaId())
+                .operacionId(request.getOperacionId() != null ? request.getOperacionId().trim() : null)
                 .detalles(new ArrayList<>())
                 .build();
 
@@ -168,7 +182,9 @@ public class VentaServiceImpl implements VentaService {
                         total,
                         mapearMetodoPagoFinanzas(metodoVenta),
                         ticket,
-                        cliente
+                        cliente,
+                        request.getSesionCajaId(),
+                        vendedorId
                 );
             }
         }
@@ -185,36 +201,34 @@ public class VentaServiceImpl implements VentaService {
     @Override
     @Transactional
     public VentaResponse anular(Long id, String vendedorId) {
-        Venta venta = ventaRepository.findById(id)
+        // Bloqueo pesimista para evitar que dos peticiones concurrentes anulen la misma venta dos veces
+        Venta venta = ventaRepository.findByIdForUpdate(id)
+                .or(() -> ventaRepository.findById(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + id));
 
         if (venta.getEstado() == EstadoVenta.ANULADA) {
             throw new VentaYaAnuladaException("La venta " + id + " ya está anulada");
         }
 
-        // 1. Reposición atómica en Catálogo, Lote FEFO y Kardex
+        // 1. Reposición atómica en Catálogo del total vendido
         if (venta.getDetalles() != null) {
             for (DetalleVenta detalle : venta.getDetalles()) {
                 if (detalle.getProductoId() != null && detalle.getCantidad() != null) {
                     productoService.restaurarStock(detalle.getProductoId(), detalle.getCantidad());
-                    if (inventarioService != null) {
-                        inventarioService.revertirSalidaVenta(
-                                detalle.getProductoId(),
-                                detalle.getNombreProducto(),
-                                detalle.getLoteId(),
-                                detalle.getCantidad(),
-                                venta.getNumeroTicket()
-                        );
-                    }
                 }
             }
         }
 
-        // 2. Extorno financiero en Caja / Cuentas por Cobrar / Transacciones
+        // 2. Reposición exacta por lote FEFO y Kardex Físico (soporte multi-lote con trazabilidad histórica)
+        if (inventarioService != null) {
+            inventarioService.revertirSalidaVentaPorTicket(venta.getNumeroTicket());
+        }
+
+        // 3. Extorno financiero en Caja / Cuentas por Cobrar / Transacciones
         if (finanzasApi != null) {
             boolean eraCredito = venta.getMetodoPago() == MetodoPagoVenta.CREDITO;
             MetodoPago mp = eraCredito ? null : mapearMetodoPagoFinanzas(venta.getMetodoPago());
-            finanzasApi.revertirVentaPos(venta.getNumeroTicket(), venta.getTotal(), mp, eraCredito);
+            finanzasApi.revertirVentaPos(venta.getNumeroTicket(), venta.getTotal(), mp, eraCredito, venta.getSesionCajaId());
         }
 
         venta.setEstado(EstadoVenta.ANULADA);
@@ -226,7 +240,8 @@ public class VentaServiceImpl implements VentaService {
     @Override
     @Transactional
     public VentaResponse solicitarAnulacion(Long id, String motivo, String actor, String vendedorIdRestringido) {
-        Venta venta = ventaRepository.findById(id)
+        Venta venta = ventaRepository.findByIdForUpdate(id)
+                .or(() -> ventaRepository.findById(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + id));
 
         if (vendedorIdRestringido != null && !vendedorIdRestringido.equals(venta.getVendedorId())) {
@@ -250,7 +265,8 @@ public class VentaServiceImpl implements VentaService {
     @Override
     @Transactional
     public VentaResponse rechazarAnulacion(Long id, String actor) {
-        Venta venta = ventaRepository.findById(id)
+        Venta venta = ventaRepository.findByIdForUpdate(id)
+                .or(() -> ventaRepository.findById(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + id));
 
         if (venta.getEstado() != EstadoVenta.SOLICITADA_ANULACION) {
@@ -310,6 +326,8 @@ public class VentaServiceImpl implements VentaService {
                 .total(v.getTotal())
                 .clienteNombre(v.getClienteNombre())
                 .vendedorId(v.getVendedorId())
+                .sesionCajaId(v.getSesionCajaId())
+                .operacionId(v.getOperacionId())
                 .detalles(detalles)
                 .build();
     }

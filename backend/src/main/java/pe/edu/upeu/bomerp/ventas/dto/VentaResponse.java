@@ -24,5 +24,7 @@ public class VentaResponse {
     private BigDecimal total;
     private String clienteNombre;
     private String vendedorId;
+    private Long sesionCajaId;
+    private String operacionId;
     private List<DetalleVentaResponse> detalles;
 }

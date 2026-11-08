@@ -48,6 +48,7 @@ export class VentaForm implements OnInit, OnDestroy {
   protected readonly productos = signal<Producto[]>([]);
   protected readonly error = signal<string | null>(null);
   protected readonly loading = signal(false);
+  protected readonly guardando = signal(false);
   protected readonly buscandoDni = signal(false);
 
   // Estados de integración con Sesión de Caja Activa (Turno POS)
@@ -435,18 +436,27 @@ export class VentaForm implements OnInit, OnDestroy {
       ? ` (Se generará Cuenta por Cobrar a ${this.form.controls.diasCredito.value} días + Despacho FEFO)`
       : ` (Impactará Sesión de Caja activa${sesionTexto} + Despacho FEFO)${notaVuelto}`;
 
+    if (this.guardando() || this.loading()) return;
     const resumen = `Vas a registrar una venta de ${cantidadLineas} línea(s) por un total de S/ ${this.total().toFixed(2)}${notaIntegracion}. ¿Confirmar?`;
     if (!confirm(resumen)) return;
     this.guardar();
   }
 
   private guardar(): void {
+    if (this.guardando() || this.loading()) return;
     this.error.set(null);
     this.loading.set(true);
+    this.guardando.set(true);
+
     const rawVal = this.form.getRawValue();
     const detalles = this.lineasForm
       .getRawValue()
       .map(({ productoId, cantidad }) => ({ productoId, cantidad }));
+
+    const operacionId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : ('OP-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9));
+    const sesionCajaId = this.sesionCajaActiva()?.id;
 
     this.ventaService
       .crear({
@@ -454,11 +464,14 @@ export class VentaForm implements OnInit, OnDestroy {
         clienteDocumento: rawVal.clienteDocumento ? rawVal.clienteDocumento.trim() : undefined,
         diasCredito: rawVal.metodoPago === 'CREDITO' ? Number(rawVal.diasCredito) : undefined,
         metodoPago: rawVal.metodoPago,
+        sesionCajaId,
+        operacionId,
         detalles,
       })
       .subscribe({
         next: (ventaCreada) => {
           this.loading.set(false);
+          this.guardando.set(false);
           this.ticketMontoRecibido.set(this.esEfectivo() ? this.montoRecibido() : null);
           this.ticketCambio.set(this.esEfectivo() ? this.cambio() : null);
           this.ventaGenerada.set(ventaCreada);
@@ -467,7 +480,11 @@ export class VentaForm implements OnInit, OnDestroy {
           this.cargarProductos();
           this.cargarSesionCajaActiva();
         },
-        error: (err: HttpErrorResponse) => this.manejarErrorGuardado(err),
+        error: (err: HttpErrorResponse) => {
+          this.loading.set(false);
+          this.guardando.set(false);
+          this.manejarErrorGuardado(err);
+        },
       });
   }
 

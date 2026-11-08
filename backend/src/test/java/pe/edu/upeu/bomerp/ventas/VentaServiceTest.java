@@ -114,7 +114,9 @@ class VentaServiceTest {
                 eq(new BigDecimal("20.00")),
                 eq(MetodoPago.EFECTIVO),
                 any(),
-                eq("Supermercados Wong")
+                eq("Supermercados Wong"),
+                any(),
+                any()
         );
         verify(ventaRepository, times(1)).save(any(Venta.class));
     }
@@ -152,7 +154,7 @@ class VentaServiceTest {
                 eq(new BigDecimal("50.00")),
                 eq(45)
         );
-        verify(finanzasApi, never()).registrarIngresoVentaPos(any(), any(), any(), any());
+        verify(finanzasApi, never()).registrarIngresoVentaPos(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -173,7 +175,7 @@ class VentaServiceTest {
 
         assertThrows(BusinessConflictException.class, () -> ventaService.crear(request));
         verify(ventaRepository, never()).save(any(Venta.class));
-        verify(finanzasApi, never()).registrarIngresoVentaPos(any(), any(), any(), any());
+        verify(finanzasApi, never()).registrarIngresoVentaPos(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -206,8 +208,8 @@ class VentaServiceTest {
         assertNotNull(response);
         assertEquals(EstadoVenta.ANULADA, response.getEstado());
         verify(productoService, times(1)).restaurarStock(13L, 5);
-        verify(inventarioService, times(1)).revertirSalidaVenta(13L, "Aceite de Coco Virgen 460 ml", 77L, 5, "TKT-20261021-001");
-        verify(finanzasApi, times(1)).revertirVentaPos("TKT-20261021-001", new BigDecimal("50.00"), MetodoPago.EFECTIVO, false);
+        verify(inventarioService, times(1)).revertirSalidaVentaPorTicket("TKT-20261021-001");
+        verify(finanzasApi, times(1)).revertirVentaPos(eq("TKT-20261021-001"), eq(new BigDecimal("50.00")), eq(MetodoPago.EFECTIVO), eq(false), any());
         verify(ventaRepository, times(1)).save(venta);
     }
 

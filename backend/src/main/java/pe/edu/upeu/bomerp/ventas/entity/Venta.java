@@ -51,6 +51,12 @@ public class Venta {
     @Column(name = "VENDEDOR_ID", length = 36)
     private String vendedorId;
 
+    @Column(name = "SESION_CAJA_ID")
+    private Long sesionCajaId;
+
+    @Column(name = "OPERACION_ID", length = 64, unique = true)
+    private String operacionId;
+
     @Builder.Default
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleVenta> detalles = new ArrayList<>();

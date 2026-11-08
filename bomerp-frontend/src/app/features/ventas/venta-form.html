@@ -462,9 +462,9 @@
           type="button"
           class="btn btn-primary btn-submit"
           (click)="confirmarYGuardar()"
-          [disabled]="loading() || form.invalid || (esEfectivo() && cambio() !== null && cambio()! < 0)"
+          [disabled]="loading() || guardando() || form.invalid || (esEfectivo() && cambio() !== null && cambio()! < 0)"
         >
-          @if (loading()) {
+          @if (loading() || guardando()) {
             <span class="spinner-small"></span> Registrando venta...
           } @else {
             <span class="material-symbols-outlined icon-inline" style="font-size: 1.1rem;">check_circle</span>

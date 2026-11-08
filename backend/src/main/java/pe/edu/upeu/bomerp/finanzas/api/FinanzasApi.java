@@ -21,7 +21,11 @@ public interface FinanzasApi {
      * Registra automáticamente el ingreso en el turno de caja abierto actual y la transacción financiera PAGADA
      * al emitir una venta POS al contado o liquidar un cobro contra entrega (Delivery).
      */
-    Long registrarIngresoVentaPos(BigDecimal monto, MetodoPago metodoPago, String numeroTicket, String clienteNombre);
+    default Long registrarIngresoVentaPos(BigDecimal monto, MetodoPago metodoPago, String numeroTicket, String clienteNombre) {
+        return registrarIngresoVentaPos(monto, metodoPago, numeroTicket, clienteNombre, null, null);
+    }
+
+    Long registrarIngresoVentaPos(BigDecimal monto, MetodoPago metodoPago, String numeroTicket, String clienteNombre, Long sesionCajaId, String cajeroId);
 
     /**
      * Registra automáticamente una Cuenta por Cobrar (PENDIENTE) y su transacción financiera devengada
@@ -38,7 +42,11 @@ public interface FinanzasApi {
     /**
      * Extorna el impacto financiero (Transacción Financiera, Sesión de Caja o Cuenta por Cobrar) al anular una venta POS.
      */
-    void revertirVentaPos(String numeroTicket, BigDecimal monto, MetodoPago metodoPago, boolean eraCredito);
+    default void revertirVentaPos(String numeroTicket, BigDecimal monto, MetodoPago metodoPago, boolean eraCredito) {
+        revertirVentaPos(numeroTicket, monto, metodoPago, eraCredito, null);
+    }
+
+    void revertirVentaPos(String numeroTicket, BigDecimal monto, MetodoPago metodoPago, boolean eraCredito, Long sesionCajaId);
 
     /**
      * Registra la obligación financiera (EGRESO PENDIENTE) al ingresar una factura/comprobante de Compra de insumos.

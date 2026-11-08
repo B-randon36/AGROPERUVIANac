@@ -203,7 +203,7 @@ public class InventarioServiceImpl implements InventarioService {
         BigDecimal pendiente = BigDecimal.valueOf(cantidad);
 
         List<Lote> todosLotesProducto = loteRepository.findByProductoIdOrderByFechaVencimientoAsc(productoId);
-        List<Lote> lotesVigentes = loteRepository.findLotesParaDespachoFEFO(
+        List<Lote> lotesVigentes = loteRepository.findLotesParaDespachoFEFOForUpdate(
                 productoId,
                 List.of(EstadoLote.DISPONIBLE, EstadoLote.PROXIMO_A_VENCER)
         );
@@ -333,6 +333,61 @@ public class InventarioServiceImpl implements InventarioService {
                 .documentoReferencia(numeroTicket)
                 .fechaHora(LocalDateTime.now())
                 .build());
+    }
+
+    @Override
+    @Transactional
+    public void revertirSalidaVentaPorTicket(String numeroTicket) {
+        if (numeroTicket == null || numeroTicket.isBlank()) {
+            return;
+        }
+
+        // Idempotencia: Verificar que no se haya extornado ya en Kardex
+        if (kardexRepository.existsByDocumentoReferenciaAndMotivo(numeroTicket, "ANULACION_VENTA_POS")) {
+            log.warn("El stock del ticket {} ya fue revertido en Kardex previamente. Omitiendo duplicado.", numeroTicket);
+            return;
+        }
+
+        List<MovimientoKardex> salidasTicket = kardexRepository.findByDocumentoReferenciaAndTipo(
+                numeroTicket,
+                TipoMovimientoKardex.SALIDA
+        );
+
+        for (MovimientoKardex salida : salidasTicket) {
+            Lote loteRestaurado = null;
+            BigDecimal saldoResultante = salida.getCantidad();
+
+            if (salida.getLote() != null && salida.getLote().getId() != null) {
+                loteRestaurado = loteRepository.findById(salida.getLote().getId()).orElse(null);
+                if (loteRestaurado != null) {
+                    BigDecimal nuevoStock = loteRestaurado.getStockActual().add(salida.getCantidad());
+                    loteRestaurado.setStockActual(nuevoStock);
+                    loteRestaurado.setEstado(calcularEstadoLote(loteRestaurado.getFechaVencimiento(), nuevoStock));
+                    loteRepository.save(loteRestaurado);
+                    saldoResultante = nuevoStock;
+                }
+            } else {
+                try {
+                    ProductoResponse p = productoService.obtener(salida.getProductoId());
+                    if (p.getStock() != null) {
+                        saldoResultante = BigDecimal.valueOf(p.getStock());
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+
+            kardexRepository.save(MovimientoKardex.builder()
+                    .tipo(TipoMovimientoKardex.ENTRADA)
+                    .lote(loteRestaurado)
+                    .productoId(salida.getProductoId())
+                    .productoNombre(salida.getProductoNombre())
+                    .cantidad(salida.getCantidad())
+                    .saldoStockResultante(saldoResultante)
+                    .motivo("ANULACION_VENTA_POS")
+                    .documentoReferencia(numeroTicket)
+                    .fechaHora(LocalDateTime.now())
+                    .build());
+        }
     }
 
     @Override

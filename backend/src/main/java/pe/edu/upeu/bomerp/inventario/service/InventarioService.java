@@ -36,6 +36,12 @@ public interface InventarioService {
     void revertirSalidaVenta(Long productoId, String productoNombre, Long loteId, int cantidad, String numeroTicket);
 
     /**
+     * Reversión exacta multilote FEFO y Kardex al anular una venta POS por número de ticket.
+     * Recupera del Kardex la distribución exacta que aportó cada lote a la venta y la repone idéntica.
+     */
+    void revertirSalidaVentaPorTicket(String numeroTicket);
+
+    /**
      * Integración Producción BOM -> Inventario FEFO y Kardex:
      * Registra el lote terminado producido en planta en la tabla unificada de lotes FEFO y asienta ENTRADA en Kardex.
      */

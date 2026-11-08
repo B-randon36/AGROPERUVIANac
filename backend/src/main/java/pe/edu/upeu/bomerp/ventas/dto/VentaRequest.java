@@ -24,6 +24,10 @@ public class VentaRequest {
 
     private Integer diasCredito;
 
+    private Long sesionCajaId;
+
+    private String operacionId;
+
     @NotEmpty(message = "La venta debe contener al menos un detalle de producto")
     @Valid
     private List<DetalleVentaRequest> detalles;

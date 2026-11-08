@@ -1,6 +1,8 @@
 package pe.edu.upeu.bomerp.inventario.repository;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -35,6 +37,19 @@ public interface LoteRepository extends JpaRepository<Lote, Long> {
         ORDER BY l.fechaVencimiento ASC, l.id ASC
     """)
     List<Lote> findLotesParaDespachoFEFO(
+            @Param("productoId") Long productoId,
+            @Param("estados") Collection<EstadoLote> estados
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT l FROM Lote l
+        WHERE l.productoId = :productoId
+          AND l.stockActual > 0
+          AND l.estado IN :estados
+        ORDER BY l.fechaVencimiento ASC, l.id ASC
+    """)
+    List<Lote> findLotesParaDespachoFEFOForUpdate(
             @Param("productoId") Long productoId,
             @Param("estados") Collection<EstadoLote> estados
     );

@@ -23,6 +23,8 @@ export interface VentaRequest {
   clienteDocumento?: string;
   diasCredito?: number;
   metodoPago?: MetodoPagoPos;
+  sesionCajaId?: number;
+  operacionId?: string;
   detalles: DetalleVentaRequest[];
 }
 
@@ -36,6 +38,9 @@ export interface VentaResponse {
   igv?: number;
   clienteNombre?: string;
   metodoPago?: string;
+  vendedorId?: string;
+  sesionCajaId?: number;
+  operacionId?: string;
   detalles: DetalleVentaResponse[];
 }
 

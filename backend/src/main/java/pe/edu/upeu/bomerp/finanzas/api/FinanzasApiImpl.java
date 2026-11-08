@@ -79,7 +79,7 @@ public class FinanzasApiImpl implements FinanzasApi {
 
     @Override
     @Transactional
-    public Long registrarIngresoVentaPos(BigDecimal monto, MetodoPago metodoPago, String numeroTicket, String clienteNombre) {
+    public Long registrarIngresoVentaPos(BigDecimal monto, MetodoPago metodoPago, String numeroTicket, String clienteNombre, Long sesionCajaId, String cajeroId) {
         if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
             return null;
         }
@@ -89,17 +89,41 @@ public class FinanzasApiImpl implements FinanzasApi {
         );
 
         Long movimientoId = null;
-        SesionCaja sesionActiva = sesionRepository.findFirstByEstadoOrderByFechaAperturaDesc(EstadoCaja.ABIERTA).orElse(null);
-        if (sesionActiva != null) {
+        SesionCaja sesionDestino = null;
+
+        if (sesionCajaId != null) {
+            sesionDestino = sesionRepository.findById(sesionCajaId).orElse(null);
+            if (sesionDestino != null && sesionDestino.getEstado() != EstadoCaja.ABIERTA) {
+                throw new pe.edu.upeu.bomerp.exception.BusinessConflictException("La sesión de caja #" + sesionCajaId + " no se encuentra ABIERTA.");
+            }
+        }
+
+        if (sesionDestino == null && cajeroId != null && !cajeroId.isBlank()) {
+            sesionDestino = sesionRepository.findByCajeroAndEstadoOrderByFechaAperturaDesc(cajeroId, EstadoCaja.ABIERTA)
+                    .stream().findFirst().orElse(null);
+        }
+
+        if (sesionDestino == null) {
+            sesionDestino = sesionRepository.findFirstByEstadoOrderByFechaAperturaDesc(EstadoCaja.ABIERTA).orElse(null);
+        }
+
+        MetodoPago mp = metodoPago != null ? metodoPago : MetodoPago.EFECTIVO;
+        if (mp == MetodoPago.EFECTIVO && sesionDestino == null) {
+            throw new pe.edu.upeu.bomerp.exception.BusinessConflictException(
+                    "No existe un turno de caja abierto para registrar cobros en efectivo (Ticket " + numeroTicket + ")."
+            );
+        }
+
+        if (sesionDestino != null) {
             MovimientoCajaRequest movReq = MovimientoCajaRequest.builder()
                     .tipo(TipoFinanciero.INGRESO)
-                    .metodoPago(metodoPago != null ? metodoPago : MetodoPago.EFECTIVO)
+                    .metodoPago(mp)
                     .monto(monto)
                     .descripcion(truncar("Venta POS " + numeroTicket + " · " + (clienteNombre != null ? clienteNombre : "Cliente General"), 200))
                     .referenciaExterna(numeroTicket)
                     .categoriaFinancieraId(catIngreso.getId())
                     .build();
-            MovimientoCajaResponse resp = sesionService.registrarMovimiento(sesionActiva.getId(), movReq);
+            MovimientoCajaResponse resp = sesionService.registrarMovimiento(sesionDestino.getId(), movReq);
             movimientoId = resp.getId();
         }
 
@@ -115,7 +139,8 @@ public class FinanzasApiImpl implements FinanzasApi {
         trx.setCategoriaFinanciera(catIngreso);
         transaccionRepository.save(trx);
 
-        log.info("Ingreso financiero por Venta POS {} (S/ {}) asentado en Caja y Finanzas.", numeroTicket, monto);
+        log.info("Ingreso financiero por Venta POS {} (S/ {}) asentado en Sesión #{} y Finanzas.",
+                numeroTicket, monto, (sesionDestino != null ? sesionDestino.getId() : "NINGUNA"));
         return movimientoId;
     }
 
@@ -167,7 +192,7 @@ public class FinanzasApiImpl implements FinanzasApi {
 
     @Override
     @Transactional
-    public void revertirVentaPos(String numeroTicket, BigDecimal monto, MetodoPago metodoPago, boolean eraCredito) {
+    public void revertirVentaPos(String numeroTicket, BigDecimal monto, MetodoPago metodoPago, boolean eraCredito, Long sesionCajaId) {
         if (numeroTicket == null) {
             return;
         }
@@ -184,28 +209,55 @@ public class FinanzasApiImpl implements FinanzasApi {
         }
 
         if (monto != null && monto.compareTo(BigDecimal.ZERO) > 0) {
-            SesionCaja sesionActiva = sesionRepository.findFirstByEstadoOrderByFechaAperturaDesc(EstadoCaja.ABIERTA).orElse(null);
-            if (sesionActiva != null) {
-                MetodoPago mp = metodoPago != null ? metodoPago : MetodoPago.EFECTIVO;
+            SesionCaja sesionDestino = null;
+            if (sesionCajaId != null) {
+                SesionCaja sc = sesionRepository.findById(sesionCajaId).orElse(null);
+                if (sc != null && sc.getEstado() == EstadoCaja.ABIERTA) {
+                    sesionDestino = sc;
+                }
+            }
+            if (sesionDestino == null) {
+                sesionDestino = sesionRepository.findFirstByEstadoOrderByFechaAperturaDesc(EstadoCaja.ABIERTA).orElse(null);
+            }
+
+            MetodoPago mp = metodoPago != null ? metodoPago : MetodoPago.EFECTIVO;
+            CategoriaFinanciera catEgreso = obtenerOCrearCategoria(
+                    TipoFinanciero.EGRESO,
+                    "Devoluciones y Anulaciones POS"
+            );
+
+            if (sesionDestino != null) {
                 // Verificar solvencia en efectivo antes de extornar para no romper anulación si el turno cambió
                 boolean puedeExtornarCaja = mp != MetodoPago.EFECTIVO ||
-                        (sesionActiva.getSaldoEsperadoEfectivo() != null
-                                && sesionActiva.getSaldoEsperadoEfectivo().compareTo(monto) >= 0);
+                        (sesionDestino.getSaldoEsperadoEfectivo() != null
+                                && sesionDestino.getSaldoEsperadoEfectivo().compareTo(monto) >= 0);
 
                 if (puedeExtornarCaja) {
-                    CategoriaFinanciera catEgreso = obtenerOCrearCategoria(
-                            TipoFinanciero.EGRESO,
-                            "Devoluciones y Anulaciones POS"
-                    );
-                    sesionService.registrarMovimiento(sesionActiva.getId(), MovimientoCajaRequest.builder()
+                    String desc = (sesionCajaId != null && !sesionDestino.getId().equals(sesionCajaId))
+                            ? "Extorno por anulación de Venta " + numeroTicket + " (Sesión #" + sesionCajaId + " ya cerrada)"
+                            : "Extorno por anulación de Venta " + numeroTicket;
+                    sesionService.registrarMovimiento(sesionDestino.getId(), MovimientoCajaRequest.builder()
                             .tipo(TipoFinanciero.EGRESO)
                             .metodoPago(mp)
                             .monto(monto)
-                            .descripcion(truncar("Extorno por anulación de Venta " + numeroTicket, 200))
+                            .descripcion(truncar(desc, 200))
                             .referenciaExterna(numeroTicket)
                             .categoriaFinancieraId(catEgreso.getId())
                             .build());
                 }
+            } else {
+                // Si ninguna caja está abierta, registramos una transacción de egreso directo para trazabilidad contable
+                TransaccionFinanciera extornoTrx = new TransaccionFinanciera();
+                extornoTrx.setCodigo(generarCodigoUnico("EXT-VTA", numeroTicket));
+                extornoTrx.setConcepto(truncar("Extorno Venta " + numeroTicket + " (Sin caja abierta)", 195));
+                extornoTrx.setMonto(monto);
+                extornoTrx.setFechaTransaccion(LocalDate.now());
+                extornoTrx.setTipo(TipoFinanciero.EGRESO);
+                extornoTrx.setEstado(EstadoFinanciero.PAGADO);
+                extornoTrx.setTipoComprobante("EXTORNO_POS");
+                extornoTrx.setNumeroComprobante(numeroTicket);
+                extornoTrx.setCategoriaFinanciera(catEgreso);
+                transaccionRepository.save(extornoTrx);
             }
         }
     }

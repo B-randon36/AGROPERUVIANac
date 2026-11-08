@@ -14,4 +14,8 @@ public interface MovimientoKardexRepository extends JpaRepository<MovimientoKard
     List<MovimientoKardex> findTop100ByOrderByFechaHoraDesc();
 
     List<MovimientoKardex> findByLoteIdOrderByFechaHoraDesc(Long loteId);
+
+    List<MovimientoKardex> findByDocumentoReferenciaAndTipo(String documentoReferencia, pe.edu.upeu.bomerp.inventario.entity.TipoMovimientoKardex tipo);
+
+    boolean existsByDocumentoReferenciaAndMotivo(String documentoReferencia, String motivo);
 }

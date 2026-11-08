@@ -20,6 +20,8 @@ public interface SesionCajaRepository extends JpaRepository<SesionCaja, Long> {
 
     Optional<SesionCaja> findFirstByUsuarioIdAndEstadoOrderByFechaAperturaDesc(Long usuarioId, EstadoCaja estado);
 
+    List<SesionCaja> findByCajeroAndEstadoOrderByFechaAperturaDesc(String cajero, EstadoCaja estado);
+
     Optional<SesionCaja> findFirstByEstadoOrderByFechaAperturaDesc(EstadoCaja estado);
 
     boolean existsByUsuarioIdAndEstado(Long usuarioId, EstadoCaja estado);

@@ -95,7 +95,12 @@ public class ProductoServiceImpl implements ProductoService {
     @Override
     @Transactional
     public void descontarStock(Long id, Integer cantidad) {
-        Producto producto = productoRepository.findById(id)
+        if (cantidad == null || cantidad <= 0) {
+            return;
+        }
+        // Bloqueo pesimista para evitar carreras entre ventas simultáneas
+        Producto producto = productoRepository.findByIdForUpdate(id)
+                .or(() -> productoRepository.findById(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
 
         if (producto.getStock() < cantidad) {

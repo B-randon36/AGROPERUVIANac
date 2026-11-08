@@ -1,10 +1,12 @@
 package pe.edu.upeu.bomerp.ventas.repository;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import pe.edu.upeu.bomerp.ventas.dto.VentaAgregado;
@@ -22,6 +24,12 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
     @Override
     @EntityGraph(attributePaths = "detalles")
     Optional<Venta> findById(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT v FROM Venta v WHERE v.id = :id")
+    Optional<Venta> findByIdForUpdate(@Param("id") Long id);
+
+    Optional<Venta> findByOperacionId(String operacionId);
 
     @EntityGraph(attributePaths = "detalles")
     @Query("""
