@@ -197,7 +197,120 @@
       </div>
     }
 
-    <!-- CALCULADORA DE COBRO EN EFECTIVO & CAMBIO (VUELTO) -->
+    <div class="detalles-section">
+      <div class="section-title-row">
+        <h3>Líneas de Detalle de Venta</h3>
+        <span class="badge badge-info">{{ lineasForm.length }} línea(s) · Despacho automático FEFO</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="tabla-transaccional" formArrayName="detalles">
+          <thead>
+            <tr>
+              <th style="width: 45%;">Producto (Búsqueda en Catálogo Oficial)</th>
+              <th style="width: 15%;">Precio Unitario</th>
+              <th style="width: 15%;">Cantidad</th>
+              <th style="width: 15%;">Subtotal</th>
+              <th style="width: 10%; text-align: center;">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (linea of lineasForm.controls; track linea) {
+              <tr [formGroupName]="$index" class="linea-row">
+                <td>
+                  <mat-form-field class="full-width-field" appearance="outline">
+                    <input
+                      type="text"
+                      matInput
+                      formControlName="busqueda"
+                      [matAutocomplete]="auto"
+                      placeholder="Buscar por nombre (ej. Aceite de Coco, Cacao...)"
+                    />
+                    <mat-autocomplete
+                      #auto="matAutocomplete"
+                      (optionSelected)="seleccionarProducto($index, $event)"
+                    >
+                      @for (producto of opcionesPorLinea()[$index]; track producto.id) {
+                        <mat-option [value]="producto">
+                          <span class="producto-opt-nombre">{{ producto.nombre }}</span>
+                          <span class="producto-opt-precio">
+                            — {{ producto.precio | currency: 'PEN' : 'S/ ' }} (Stock: {{ producto.stock }})
+                          </span>
+                        </mat-option>
+                      }
+                    </mat-autocomplete>
+                  </mat-form-field>
+                  @if (linea.get('productoId')?.invalid && linea.get('productoId')?.touched) {
+                    <span class="form-error">Debes seleccionar un producto del catálogo.</span>
+                  }
+                </td>
+                <td class="col-precio">
+                  <strong>{{ preciosUnitarios()[$index] | currency: 'PEN' : 'S/ ' }}</strong>
+                </td>
+                <td class="col-cantidad">
+                  <input
+                    type="number"
+                    step="1"
+                    min="1"
+                    formControlName="cantidad"
+                    class="form-control text-center"
+                  />
+                  @if (linea.get('cantidad')?.invalid && linea.get('cantidad')?.touched) {
+                    <span class="form-error">Mín. 1 unidad</span>
+                  }
+                </td>
+                <td class="col-subtotal">
+                  <span class="subtotal-badge">
+                    {{ subtotales()[$index] | currency: 'PEN' : 'S/ ' }}
+                  </span>
+                </td>
+                <td class="col-accion text-center">
+                  <button
+                    type="button"
+                    class="btn-quitar"
+                    (click)="quitarLinea($index)"
+                    [disabled]="lineasForm.length <= 1"
+                    title="Quitar esta línea de la venta"
+                  >
+                    <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">delete</span>
+                    Quitar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="fila-resumen">
+              <td colspan="3" class="text-right">
+                <strong>TOTAL ESTIMADO EN VENTANILLA:</strong>
+              </td>
+              <td colspan="2" class="total-destacado">
+                {{ total() | currency: 'PEN' : 'S/ ' }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="acciones-lineas" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary" (click)="agregarLinea()">
+          <span class="material-symbols-outlined icon-inline" style="font-size: 1.1rem;">add</span>
+          Agregar otra línea
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="abrirEscanerCamara()"
+          style="display: inline-flex; align-items: center; gap: 0.4rem; border-color: #0284c7; color: #0284c7; background: #f0f9ff;"
+          title="Escanear producto con cámara web o móvil"
+        >
+          <span class="material-symbols-outlined" style="font-size: 1.15rem;">barcode_scanner</span>
+          Escanear Código de Barras (Cámara)
+        </button>
+      </div>
+    </div>
+
+    <!-- CALCULADORA DE COBRO EN EFECTIVO & CAMBIO (VUELTO) (UBICADA ABAJO DEL TOTAL ESTIMADO) -->
     @if (esEfectivo()) {
       <div class="cambio-efectivo-card">
         <div class="cambio-header">
@@ -320,119 +433,6 @@
         </div>
       </div>
     }
-
-    <div class="detalles-section">
-      <div class="section-title-row">
-        <h3>Líneas de Detalle de Venta</h3>
-        <span class="badge badge-info">{{ lineasForm.length }} línea(s) · Despacho automático FEFO</span>
-      </div>
-
-      <div class="table-responsive">
-        <table class="tabla-transaccional" formArrayName="detalles">
-          <thead>
-            <tr>
-              <th style="width: 45%;">Producto (Búsqueda en Catálogo Oficial)</th>
-              <th style="width: 15%;">Precio Unitario</th>
-              <th style="width: 15%;">Cantidad</th>
-              <th style="width: 15%;">Subtotal</th>
-              <th style="width: 10%; text-align: center;">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (linea of lineasForm.controls; track linea) {
-              <tr [formGroupName]="$index" class="linea-row">
-                <td>
-                  <mat-form-field class="full-width-field" appearance="outline">
-                    <input
-                      type="text"
-                      matInput
-                      formControlName="busqueda"
-                      [matAutocomplete]="auto"
-                      placeholder="Buscar por nombre (ej. Aceite de Coco, Cacao...)"
-                    />
-                    <mat-autocomplete
-                      #auto="matAutocomplete"
-                      (optionSelected)="seleccionarProducto($index, $event)"
-                    >
-                      @for (producto of opcionesPorLinea()[$index]; track producto.id) {
-                        <mat-option [value]="producto">
-                          <span class="producto-opt-nombre">{{ producto.nombre }}</span>
-                          <span class="producto-opt-precio">
-                            — {{ producto.precio | currency: 'PEN' : 'S/ ' }} (Stock: {{ producto.stock }})
-                          </span>
-                        </mat-option>
-                      }
-                    </mat-autocomplete>
-                  </mat-form-field>
-                  @if (linea.get('productoId')?.invalid && linea.get('productoId')?.touched) {
-                    <span class="form-error">Debes seleccionar un producto del catálogo.</span>
-                  }
-                </td>
-                <td class="col-precio">
-                  <strong>{{ preciosUnitarios()[$index] | currency: 'PEN' : 'S/ ' }}</strong>
-                </td>
-                <td class="col-cantidad">
-                  <input
-                    type="number"
-                    step="1"
-                    min="1"
-                    formControlName="cantidad"
-                    class="form-control text-center"
-                  />
-                  @if (linea.get('cantidad')?.invalid && linea.get('cantidad')?.touched) {
-                    <span class="form-error">Mín. 1 unidad</span>
-                  }
-                </td>
-                <td class="col-subtotal">
-                  <span class="subtotal-badge">
-                    {{ subtotales()[$index] | currency: 'PEN' : 'S/ ' }}
-                  </span>
-                </td>
-                <td class="col-accion text-center">
-                  <button
-                    type="button"
-                    class="btn-quitar"
-                    (click)="quitarLinea($index)"
-                    [disabled]="lineasForm.length <= 1"
-                    title="Quitar esta línea de la venta"
-                  >
-                    <span class="material-symbols-outlined icon-inline" style="font-size: 1rem;">delete</span>
-                    Quitar
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-          <tfoot>
-            <tr class="fila-resumen">
-              <td colspan="3" class="text-right">
-                <strong>TOTAL ESTIMADO EN VENTANILLA:</strong>
-              </td>
-              <td colspan="2" class="total-destacado">
-                {{ total() | currency: 'PEN' : 'S/ ' }}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      <div class="acciones-lineas" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-        <button type="button" class="btn btn-secondary" (click)="agregarLinea()">
-          <span class="material-symbols-outlined icon-inline" style="font-size: 1.1rem;">add</span>
-          Agregar otra línea
-        </button>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          (click)="abrirEscanerCamara()"
-          style="display: inline-flex; align-items: center; gap: 0.4rem; border-color: #0284c7; color: #0284c7; background: #f0f9ff;"
-          title="Escanear producto con cámara web o móvil"
-        >
-          <span class="material-symbols-outlined" style="font-size: 1.15rem;">barcode_scanner</span>
-          Escanear Código de Barras (Cámara)
-        </button>
-      </div>
-    </div>
 
     <div class="form-footer">
       <div class="info-aviso">
