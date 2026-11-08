@@ -83,9 +83,11 @@ public class SecurityConfig {
                         // 3. Ventas y Delivery: Habilitado completamente para ADMIN normal, además de VENDEDOR y SUPERVISOR
                         .requestMatchers("/api/v1/ventas/delivery/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/ventas").hasAnyRole("ADMIN", "VENDEDOR", "SUPERVISOR")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/ventas/resumen").hasAnyRole("ADMIN", "SUPERVISOR")
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/ventas/*/anular").hasAnyRole("ADMIN", "SUPERVISOR")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/ventas/*/anular").hasAnyRole("ADMIN", "SUPERVISOR")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/ventas/resumen").hasAnyRole("ADMIN", "VENDEDOR", "SUPERVISOR")
+                        .requestMatchers("/api/v1/ventas/*/solicitar-anulacion").hasAnyRole("ADMIN", "VENDEDOR", "SUPERVISOR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/ventas/*/anular", "/api/v1/ventas/*/rechazar-anulacion").hasAnyRole("ADMIN", "SUPERVISOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/ventas/*/anular", "/api/v1/ventas/*/rechazar-anulacion").hasAnyRole("ADMIN", "SUPERVISOR")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/ventas/*/rechazar-anulacion").hasAnyRole("ADMIN", "SUPERVISOR")
                         .requestMatchers("/api/v1/ventas/**").hasAnyRole("ADMIN", "VENDEDOR", "SUPERVISOR")
 
                         // 4. Finanzas (Brandon): Habilitado para ADMIN normal, ADMIN_FINANZAS, SUPERVISOR, CAJERO y VENDEDOR para control de caja en POS

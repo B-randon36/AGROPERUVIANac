@@ -45,6 +45,7 @@
         >
           <option value="">Todos los estados</option>
           <option value="REGISTRADA">Registrada</option>
+          <option value="SOLICITADA_ANULACION">Solicitud de Anulación</option>
           <option value="ANULADA">Anulada</option>
         </select>
       </div>
@@ -215,9 +216,14 @@
                   <span
                     class="badge"
                     [class.badge-success]="venta.estado === 'REGISTRADA'"
+                    [class.badge-warning]="venta.estado === 'SOLICITADA_ANULACION'"
                     [class.badge-danger]="venta.estado === 'ANULADA'"
                   >
-                    {{ venta.estado }}
+                    @if (venta.estado === 'SOLICITADA_ANULACION') {
+                      ⚠️ Solicitud Anulación
+                    } @else {
+                      {{ venta.estado }}
+                    }
                   </span>
                 </td>
                 <td>
@@ -240,7 +246,7 @@
                   {{ venta.total | currency: 'PEN' : 'S/ ' }}
                 </td>
                 <td style="text-align: center;">
-                  <div style="display: inline-flex; gap: 0.5rem; align-items: center; justify-content: center;">
+                  <div style="display: inline-flex; gap: 0.5rem; align-items: center; justify-content: center; flex-wrap: wrap;">
                     <button
                       type="button"
                       class="btn-ver-ticket"
@@ -249,19 +255,36 @@
                     >
                       <span class="material-symbols-outlined icon-inline" style="font-size: 0.95rem;">receipt_long</span> Ver Ticket
                     </button>
-                    @if (venta.estado === 'REGISTRADA' && auth.tieneRol('SUPERVISOR', 'ADMIN')) {
-                      <button
-                        type="button"
-                        class="btn-action-discreet-danger"
-                        (click)="solicitarAnularVenta(venta.id)"
-                        title="Anular venta y restaurar stock en catálogo"
-                      >
-                        <span class="material-symbols-outlined icon-inline" style="font-size: 0.95rem;">block</span> Anular
-                      </button>
-                    } @else if (venta.estado === 'ANULADA') {
-                      <span class="badge-anulado-label">Anulada</span>
-                    }
-                    @if (auth.tieneRol('ADMIN', 'SUPERVISOR')) {
+                    @if (auth.tieneRol('SUPERVISOR', 'ADMIN')) {
+                      @if (venta.estado === 'SOLICITADA_ANULACION') {
+                        <button
+                          type="button"
+                          class="btn-aprobar-anulacion"
+                          (click)="solicitarAnularVenta(venta.id)"
+                          title="Aprobar anulación y devolver mercadería al stock"
+                        >
+                          <span class="material-symbols-outlined icon-inline" style="font-size: 0.95rem;">check_circle</span> Aprobar Anulación
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-rechazar-anulacion"
+                          (click)="rechazarSolicitudAnulacion(venta.id)"
+                          title="Rechazar solicitud y devolver venta a estado Registrada"
+                        >
+                          <span class="material-symbols-outlined icon-inline" style="font-size: 0.95rem;">close</span> Rechazar
+                        </button>
+                      } @else if (venta.estado === 'REGISTRADA') {
+                        <button
+                          type="button"
+                          class="btn-action-discreet-danger"
+                          (click)="solicitarAnularVenta(venta.id)"
+                          title="Anular venta y restaurar stock en catálogo"
+                        >
+                          <span class="material-symbols-outlined icon-inline" style="font-size: 0.95rem;">block</span> Anular
+                        </button>
+                      } @else if (venta.estado === 'ANULADA') {
+                        <span class="badge-anulado-label">Anulada</span>
+                      }
                       <button
                         type="button"
                         class="btn-action-discreet-danger"
@@ -271,6 +294,24 @@
                       >
                         <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
                       </button>
+                    } @else {
+                      <!-- Rol VENDEDOR -->
+                      @if (venta.estado === 'REGISTRADA') {
+                        <button
+                          type="button"
+                          class="btn-solicitar-anulacion"
+                          (click)="solicitarAnulacionVenta(venta.id)"
+                          title="Solicitar al Administrador la anulación de esta venta"
+                        >
+                          <span class="material-symbols-outlined icon-inline" style="font-size: 0.95rem;">assignment_return</span> Solicitar Anulación
+                        </button>
+                      } @else if (venta.estado === 'SOLICITADA_ANULACION') {
+                        <span class="badge-solicitada-revision" title="Solicitud enviada al Administrador para su aprobación">
+                          <span class="material-symbols-outlined icon-inline" style="font-size: 0.9rem;">hourglass_top</span> En Revisión Admin
+                        </span>
+                      } @else if (venta.estado === 'ANULADA') {
+                        <span class="badge-anulado-label">Anulada</span>
+                      }
                     }
                   </div>
                 </td>
@@ -336,6 +377,59 @@
     <div class="loading-box">
       <div class="spinner"></div>
       <p>Consultando transacciones y agregados...</p>
+    </div>
+  }
+
+  <!-- MODAL: SOLICITAR ANULACIÓN DE VENTA (Para VENDEDOR) -->
+  @if (mostrarModalSolicitarAnulacion() && ventaParaSolicitar(); as vId) {
+    <div class="safe-modal-backdrop" (click)="cancelarSolicitudAnulacion()">
+      <div class="safe-modal-dialog" (click)="$event.stopPropagation()">
+        <div class="safe-modal-header">
+          <span class="material-symbols-outlined" style="font-size: 1.5rem; color: #d97706;">help_outline</span>
+          <h3>Solicitar Anulación de Venta #{{ vId }}</h3>
+        </div>
+
+        <div class="safe-modal-body">
+          <p style="margin-bottom: 0.75rem; font-size: 0.9rem; color: #334155;">
+            Como vendedor, puedes solicitar la anulación de la venta <strong>#{{ vId }}</strong> para que un Administrador o Supervisor la revise y autorice la reversión en caja y reposición de inventario.
+          </p>
+
+          <div style="margin: 1rem 0;">
+            <label for="motivoSolicitudInput" style="display: block; font-weight: 600; font-size: 0.825rem; color: #475569; margin-bottom: 0.35rem;">
+              Motivo de la anulación (opcional):
+            </label>
+            <input
+              id="motivoSolicitudInput"
+              type="text"
+              class="form-control"
+              placeholder="Ej: Cliente desistió de la compra / Error en cantidad digitada"
+              [value]="motivoSolicitud()"
+              (input)="motivoSolicitud.set($any($event.target).value)"
+              style="width: 100%; font-size: 0.875rem;"
+            />
+          </div>
+
+          <div class="friendly-help-note" style="margin-bottom: 0.5rem;">
+            <span class="material-symbols-outlined note-icon" style="color: #0284c7;">admin_panel_settings</span>
+            <div>
+              <strong>Control y Seguridad:</strong>
+              <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: #475569;">
+                La venta pasará al estado <em>Solicitud de Anulación</em>. El Administrador podrá aprobarla o rechazarla directamente desde su panel.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="safe-modal-footer">
+          <button type="button" class="btn btn-neutral-secondary" (click)="cancelarSolicitudAnulacion()" [disabled]="loading()">
+            ← Cancelar / Volver
+          </button>
+          <button type="button" class="btn-confirmar-solicitud" (click)="confirmarSolicitudAnulacion()" [disabled]="loading()">
+            <span class="material-symbols-outlined icon-mini">send</span>
+            {{ loading() ? 'Enviando...' : 'Enviar Solicitud a Admin' }}
+          </button>
+        </div>
+      </div>
     </div>
   }
 

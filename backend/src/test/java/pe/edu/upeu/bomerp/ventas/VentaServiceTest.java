@@ -220,6 +220,46 @@ class VentaServiceTest {
     }
 
     @Test
+    @DisplayName("Debe permitir al vendedor solicitar la anulación de una venta")
+    void solicitarAnulacion_debeCambiarEstadoASolicitada() {
+        Venta venta = Venta.builder()
+                .id(205L)
+                .numeroTicket("TKT-20261021-005")
+                .estado(EstadoVenta.REGISTRADA)
+                .total(new BigDecimal("80.00"))
+                .build();
+
+        when(ventaRepository.findById(205L)).thenReturn(java.util.Optional.of(venta));
+        when(ventaRepository.save(any(Venta.class))).thenAnswer(i -> i.getArgument(0));
+
+        VentaResponse response = ventaService.solicitarAnulacion(205L, "Error en producto", "vendedor-1");
+
+        assertNotNull(response);
+        assertEquals(EstadoVenta.SOLICITADA_ANULACION, response.getEstado());
+        verify(ventaRepository, times(1)).save(venta);
+    }
+
+    @Test
+    @DisplayName("Debe permitir al supervisor rechazar la solicitud de anulación y volver a REGISTRADA")
+    void rechazarAnulacion_debeRestaurarEstadoRegistrada() {
+        Venta venta = Venta.builder()
+                .id(206L)
+                .numeroTicket("TKT-20261021-006")
+                .estado(EstadoVenta.SOLICITADA_ANULACION)
+                .total(new BigDecimal("80.00"))
+                .build();
+
+        when(ventaRepository.findById(206L)).thenReturn(java.util.Optional.of(venta));
+        when(ventaRepository.save(any(Venta.class))).thenAnswer(i -> i.getArgument(0));
+
+        VentaResponse response = ventaService.rechazarAnulacion(206L, "admin-1");
+
+        assertNotNull(response);
+        assertEquals(EstadoVenta.REGISTRADA, response.getEstado());
+        verify(ventaRepository, times(1)).save(venta);
+    }
+
+    @Test
     @DisplayName("RN5: Debe persistir el vendedorId tomado del JWT en la cabecera de la venta")
     void crear_conVendedorId_debeAsignarVendedorIdEnCabecera() {
         DetalleVentaRequest item = new DetalleVentaRequest();

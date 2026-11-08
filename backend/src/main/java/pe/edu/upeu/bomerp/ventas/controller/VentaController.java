@@ -74,6 +74,25 @@ public class VentaController {
         return ResponseEntity.ok(ventaService.anular(id, actor));
     }
 
+    @Operation(summary = "Vendedor solicita la anulación de una venta para que el Administrador/Supervisor la apruebe")
+    @RequestMapping(value = "/{id}/solicitar-anulacion", method = { RequestMethod.PATCH, RequestMethod.POST, RequestMethod.PUT })
+    public ResponseEntity<VentaResponse> solicitarAnulacion(
+            @PathVariable Long id,
+            @RequestParam(required = false) String motivo,
+            @AuthenticationPrincipal Jwt jwt) {
+        String actor = (jwt != null) ? jwt.getSubject() : "VENDEDOR";
+        return ResponseEntity.ok(ventaService.solicitarAnulacion(id, motivo, actor));
+    }
+
+    @Operation(summary = "Administrador o Supervisor rechaza la solicitud de anulación y mantiene la venta registrada")
+    @RequestMapping(value = "/{id}/rechazar-anulacion", method = { RequestMethod.PATCH, RequestMethod.POST, RequestMethod.PUT })
+    public ResponseEntity<VentaResponse> rechazarAnulacion(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Jwt jwt) {
+        String actor = (jwt != null) ? jwt.getSubject() : "ADMIN";
+        return ResponseEntity.ok(ventaService.rechazarAnulacion(id, actor));
+    }
+
     @Operation(summary = "Consultar el historial de auditoría de ventas")
     @GetMapping("/auditoria")
     public ResponseEntity<?> listarAuditoria() {

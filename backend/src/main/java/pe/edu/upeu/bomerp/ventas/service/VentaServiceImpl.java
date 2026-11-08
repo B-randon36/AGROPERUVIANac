@@ -182,7 +182,7 @@ public class VentaServiceImpl implements VentaService {
         Venta venta = ventaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + id));
 
-        if (venta.getEstado() != EstadoVenta.REGISTRADA) {
+        if (venta.getEstado() == EstadoVenta.ANULADA) {
             throw new VentaYaAnuladaException("La venta " + id + " ya está anulada");
         }
 
@@ -215,6 +215,42 @@ public class VentaServiceImpl implements VentaService {
         Venta anulada = ventaRepository.save(venta);
         auditoriaService.registrar(vendedorId, "ANULAR", "VENTA", anulada.getId(), "ticket=" + anulada.getNumeroTicket());
         return toResponse(anulada);
+    }
+
+    @Override
+    @Transactional
+    public VentaResponse solicitarAnulacion(Long id, String motivo, String vendedorId) {
+        Venta venta = ventaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + id));
+
+        if (venta.getEstado() == EstadoVenta.ANULADA) {
+            throw new VentaYaAnuladaException("La venta " + id + " ya está anulada.");
+        }
+        if (venta.getEstado() == EstadoVenta.SOLICITADA_ANULACION) {
+            throw new IllegalStateException("La venta " + id + " ya tiene una solicitud de anulación en curso.");
+        }
+
+        venta.setEstado(EstadoVenta.SOLICITADA_ANULACION);
+        Venta guardada = ventaRepository.save(venta);
+        auditoriaService.registrar(vendedorId, "SOLICITAR_ANULACION", "VENTA", guardada.getId(),
+                "ticket=" + guardada.getNumeroTicket() + (motivo != null && !motivo.isBlank() ? "; motivo=" + motivo : ""));
+        return toResponse(guardada);
+    }
+
+    @Override
+    @Transactional
+    public VentaResponse rechazarAnulacion(Long id, String actor) {
+        Venta venta = ventaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + id));
+
+        if (venta.getEstado() != EstadoVenta.SOLICITADA_ANULACION) {
+            throw new IllegalStateException("La venta " + id + " no tiene solicitud de anulación pendiente.");
+        }
+
+        venta.setEstado(EstadoVenta.REGISTRADA);
+        Venta guardada = ventaRepository.save(venta);
+        auditoriaService.registrar(actor, "RECHAZAR_ANULACION", "VENTA", guardada.getId(), "ticket=" + guardada.getNumeroTicket());
+        return toResponse(guardada);
     }
 
     private MetodoPago mapearMetodoPagoFinanzas(MetodoPagoVenta mp) {

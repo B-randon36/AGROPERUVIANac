@@ -65,6 +65,18 @@ export class VentaService {
     return this.http.patch<VentaResponse>(this.api.buildUrl(`${this.resource}/${id}/anular`), {});
   }
 
+  solicitarAnulacion(id: number, motivo?: string): Observable<VentaResponse> {
+    let params = new HttpParams();
+    if (motivo) {
+      params = params.set('motivo', motivo);
+    }
+    return this.http.patch<VentaResponse>(this.api.buildUrl(`${this.resource}/${id}/solicitar-anulacion`), {}, { params });
+  }
+
+  rechazarAnulacion(id: number): Observable<VentaResponse> {
+    return this.http.patch<VentaResponse>(this.api.buildUrl(`${this.resource}/${id}/rechazar-anulacion`), {});
+  }
+
   reporte(estado?: string, metodoPago?: string, desde?: string, hasta?: string): Observable<VentaReporte> {
     let params = new HttpParams();
     if (estado) params = params.set('estado', estado);

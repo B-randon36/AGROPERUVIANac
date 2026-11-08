@@ -43,6 +43,16 @@ public interface VentaService {
     }
     VentaResponse anular(Long id, String vendedorId);
 
+    default VentaResponse solicitarAnulacion(Long id, String motivo) {
+        return solicitarAnulacion(id, motivo, null);
+    }
+    VentaResponse solicitarAnulacion(Long id, String motivo, String vendedorId);
+
+    default VentaResponse rechazarAnulacion(Long id) {
+        return rechazarAnulacion(id, null);
+    }
+    VentaResponse rechazarAnulacion(Long id, String actor);
+
     VentaReporte reporte(EstadoVenta estado, MetodoPagoVenta metodoPago, LocalDateTime desde, LocalDateTime hasta);
 
     default VentaReporte reporte(EstadoVenta estado, LocalDateTime desde, LocalDateTime hasta) {

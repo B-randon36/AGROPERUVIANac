@@ -48,6 +48,11 @@ export class VentaReporteComponent implements OnInit {
   // Modal tranquilizador de anulación (Pilar 2)
   protected readonly ventaParaAnular = signal<number | null>(null);
   protected readonly mostrarModalAnularVenta = signal(false);
+
+  // Solicitud de anulación (Rol VENDEDOR)
+  protected readonly ventaParaSolicitar = signal<number | null>(null);
+  protected readonly mostrarModalSolicitarAnulacion = signal(false);
+  protected readonly motivoSolicitud = signal('');
   protected readonly totalElements = signal(0);
   protected readonly totalPages = signal(0);
 
@@ -167,6 +172,52 @@ export class VentaReporteComponent implements OnInit {
   cancelarAnularVenta(): void {
     this.mostrarModalAnularVenta.set(false);
     this.ventaParaAnular.set(null);
+  }
+
+  solicitarAnulacionVenta(id: number): void {
+    this.ventaParaSolicitar.set(id);
+    this.motivoSolicitud.set('');
+    this.mostrarModalSolicitarAnulacion.set(true);
+  }
+
+  cancelarSolicitudAnulacion(): void {
+    this.mostrarModalSolicitarAnulacion.set(false);
+    this.ventaParaSolicitar.set(null);
+    this.motivoSolicitud.set('');
+  }
+
+  confirmarSolicitudAnulacion(): void {
+    const id = this.ventaParaSolicitar();
+    if (!id) return;
+    this.mostrarModalSolicitarAnulacion.set(false);
+    this.loading.set(true);
+    this.ventaService.solicitarAnulacion(id, this.motivoSolicitud() || undefined).subscribe({
+      next: () => {
+        this.ventaParaSolicitar.set(null);
+        this.motivoSolicitud.set('');
+        this.cargar();
+      },
+      error: () => {
+        this.error.set('No se pudo enviar la solicitud de anulación.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  rechazarSolicitudAnulacion(id: number): void {
+    if (!confirm(`¿Desea rechazar la solicitud de anulación de la Venta #${id} y mantenerla como REGISTRADA?`)) {
+      return;
+    }
+    this.loading.set(true);
+    this.ventaService.rechazarAnulacion(id).subscribe({
+      next: () => {
+        this.cargar();
+      },
+      error: () => {
+        this.error.set('No se pudo rechazar la solicitud de anulación.');
+        this.loading.set(false);
+      },
+    });
   }
 
   confirmarAnularVenta(): void {
