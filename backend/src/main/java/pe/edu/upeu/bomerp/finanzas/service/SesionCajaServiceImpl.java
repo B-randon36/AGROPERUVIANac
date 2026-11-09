@@ -101,28 +101,36 @@ public class SesionCajaServiceImpl implements SesionCajaService {
         SesionCaja sesion = buscarSesionOFallar(id);
 
         // [RN-FIN-02] Inmutabilidad del Turno Cerrado:
-        // Un turno sellado queda protegido contra modificaciones; no puede volver a cerrarse ni recibir nuevos cobros
+        // Un turno sellado queda protegido contra modificaciones; no puede volver a
+        // cerrarse ni recibir nuevos cobros
         if (sesion.getEstado() != EstadoCaja.ABIERTA) {
-            throw new IllegalStateException("RN-FIN-02: La sesión " + sesion.getCodigoSesion() + " ya se encuentra CERRADA.");
+            throw new IllegalStateException(
+                    "RN-FIN-02: La sesión " + sesion.getCodigoSesion() + " ya se encuentra CERRADA.");
         }
 
         BigDecimal saldoReal = request.getSaldoRealEfectivo();
 
         // [RN-FIN-03] Arqueo Físico Obligatorio con Desglose de Billetes y Monedas:
-        // El servidor recalcula el total a partir de cada denominación (fuente de verdad)
-        // y calcula automáticamente el descuadre (Diferencia = Saldo Real - Saldo Teórico Esperado)
+        // El servidor recalcula el total a partir de cada denominación (fuente de
+        // verdad)
+        // y calcula automáticamente el descuadre (Diferencia = Saldo Real - Saldo
+        // Teórico Esperado)
         if (request.getDesglose() != null && !request.getDesglose().isEmpty()) {
             BigDecimal totalDesglose = BigDecimal.ZERO;
             sesion.getDetallesArqueo().clear();
             for (pe.edu.upeu.bomerp.finanzas.dto.DesgloseEfectivoItemDto item : request.getDesglose()) {
                 if (item.getCantidad() != null && item.getCantidad() > 0) {
-                    pe.edu.upeu.bomerp.finanzas.entity.DenominacionMoneda denom = denominacionRepository.findById(item.getDenominacionId())
-                            .orElseThrow(() -> new ResourceNotFoundException("Denominación no encontrada con id: " + item.getDenominacionId()));
+                    pe.edu.upeu.bomerp.finanzas.entity.DenominacionMoneda denom = denominacionRepository
+                            .findById(item.getDenominacionId())
+                            .orElseThrow(() -> new ResourceNotFoundException(
+                                    "Denominación no encontrada con id: " + item.getDenominacionId()));
                     BigDecimal subtotal = denom.getValorFacial().multiply(BigDecimal.valueOf(item.getCantidad()));
                     totalDesglose = totalDesglose.add(subtotal);
 
-                    pe.edu.upeu.bomerp.finanzas.entity.DetalleArqueoEfectivo detalle = pe.edu.upeu.bomerp.finanzas.entity.DetalleArqueoEfectivo.builder()
-                            .id(new pe.edu.upeu.bomerp.finanzas.entity.DetalleArqueoEfectivoId(sesion.getId(), denom.getId()))
+                    pe.edu.upeu.bomerp.finanzas.entity.DetalleArqueoEfectivo detalle = pe.edu.upeu.bomerp.finanzas.entity.DetalleArqueoEfectivo
+                            .builder()
+                            .id(new pe.edu.upeu.bomerp.finanzas.entity.DetalleArqueoEfectivoId(sesion.getId(),
+                                    denom.getId()))
                             .sesionCaja(sesion)
                             .denominacionMoneda(denom)
                             .cantidad(item.getCantidad())
@@ -143,10 +151,12 @@ public class SesionCajaServiceImpl implements SesionCajaService {
      * ========================================================================
      * REGISTRO TRANSACCIONAL DE MOVIMIENTO
      * ========================================================================
-     * 1. [RN-FIN-02] Valida que la sesión esté ABIERTA; prohíbe operaciones en turnos sellados.
+     * 1. [RN-FIN-02] Valida que la sesión esté ABIERTA; prohíbe operaciones en
+     * turnos sellados.
      * 2. [RN-FIN-04] Control de Solvencia y Liquidez en Gaveta de Efectivo.
-     *    Si el movimiento es un EGRESO en EFECTIVO y supera el saldoEsperadoEfectivo,
-     *    se lanza SolvenciaInsuficienteException, provocando rollback @Transactional inmediato.
+     * Si el movimiento es un EGRESO en EFECTIVO y supera el saldoEsperadoEfectivo,
+     * se lanza SolvenciaInsuficienteException, provocando rollback @Transactional
+     * inmediato.
      * 3. Actualiza atómicamente los totales de ingresos/egresos y saldo en gaveta.
      * ========================================================================
      */
@@ -156,23 +166,25 @@ public class SesionCajaServiceImpl implements SesionCajaService {
         SesionCaja sesion = buscarSesionOFallar(sesionId);
 
         if (sesion.getEstado() != EstadoCaja.ABIERTA) {
-            throw new IllegalStateException("RN-FIN-02: La sesión " + sesion.getCodigoSesion() + " no está ABIERTA. No se pueden registrar movimientos.");
+            throw new IllegalStateException("RN-FIN-02: La sesión " + sesion.getCodigoSesion()
+                    + " no está ABIERTA. No se pueden registrar movimientos.");
         }
 
         // Validación de la Categoría Financiera
         CategoriaFinanciera categoria = categoriaRepository.findById(request.getCategoriaFinancieraId())
-                .orElseThrow(() -> new ResourceNotFoundException("Categoría financiera no encontrada con id: " + request.getCategoriaFinancieraId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Categoría financiera no encontrada con id: " + request.getCategoriaFinancieraId()));
 
         // ====================================================================
         // [RN-FIN-04] Solvencia de Gaveta en Egresos de Efectivo
         // ====================================================================
         if (request.getTipo() == TipoFinanciero.EGRESO && request.getMetodoPago() == MetodoPago.EFECTIVO) {
-            BigDecimal saldoDisponible = sesion.getSaldoEsperadoEfectivo() != null ? sesion.getSaldoEsperadoEfectivo() : BigDecimal.ZERO;
+            BigDecimal saldoDisponible = sesion.getSaldoEsperadoEfectivo() != null ? sesion.getSaldoEsperadoEfectivo()
+                    : BigDecimal.ZERO;
             if (request.getMonto().compareTo(saldoDisponible) > 0) {
                 throw new SolvenciaInsuficienteException(
                         "RN-FIN-01: El monto del egreso en efectivo (S/ " + request.getMonto() +
-                        ") excede el saldo en efectivo disponible en gaveta (S/ " + saldoDisponible + ")"
-                );
+                                ") excede el saldo en efectivo disponible en gaveta (S/ " + saldoDisponible + ")");
             }
         }
 
@@ -210,8 +222,8 @@ public class SesionCajaServiceImpl implements SesionCajaService {
                 .map(this::mapToMovimientoResponse)
                 .toList();
 
-        List<pe.edu.upeu.bomerp.finanzas.dto.DesgloseEfectivoItemDto> arqueo = sesion.getDetallesArqueo() != null ?
-                sesion.getDetallesArqueo().stream()
+        List<pe.edu.upeu.bomerp.finanzas.dto.DesgloseEfectivoItemDto> arqueo = sesion.getDetallesArqueo() != null
+                ? sesion.getDetallesArqueo().stream()
                         .map(d -> pe.edu.upeu.bomerp.finanzas.dto.DesgloseEfectivoItemDto.builder()
                                 .denominacionId(d.getDenominacionMoneda().getId())
                                 .valorFacial(d.getDenominacionMoneda().getValorFacial())
@@ -219,7 +231,8 @@ public class SesionCajaServiceImpl implements SesionCajaService {
                                 .cantidad(d.getCantidad())
                                 .subtotal(d.getSubtotal())
                                 .build())
-                        .toList() : java.util.Collections.emptyList();
+                        .toList()
+                : java.util.Collections.emptyList();
 
         return SesionCajaDetalleResponse.builder()
                 .id(sesion.getId())
@@ -245,8 +258,10 @@ public class SesionCajaServiceImpl implements SesionCajaService {
     @Override
     @Transactional(readOnly = true)
     public SesionCajaResponse obtenerSesionActivaUsuario(Long usuarioId) {
-        SesionCaja sesion = sesionRepository.findFirstByUsuarioIdAndEstadoOrderByFechaAperturaDesc(usuarioId, EstadoCaja.ABIERTA)
-                .orElseThrow(() -> new ResourceNotFoundException("No existe sesión abierta para el usuario id: " + usuarioId));
+        SesionCaja sesion = sesionRepository
+                .findFirstByUsuarioIdAndEstadoOrderByFechaAperturaDesc(usuarioId, EstadoCaja.ABIERTA)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No existe sesión abierta para el usuario id: " + usuarioId));
         return mapToResponse(sesion);
     }
 
@@ -261,15 +276,18 @@ public class SesionCajaServiceImpl implements SesionCajaService {
     @Transactional(readOnly = true)
     public SesionCajaResponse obtenerUltimaSesionActiva() {
         return buscarUltimaSesionActiva()
-                .orElseThrow(() -> new ResourceNotFoundException("No existe ninguna sesión de caja abierta actualmente."));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("No existe ninguna sesión de caja abierta actualmente."));
     }
 
     @Override
     @Transactional(readOnly = true)
     public CierreCajaReporteDto generarDatosReporte(Long id) {
         // [RN-FIN-05] Conciliación Multicanal de Métodos de Pago:
-        // Agrupa de forma separada los totales de ingresos, egresos y neto para cada medio
-        // (Efectivo, Yape, Plin, Tarjeta, Transferencia) permitiendo cruces contra estados bancarios y apps POS.
+        // Agrupa de forma separada los totales de ingresos, egresos y neto para cada
+        // medio
+        // (Efectivo, Yape, Plin, Tarjeta, Transferencia) permitiendo cruces contra
+        // estados bancarios y apps POS.
         SesionCaja sesion = buscarSesionOFallar(id);
         List<MovimientoCajaResponse> movs = sesion.getMovimientos().stream()
                 .map(this::mapToMovimientoResponse)
@@ -277,7 +295,7 @@ public class SesionCajaServiceImpl implements SesionCajaService {
 
         Map<MetodoPago, BigDecimal[]> acumuladores = new EnumMap<>(MetodoPago.class);
         for (MetodoPago m : MetodoPago.values()) {
-            acumuladores.put(m, new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+            acumuladores.put(m, new BigDecimal[] { BigDecimal.ZERO, BigDecimal.ZERO });
         }
 
         for (MovimientoCaja mov : sesion.getMovimientos()) {
