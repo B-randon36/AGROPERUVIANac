@@ -55,6 +55,8 @@ public class SesionCajaServiceImpl implements SesionCajaService {
     @Override
     @Transactional
     public SesionCajaResponse abrirSesion(AperturaSesionRequest request) {
+        // [RN-FIN-01] / [RN-FIN-02] Unicidad de Turno Activo por Usuario:
+        // Cada cajero/vendedor solo puede operar un turno de caja simultáneamente en estado ABIERTA.
         if (sesionRepository.existsByUsuarioIdAndEstado(request.getUsuarioId(), EstadoCaja.ABIERTA)) {
             throw new IllegalStateException("RN-FIN-02: El usuario ya posee un turno de caja abierto. Debe cerrarlo antes de iniciar otro.");
         }
@@ -98,13 +100,17 @@ public class SesionCajaServiceImpl implements SesionCajaService {
     public SesionCajaResponse cerrarSesion(Long id, CierreSesionRequest request) {
         SesionCaja sesion = buscarSesionOFallar(id);
 
-        // RN-FIN-02: Un turno ya sellado no puede volver a cerrarse (se sobrescribiría su arqueo)
+        // [RN-FIN-02] Inmutabilidad del Turno Cerrado:
+        // Un turno sellado queda protegido contra modificaciones; no puede volver a cerrarse ni recibir nuevos cobros
         if (sesion.getEstado() != EstadoCaja.ABIERTA) {
             throw new IllegalStateException("RN-FIN-02: La sesión " + sesion.getCodigoSesion() + " ya se encuentra CERRADA.");
         }
 
         BigDecimal saldoReal = request.getSaldoRealEfectivo();
 
+        // [RN-FIN-03] Arqueo Físico Obligatorio con Desglose de Billetes y Monedas:
+        // El servidor recalcula el total a partir de cada denominación (fuente de verdad)
+        // y calcula automáticamente el descuadre (Diferencia = Saldo Real - Saldo Teórico Esperado)
         if (request.getDesglose() != null && !request.getDesglose().isEmpty()) {
             BigDecimal totalDesglose = BigDecimal.ZERO;
             sesion.getDetallesArqueo().clear();
@@ -125,7 +131,6 @@ public class SesionCajaServiceImpl implements SesionCajaService {
                     sesion.agregarDetalleArqueo(detalle);
                 }
             }
-            // RN-FIN-04: El total recalculado en servidor a partir del desglose M:N es la fuente de verdad
             saldoReal = totalDesglose;
         }
 
@@ -136,13 +141,13 @@ public class SesionCajaServiceImpl implements SesionCajaService {
 
     /**
      * ========================================================================
-     * REGISTRO TRANSACCIONAL DE MOVIMIENTO CON REGLA DE NEGOCIO RN-FIN-01
+     * REGISTRO TRANSACCIONAL DE MOVIMIENTO
      * ========================================================================
-     * 1. Valida que la sesión esté ABIERTA (RN-FIN-02).
-     * 2. RN-FIN-01: Control de Liquidez / Solvencia.
+     * 1. [RN-FIN-02] Valida que la sesión esté ABIERTA; prohíbe operaciones en turnos sellados.
+     * 2. [RN-FIN-04] Control de Solvencia y Liquidez en Gaveta de Efectivo.
      *    Si el movimiento es un EGRESO en EFECTIVO y supera el saldoEsperadoEfectivo,
-     *    se lanza SolvenciaInsuficienteException, provocando un rollback @Transactional inmediato.
-     * 3. Se actualizan atómicamente los totales de la sesión de caja en gaveta.
+     *    se lanza SolvenciaInsuficienteException, provocando rollback @Transactional inmediato.
+     * 3. Actualiza atómicamente los totales de ingresos/egresos y saldo en gaveta.
      * ========================================================================
      */
     @Override
@@ -159,7 +164,7 @@ public class SesionCajaServiceImpl implements SesionCajaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría financiera no encontrada con id: " + request.getCategoriaFinancieraId()));
 
         // ====================================================================
-        // REGLA CRÍTICA RN-FIN-01: Control de Liquidez en Gaveta de Efectivo
+        // [RN-FIN-04] Solvencia de Gaveta en Egresos de Efectivo
         // ====================================================================
         if (request.getTipo() == TipoFinanciero.EGRESO && request.getMetodoPago() == MetodoPago.EFECTIVO) {
             BigDecimal saldoDisponible = sesion.getSaldoEsperadoEfectivo() != null ? sesion.getSaldoEsperadoEfectivo() : BigDecimal.ZERO;
@@ -262,6 +267,9 @@ public class SesionCajaServiceImpl implements SesionCajaService {
     @Override
     @Transactional(readOnly = true)
     public CierreCajaReporteDto generarDatosReporte(Long id) {
+        // [RN-FIN-05] Conciliación Multicanal de Métodos de Pago:
+        // Agrupa de forma separada los totales de ingresos, egresos y neto para cada medio
+        // (Efectivo, Yape, Plin, Tarjeta, Transferencia) permitiendo cruces contra estados bancarios y apps POS.
         SesionCaja sesion = buscarSesionOFallar(id);
         List<MovimientoCajaResponse> movs = sesion.getMovimientos().stream()
                 .map(this::mapToMovimientoResponse)

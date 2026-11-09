@@ -43,6 +43,7 @@ public class VentaController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta,
             @PageableDefault(size = 20, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal Jwt jwt, Authentication authentication) {
+        // [RN-VEN-08] Aislamiento ABAC: Vendedores solo pueden consultar su propia bandeja de ventas
         String vendedorId = esVendedorRestringido(authentication) ? jwt.getSubject() : null;
         return ResponseEntity.ok(ventaService.buscar(estado, metodoPago, desde, hasta, vendedorId, pageable));
     }
@@ -50,6 +51,7 @@ public class VentaController {
     @Operation(summary = "Consultar una venta por ID con validación de propiedad RN8 (VENDEDOR solo ve sus ventas)")
     @GetMapping("/{id}")
     public ResponseEntity<VentaResponse> obtener(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt, Authentication authentication) {
+        // [RN-VEN-08] Consulta puntual protegida contra IDOR / acceso cruzado entre vendedores
         String vendedorId = esVendedorRestringido(authentication) ? jwt.getSubject() : null;
         return ResponseEntity.ok(ventaService.obtener(id, vendedorId));
     }
@@ -59,6 +61,7 @@ public class VentaController {
     public ResponseEntity<VentaResponse> crear(
             @Valid @RequestBody VentaRequest request,
             @AuthenticationPrincipal Jwt jwt, Authentication authentication) {
+        // [RN-VEN-05] Atribución Nominal Criptográfica: Vendedor identificado por el claim 'sub' del JWT
         String vendedorId = (jwt != null) ? jwt.getSubject() : null;
         return ResponseEntity.status(HttpStatus.CREATED).body(ventaService.crear(request, vendedorId));
     }
@@ -66,6 +69,7 @@ public class VentaController {
     @Operation(summary = "Anula una venta registrada, restaurando el stock de sus productos y auditando al actor")
     @RequestMapping(value = "/{id}/anular", method = { RequestMethod.PATCH, RequestMethod.PUT })
     public ResponseEntity<VentaResponse> anular(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt, Authentication authentication) {
+        // [RN-VEN-07] Anulación Directa Reservada a Roles con Privilegio Elevado (Supervisor / Administrador)
         String actor = (jwt != null) ? jwt.getSubject() : "ANONYMOUS";
         return ResponseEntity.ok(ventaService.anular(id, actor));
     }
@@ -76,6 +80,7 @@ public class VentaController {
             @PathVariable Long id,
             @RequestParam(required = false) String motivo,
             @AuthenticationPrincipal Jwt jwt, Authentication authentication) {
+        // [RN-VEN-07] Flujo de Solicitud de Anulación con Motivo Justificado
         String actor = (jwt != null) ? jwt.getSubject() : "VENDEDOR";
         return ResponseEntity.ok(ventaService.solicitarAnulacion(id, motivo, actor,
                 esVendedorRestringido(authentication) ? jwt.getSubject() : null));
@@ -86,6 +91,7 @@ public class VentaController {
     public ResponseEntity<VentaResponse> rechazarAnulacion(
             @PathVariable Long id,
             @AuthenticationPrincipal Jwt jwt, Authentication authentication) {
+        // [RN-VEN-07] Resolución de Solicitud: Desestimar y Restaurar Venta a REGISTRADA
         String actor = (jwt != null) ? jwt.getSubject() : "ADMIN";
         return ResponseEntity.ok(ventaService.rechazarAnulacion(id, actor));
     }

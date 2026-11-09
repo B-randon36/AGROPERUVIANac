@@ -76,7 +76,8 @@ public class VentaServiceImpl implements VentaService {
         Venta venta = ventaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + id));
 
-        // Regla RN8 (ADS S8/S10): VENDEDOR solo puede consultar sus propias ventas (ABAC)
+        // [RN-VEN-08] Aislamiento Multi-Tenant por Vendedor (ABAC):
+        // Un VENDEDOR solo puede consultar sus propias ventas. Si intenta ver la de otro vendedor se rechaza.
         if (vendedorId != null && !vendedorId.equals(venta.getVendedorId())) {
             throw new AccesoDenegadoException("No tienes acceso a esta venta: pertenece a otro vendedor.");
         }
@@ -87,7 +88,8 @@ public class VentaServiceImpl implements VentaService {
     @Override
     @Transactional
     public VentaResponse crear(VentaRequest request, String vendedorId) {
-        // Control de idempotencia para prevenir ventas duplicadas por doble clic o reintentos de conexión
+        // [RN-VEN-06] Idempotencia Transaccional (Protección Anti-Doble Clic):
+        // Si el cliente envía un operacionId ya procesado, se retorna la venta existente sin duplicar cobro ni descontar stock
         if (request.getOperacionId() != null && !request.getOperacionId().isBlank()) {
             var existente = ventaRepository.findByOperacionId(request.getOperacionId().trim());
             if (existente.isPresent()) {
@@ -97,6 +99,8 @@ public class VentaServiceImpl implements VentaService {
             }
         }
 
+        // [RN-VEN-04] Correlativo Oficial Único e Inmutable:
+        // Generado mediante secuencia nativa de base de datos (SEQ_TICKET_VENTA) -> TKT-S-XXXXXXXXXX
         String ticket = numeroTicketService.siguiente();
 
         MetodoPagoVenta metodoVenta = request.getMetodoPago() != null ? request.getMetodoPago() : MetodoPagoVenta.EFECTIVO;
@@ -104,6 +108,8 @@ public class VentaServiceImpl implements VentaService {
                 ? request.getClienteNombre().trim()
                 : "Cliente General";
 
+        // [RN-VEN-05] Atribución Nominal Criptográfica:
+        // vendedorId se extrae obligatoriamente del claim 'sub' del JWT autenticado, nunca del body del cliente
         Venta venta = Venta.builder()
                 .numeroTicket(ticket)
                 .fecha(LocalDateTime.now())
@@ -122,10 +128,12 @@ public class VentaServiceImpl implements VentaService {
             // 1. Verificación y obtención de datos del producto en Catálogo
             ProductoResponse prod = productoService.obtener(item.getProductoId());
 
-            // 2. Descuento atómico en Catálogo (lanza BusinessConflictException y revierte todo si no alcanza)
+            // [RN-VEN-01] Control Atómico de Existencias con Rollback:
+            // Descuenta con bloqueo pesimista en BD (SELECT FOR UPDATE). Si no alcanza, lanza BusinessConflictException y aborta
             productoService.descontarStock(item.getProductoId(), item.getCantidad());
 
-            // 3. Despacho FEFO y registro automático de SALIDA en Kardex Físico
+            // [RN-VEN-03] Despacho Sanitario FEFO (First Expired, First Out):
+            // Descuenta prioritariamente de los lotes más próximos a vencer y asienta la SALIDA en el Kardex Físico
             Long loteConsumidoId = item.getLoteId();
             if (inventarioService != null) {
                 Long loteFefoId = inventarioService.registrarSalidaVentaFEFO(
@@ -155,7 +163,8 @@ public class VentaServiceImpl implements VentaService {
             total = total.add(subtotalItem);
         }
 
-        // Los precios del catálogo son precios finales con IGV incluido.
+        // [RN-VEN-02] Desglose Tributario Peruano (IGV 18%):
+        // Precios finales con IGV incluido. Subtotal = Total / 1.18 ; IGV = Total - Subtotal (RoundingMode.HALF_UP)
         total = total.setScale(2, RoundingMode.HALF_UP);
         BigDecimal subtotal = total.divide(new BigDecimal("1.18"), 2, RoundingMode.HALF_UP);
         BigDecimal igv = total.subtract(subtotal);
@@ -167,7 +176,9 @@ public class VentaServiceImpl implements VentaService {
         Venta guardada = ventaRepository.save(venta);
         auditoriaService.registrar(vendedorId, "CREAR", "VENTA", guardada.getId(), "total=" + total);
 
-        // 4. Integración Financiera Automática (Sesión de Caja Activa o Cuenta por Cobrar)
+        // [RN-VEN-10] Vinculación Financiera según Modalidad de Pago:
+        // - Si es CREDITO: Genera Cuenta por Cobrar a plazo (15 a 60 días)
+        // - Si es EFECTIVO: Exige turno de caja ABIERTO en sesionCajaId para registrar en gaveta
         if (finanzasApi != null) {
             if (metodoVenta == MetodoPagoVenta.CREDITO) {
                 finanzasApi.registrarVentaACredito(
@@ -201,16 +212,18 @@ public class VentaServiceImpl implements VentaService {
     @Override
     @Transactional
     public VentaResponse anular(Long id, String vendedorId) {
-        // Bloqueo pesimista para evitar que dos peticiones concurrentes anulen la misma venta dos veces
+        // [RN-VEN-07] Segregación de Roles y Control de Doble Anulación:
+        // Bloqueo pesimista (SELECT FOR UPDATE) para evitar que dos transacciones concurrentes anulen la misma venta.
         Venta venta = ventaRepository.findByIdForUpdate(id)
                 .or(() -> ventaRepository.findById(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + id));
 
+        // Idempotencia de anulación: rechazar si ya fue previamente anulada
         if (venta.getEstado() == EstadoVenta.ANULADA) {
             throw new VentaYaAnuladaException("La venta " + id + " ya está anulada");
         }
 
-        // 1. Reposición atómica en Catálogo del total vendido
+        // 1. [RN-VEN-01] Reposición Atómica en Catálogo del total vendido por producto
         if (venta.getDetalles() != null) {
             for (DetalleVenta detalle : venta.getDetalles()) {
                 if (detalle.getProductoId() != null && detalle.getCantidad() != null) {
@@ -219,12 +232,14 @@ public class VentaServiceImpl implements VentaService {
             }
         }
 
-        // 2. Reposición exacta por lote FEFO y Kardex Físico (soporte multi-lote con trazabilidad histórica)
+        // 2. [RN-VEN-09] Reversión Multi-lote FEFO y Compensación de Kardex Físico:
+        // Consulta los lotes específicos de donde salió la mercadería y genera contra-asientos ENTRADA
         if (inventarioService != null) {
             inventarioService.revertirSalidaVentaPorTicket(venta.getNumeroTicket());
         }
 
-        // 3. Extorno financiero en Caja / Cuentas por Cobrar / Transacciones
+        // 3. [RN-VEN-10] / [RN-FIN-07] Extorno Financiero Trazable:
+        // Si la sesión de caja está cerrada, no altera el arqueo histórico sellado; registra EXTORNO_POS
         if (finanzasApi != null) {
             boolean eraCredito = venta.getMetodoPago() == MetodoPagoVenta.CREDITO;
             MetodoPago mp = eraCredito ? null : mapearMetodoPagoFinanzas(venta.getMetodoPago());
@@ -240,10 +255,14 @@ public class VentaServiceImpl implements VentaService {
     @Override
     @Transactional
     public VentaResponse solicitarAnulacion(Long id, String motivo, String actor, String vendedorIdRestringido) {
+        // [RN-VEN-07] Solicitud de Anulación por Vendedor:
+        // El vendedor en mostrador no puede anular directamente; debe enviar una solicitud formal con motivo justificado
         Venta venta = ventaRepository.findByIdForUpdate(id)
                 .or(() -> ventaRepository.findById(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + id));
 
+        // [RN-VEN-08] Aislamiento ABAC:
+        // Un vendedor solo tiene potestad para solicitar la anulación de sus propias operaciones registradas
         if (vendedorIdRestringido != null && !vendedorIdRestringido.equals(venta.getVendedorId())) {
             throw new AccesoDenegadoException("No puedes solicitar la anulación de una venta de otro vendedor.");
         }
@@ -265,6 +284,8 @@ public class VentaServiceImpl implements VentaService {
     @Override
     @Transactional
     public VentaResponse rechazarAnulacion(Long id, String actor) {
+        // [RN-VEN-07] Resolución de Solicitud por Supervisor:
+        // Si el motivo no procede, el supervisor devuelve la venta al estado regular REGISTRADA sin extornar stock ni dinero
         Venta venta = ventaRepository.findByIdForUpdate(id)
                 .or(() -> ventaRepository.findById(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + id));
@@ -296,6 +317,9 @@ public class VentaServiceImpl implements VentaService {
     @Override
     @Transactional(readOnly = true)
     public VentaReporte reporte(EstadoVenta estado, MetodoPagoVenta metodoPago, LocalDateTime desde, LocalDateTime hasta, String vendedorId) {
+        // [RN-VEN-08] Aislamiento ABAC en Reportería:
+        // Si vendedorId != null (rol VENDEDOR), los agregados y listas se filtran estrictamente a sus ventas.
+        // Si vendedorId == null (rol SUPERVISOR / ADMIN), se obtienen los totales globales del ERP.
         VentaAgregado agregado = ventaRepository.agregados(estado, metodoPago, desde, hasta, vendedorId);
         Sort sort = Sort.by(Sort.Direction.DESC, "fecha");
         List<VentaResumen> resumenes = ventaRepository.buscarResumen(estado, metodoPago, desde, hasta, vendedorId, sort);

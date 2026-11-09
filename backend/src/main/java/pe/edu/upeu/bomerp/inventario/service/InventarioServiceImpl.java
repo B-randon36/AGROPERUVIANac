@@ -196,6 +196,10 @@ public class InventarioServiceImpl implements InventarioService {
 
     @Override
     public Long registrarSalidaVentaFEFO(Long productoId, String productoNombre, int cantidad, String numeroTicket) {
+        // [RN-VEN-03] Despacho Sanitario FEFO (First Expired, First Out):
+        // 1. Consume prioritariamente los lotes con fecha de caducidad más cercana (OrderByFechaVencimientoAsc).
+        // 2. Bloqueo sanitario: si hay lotes vencidos y los vigentes no alcanzan la cantidad requerida, aborta la venta.
+        // 3. Asienta los movimientos físicos de tipo SALIDA en el Kardex oficial referenciando el ticket de venta.
         if (cantidad <= 0) {
             return null;
         }
@@ -338,11 +342,15 @@ public class InventarioServiceImpl implements InventarioService {
     @Override
     @Transactional
     public void revertirSalidaVentaPorTicket(String numeroTicket) {
+        // [RN-VEN-09] Reversión Exacta Multi-Lote FEFO con Compensación en Kardex:
+        // En ventas donde un solo producto se despachó desde múltiples lotes, la reversión busca
+        // los movimientos SALIDA reales asentados con este ticket y genera contra-asientos ENTRADA
+        // restaurando el stock exactamente a cada lote de origen.
         if (numeroTicket == null || numeroTicket.isBlank()) {
             return;
         }
 
-        // Idempotencia: Verificar que no se haya extornado ya en Kardex
+        // Idempotencia: Verificar que no se haya extornado ya en Kardex para evitar duplicar existencias
         if (kardexRepository.existsByDocumentoReferenciaAndMotivo(numeroTicket, "ANULACION_VENTA_POS")) {
             log.warn("El stock del ticket {} ya fue revertido en Kardex previamente. Omitiendo duplicado.", numeroTicket);
             return;

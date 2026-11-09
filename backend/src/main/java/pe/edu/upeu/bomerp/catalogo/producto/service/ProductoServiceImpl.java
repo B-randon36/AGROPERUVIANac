@@ -95,10 +95,9 @@ public class ProductoServiceImpl implements ProductoService {
     @Override
     @Transactional
     public void descontarStock(Long id, Integer cantidad) {
-        if (cantidad == null || cantidad <= 0) {
-            return;
-        }
-        // Bloqueo pesimista para evitar carreras entre ventas simultáneas
+        // [RN-VEN-01] Control Atómico de Existencias con Bloqueo Pesimista (SELECT FOR UPDATE):
+        // Garantiza aislamiento serializable ante ventas concurrentes en mostrador o delivery.
+        // Si el stock actual es insuficiente, aborta la transacción lanzando BusinessConflictException.
         Producto producto = productoRepository.findByIdForUpdate(id)
                 .or(() -> productoRepository.findById(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
@@ -121,7 +120,10 @@ public class ProductoServiceImpl implements ProductoService {
     @Override
     @Transactional
     public void restaurarStock(Long id, Integer cantidad) {
-        Producto producto = productoRepository.findById(id)
+        // [RN-VEN-09] Restitución Atómica de Existencias por Anulación de Venta:
+        // Suma de vuelta la cantidad exacta vendida al inventario general del producto en catálogo.
+        Producto producto = productoRepository.findByIdForUpdate(id)
+                .or(() -> productoRepository.findById(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
 
         producto.setStock(producto.getStock() + cantidad);

@@ -58,6 +58,9 @@ public class CuentaPorCobrarServiceImpl implements CuentaPorCobrarService {
     @Override
     @Transactional
     public CuentaPorCobrarResponse registrarCredito(CrearCreditoRequest req) {
+        // [RN-FIN-08] Cuentas por Cobrar a Crédito Comercial:
+        // Registra la obligación de pago para ventas mayoristas. Define plazo (por defecto 30 días, hasta 60 días),
+        // inicializa el saldo pendiente al 100% del monto total y asigna estado inicial PENDIENTE.
         String codigo = req.getCodigo();
         if (codigo == null || codigo.isBlank()) {
             long total = cuentaRepository.count() + 1;
@@ -98,6 +101,10 @@ public class CuentaPorCobrarServiceImpl implements CuentaPorCobrarService {
     @Override
     @Transactional
     public CuentaPorCobrarDetalleResponse registrarAbono(Long creditoId, RegistrarAbonoRequest req) {
+        // [RN-FIN-08] Amortización y Liquidación de Crédito:
+        // 1. Valida que el monto no exceda el saldo pendiente ni sea menor o igual a cero.
+        // 2. Transiciona a PAGADO_PARCIAL o PAGADO_TOTAL según el remanente.
+        // 3. Impacta automáticamente como INGRESO en la sesión de caja activa del cajero.
         CuentaPorCobrar cuenta = buscarCuentaOFallar(creditoId);
 
         if (cuenta.getEstado() == EstadoCredito.PAGADO_TOTAL) {

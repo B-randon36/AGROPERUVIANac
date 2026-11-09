@@ -80,6 +80,9 @@ public class FinanzasApiImpl implements FinanzasApi {
     @Override
     @Transactional
     public Long registrarIngresoVentaPos(BigDecimal monto, MetodoPago metodoPago, String numeroTicket, String clienteNombre, Long sesionCajaId, String cajeroId) {
+        // [RN-VEN-10] / [RN-FIN-01] Vinculación Financiera de Venta POS:
+        // Si el pago es en EFECTIVO, es obligatorio contar con un turno de caja ABIERTO para ingresar el dinero a gaveta.
+        // Si no existe sesión abierta, se bloquea la transacción con BusinessConflictException.
         if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
             return null;
         }
@@ -114,6 +117,7 @@ public class FinanzasApiImpl implements FinanzasApi {
             );
         }
 
+        // Asentar ingreso en la gaveta del cajero
         if (sesionDestino != null) {
             MovimientoCajaRequest movReq = MovimientoCajaRequest.builder()
                     .tipo(TipoFinanciero.INGRESO)
@@ -127,6 +131,7 @@ public class FinanzasApiImpl implements FinanzasApi {
             movimientoId = resp.getId();
         }
 
+        // Asentar transacción contable general en el libro diario de Finanzas
         TransaccionFinanciera trx = new TransaccionFinanciera();
         trx.setCodigo(generarCodigoUnico("TRX-VTA", numeroTicket));
         trx.setConcepto(truncar("Venta POS " + numeroTicket + " - " + (clienteNombre != null ? clienteNombre : "Cliente General"), 195));
@@ -153,6 +158,9 @@ public class FinanzasApiImpl implements FinanzasApi {
             BigDecimal montoTotal,
             Integer diasCredito) {
 
+        // [RN-VEN-10] / [RN-FIN-08] Generación Automática de Cuentas por Cobrar a Crédito:
+        // Para clientes mayoristas con crédito comercial (15 a 60 días), no afecta la caja física
+        // sino que crea un título de cobro en estado PENDIENTE con su respectiva fecha límite.
         int plazoDias = (diasCredito != null && diasCredito > 0) ? diasCredito : 30;
         LocalDate hoy = LocalDate.now();
         String codigoCredito = truncar("CRE-" + numeroTicket, 48);
@@ -193,6 +201,11 @@ public class FinanzasApiImpl implements FinanzasApi {
     @Override
     @Transactional
     public void revertirVentaPos(String numeroTicket, BigDecimal monto, MetodoPago metodoPago, boolean eraCredito, Long sesionCajaId) {
+        // [RN-FIN-02] / [RN-FIN-07] Trazabilidad Contable e Inmutabilidad de Turnos Sellados:
+        // 1. Marca la transacción contable original de la venta como ANULADO.
+        // 2. Si era crédito, elimina o anula el título de cuenta por cobrar.
+        // 3. Si la venta se cobró en una caja que YA FUE CERRADA, se respeta la inmutabilidad del turno cerrado (RN-FIN-02)
+        //    y se aplica el extorno al turno abierto actual o se emite una transacción de ajuste compensatorio EXTORNO_POS (RN-FIN-07).
         if (numeroTicket == null) {
             return;
         }
