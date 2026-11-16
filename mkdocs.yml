@@ -1,0 +1,93 @@
+site_name: AGROPERUVIAN
+site_description: Documentación técnica y funcional del ERP Agro Peruvian Foods
+site_author: Equipo Agro Peruvian Foods
+repo_url: https://github.com/B-randon36/AGROPERUVIANac
+repo_name: B-randon36/AGROPERUVIANac
+edit_uri: ''
+use_directory_urls: false
+theme:
+  name: material
+  language: es
+  font: false
+  logo: assets/marca.svg
+  favicon: assets/marca.svg
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: green
+      accent: green
+      toggle:
+        icon: material/weather-night
+        name: Cambiar a modo oscuro
+    - scheme: slate
+      primary: green
+      accent: light green
+      toggle:
+        icon: material/weather-sunny
+        name: Cambiar a modo claro
+plugins:
+  - search:
+      lang: es
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+extra_css:
+  - assets/extra.css
+extra:
+  generator: false
+copyright: Agro Peruvian Foods · Documentación del proyecto integrador · Base 41bd74a
+nav:
+  - Inicio:
+      - Presentación: index.md
+      - Guía de lectura: guia/lectura.md
+  - Proyecto:
+      - Problema y alcance: proyecto/alcance.md
+      - Equipo y aportes: proyecto/equipo.md
+      - Módulos: proyecto/modulos.md
+      - Reglas de negocio: proyecto/reglas.md
+      - Limitaciones: proyecto/limitaciones.md
+      - Fuentes y versión: proyecto/fuentes.md
+  - Guía de uso:
+      - Instalación en VS Code: guia/instalacion.md
+      - Recorrido del sistema: guia/uso.md
+      - Publicar con GitHub Pages: guia/publicacion.md
+  - ADS:
+      - Arquitectura C4: ads/arquitectura.md
+      - Modelo de dominio: ads/dominio.md
+      - Catálogo UML: ads/uml.md
+      - Patrones: ads/patrones.md
+      - Decisiones y ADR: ads/adrs.md
+  - BD2:
+      - Datos y entidades: bd2/datos.md
+      - Preparación Oracle: bd2/oracle.md
+      - Operación y recuperación: bd2/operacion.md
+  - LP2:
+      - Backend REST: lp2/backend.md
+      - Frontend Angular: lp2/frontend.md
+      - Catálogo de API: lp2/api.md
+      - Seguridad: lp2/seguridad.md
+      - Ambientes y despliegue: lp2/despliegue.md
+  - Evidencias:
+      - Plan de pruebas: evidencias/pruebas.md
+      - Trazabilidad: evidencias/trazabilidad.md
+      - Checklist final: evidencias/checklist.md
+      - Sustentación: evidencias/sustentacion.md
