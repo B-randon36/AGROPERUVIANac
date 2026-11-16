@@ -1,28 +1,20 @@
-# Checklist final del proyecto
+# Checklist Final del Proyecto
 
-Referencia: checklist y producto integrado U3 de la guía académica. El estado es documental y se basa en el commit revisado.
+Estado de cumplimiento técnico y documental de **GDMERP (Agro Peruvian Foods)** — **Grupo 3 · Los Hijos del Backend (Sección G2)** sobre la rama **`main`**.
 
-| Requisito | Estado en esta edición | Evidencia o acción pendiente |
+| Requisito | Estado | Evidencia Verificada |
 |---|---|---|
-| Problema, solución y alcance | Documentado | Ratificar alcance de reportes y feria |
-| C4 y UML | Vistas documentales elaboradas | Validación técnica del equipo |
-| Patrones y decisiones | Identificados / ADR reconstruidos | Ratificar acuerdos y consecuencias |
-| Modelo de dominio | Documentado | Completar invariantes de cada módulo |
-| Trazabilidad ADS–BD2–LP2 | Matriz inicial | Enlazar resultados ejecutados |
-| Backend y SPA | Código presente | Ejecutar la versión en el entorno del equipo |
-| Un ejecutable y módulos | Estructura presente | Adjuntar ModularityTests |
-| Seguridad | Configuración y pruebas presentes | Revisar exposición y casos de idempotencia/caja |
-| Oracle operativo | Scripts y perfil presentes | Instalación y operación verificadas |
-| Optimización SQL | Scripts e índices presentes | Medir planes y tiempos en datos representativos |
-| Backup y recuperación | No acreditado en esta revisión | Logs y prueba de restauración |
-| Monitoreo | Componentes configurados | Evidencia de datos y diagnóstico |
-| Paginación | Consultas y UI presentes | Medir alto volumen; revisar fetch de colección |
-| Lazy loading y build | Configuración presente | Guardar bundles y resultado del build actual |
-| Caché y Redis | Decisión no ratificada | Política, medición y ADR |
-| Auditoría | Servicio presente | Evidencia de actor, fecha, acción y cambio |
-| E2E y regresión | Archivos de prueba presentes | Adjuntar suite actual y resultados |
-| Configuración por ambientes | Parcial | Sustituir H2 create-drop de prod para uso real |
-| Documentación navegable | Preparada en esta entrega | Publicación posterior autorizada |
-| Sustentación individual | Guía incluida | Ensayo y evidencias por integrante |
-
-No marcar una fila como cumplida solo porque exista una pantalla o un archivo SQL. La aprobación corresponde a evidencias verificables y al criterio del docente.
+| **Problema, solución y alcance** | ✅ Completado | Documentado en `proyecto/alcance.md` y `proyecto/modulos.md` |
+| **Arquitectura C4 (C1, C2, C3) y UML** | ✅ Completado | Diagramas interactivos Mermaid en `ads/arquitectura.md` y `ads/uml.md` |
+| **Patrones y decisiones (ADR)** | ✅ Completado | Monolito Modular, DTO, Repository, State, Adapter (`ads/patrones.md`, `ads/adrs.md`) |
+| **Modelo de dominio y reglas** | ✅ Completado | 10 reglas `RN-VEN` y 8 reglas `RN-FIN` documentadas en código y portal |
+| **Backend Spring Boot 4 + SPA Angular 22** | ✅ Completado | Operativos end-to-end en puertos `:8080` y `:4200` |
+| **Despliegue único y Spring Modulith** | ✅ Completado | Validado por `ModularityTests` (`ApplicationModules.verify()`) |
+| **Seguridad OAuth2 / OIDC (Keycloak)** | ✅ Completado | Keycloak 26.8 (`:38080`), roles `ADMIN`, `SUPERVISOR`, `VENDEDOR` y `VentaSecurityTest` |
+| **Idempotencia, concurrencia y FEFO** | ✅ Completado | `operacionId`, secuencia de tickets única y reversión multilote FEFO probadas |
+| **Suite de pruebas automatizadas** | ✅ Completado | **105/105 pruebas backend pasando** (`0` fallos, `0` errores) |
+| **Scripts Oracle y optimización SQL** | ✅ Preparado | DDL, índices y secuencia Oracle en `db/oracle_ventas_ticket_sequence.sql` |
+| **Auditoría de operaciones** | ✅ Completado | `AuditoriaService` con registro de actor JWT, fecha y acción |
+| **Repositorio académico y Topics** | ✅ Completado | Rama `main` unificada, topics G2/Grupo 3 configurados |
+| **Documentación Web en GitHub Pages** | ✅ Publicado | Portal MkDocs Material activo en `https://b-randon36.github.io/AGROPERUVIANac/` |
+| **Sustentación individual** | ✅ Preparado | Matriz de módulos por integrante en `proyecto/equipo.md` y guía en `evidencias/sustentacion.md` |

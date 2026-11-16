@@ -1,25 +1,22 @@
-# Fuentes, versión y mantenimiento
+# Fuentes, Versión y Mantenimiento
 
-La referencia técnica de esta edición es el commit [`41bd74a`](https://github.com/B-randon36/AGROPERUVIANac/commit/41bd74a00342e5b28bb793a9bdc7221e3919fc3a) de `ventas_avance`. Las páginas enlazan archivos de esa versión; cambios posteriores requieren actualizar la documentación.
+La documentación corresponde al estado consolidado del repositorio en la rama oficial **`main`** de [AGROPERUVIANac](https://github.com/B-randon36/AGROPERUVIANac). Todas las rutas y enlaces apuntan directamente al código fuente vigente en `main`.
 
-## Referencia académica
+## Referencia Académica
 
-- [Portal BOM ERP](https://262ciclo4.github.io/bomerp/).
-- [Producto integrado U3](https://262ciclo4.github.io/bomerp/proyecto-integrador/u3/).
-- [Checklist final](https://262ciclo4.github.io/bomerp/proyecto-integrador/u3/checklist-final/).
+- [Portal BOM ERP](https://262ciclo4.github.io/bomerp/)
+- [Producto integrado U3](https://262ciclo4.github.io/bomerp/proyecto-integrador/u3/)
+- [Checklist final](https://262ciclo4.github.io/bomerp/proyecto-integrador/u3/checklist-final/)
 
-El contenido propio adapta la estructura al dominio Agro Peruvian Foods. Los requisitos académicos se resumen; no se presenta una copia íntegra del material docente.
+## Fuentes de Implementación
 
-## Fuentes de implementación
+La documentación está sincronizada directamente con los archivos del código fuente:
+- Configuración y dependencias: `backend/pom.xml`, `bomerp-frontend/package.json`, `backend/compose-dev.yml`
+- Reglas de negocio en código (`RN-VEN-01..10` y `RN-FIN-01..08`): `VentaServiceImpl.java`, `ProductoServiceImpl.java`, `InventarioServiceImpl.java`, `SesionCajaServiceImpl.java`, `CuentaPorCobrarServiceImpl.java`, `FinanzasApiImpl.java`, `VentaController.java`
+- Suite de pruebas: `VentaServiceTest.java`, `VentaSecurityTest.java`, `VentaPersistenciaTest.java`, `VentaEndToEndTest.java`, `SesionCajaServiceTest.java`, `ModularityTests.java`
 
-El POM, package.json, controladores, entidades, servicios, configuración y pruebas tienen prioridad para describir lo que el programa contiene. El README y el brief aportan contexto, responsables y alcance declarado. Cuando difieren, se registra la diferencia.
+## Flujo de Actualización
 
-## Actualización de una página
-
-1. Identificar commit y módulo afectado.
-2. Revisar su código, contrato y permisos.
-3. Actualizar diagrama, regla y fila de trazabilidad.
-4. Adjuntar ejecución de pruebas si se afirma funcionamiento.
-5. Ejecutar `python -m mkdocs build --strict`.
-
-No publicar tokens, contraseñas, datos de clientes o capturas de sesiones reales como evidencias académicas.
+1. Editar los archivos Markdown en la carpeta `docs/`.
+2. Hacer commit y push hacia la rama `main`.
+3. El flujo de GitHub Actions compila el sitio con `mkdocs build --strict` y publica automáticamente los cambios en la rama `gh-pages`.

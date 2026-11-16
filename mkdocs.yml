@@ -1,6 +1,6 @@
-site_name: AGROPERUVIAN
-site_description: Documentación técnica y funcional del ERP Agro Peruvian Foods
-site_author: Equipo Agro Peruvian Foods
+site_name: AGROPERUVIAN · GDMERP
+site_description: Documentación técnica y funcional del ERP Agro Peruvian Foods — Grupo 3 Los Hijos del Backend (Sección G2)
+site_author: Grupo 3 · Los Hijos del Backend (Sección G2)
 repo_url: https://github.com/B-randon36/AGROPERUVIANac
 repo_name: B-randon36/AGROPERUVIANac
 edit_uri: ''
@@ -43,7 +43,11 @@ markdown_extensions:
   - toc:
       permalink: true
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
@@ -54,7 +58,7 @@ extra_css:
   - assets/extra.css
 extra:
   generator: false
-copyright: Agro Peruvian Foods · Documentación del proyecto integrador · Base 41bd74a
+copyright: Agro Peruvian Foods (GDMERP) · Grupo 3 Los Hijos del Backend · Sección G2 · Rama main
 nav:
   - Inicio:
       - Presentación: index.md

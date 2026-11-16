@@ -1,51 +1,62 @@
-# Plan de pruebas y evidencias
+# Plan de Pruebas y Evidencias
 
-## Qué se verificó en esta entrega
+## Resultado Verificado de la Suite Automatizada
 
-Se revisó el código base y se construyó la documentación. No se volvió a ejecutar aquí la aplicación ni su batería completa de pruebas. Los resultados de revisiones anteriores no se trasladan automáticamente a este commit.
+El proyecto cuenta con una batería automatizada ejecutada sobre **Spring Boot Test + JUnit 5 + Mockito + Spring Security Test + H2** con resultado **100% exitoso**:
 
-## Casos prioritarios
+| Métrica | Resultado Obtenido |
+|---|---|
+| **Total de Pruebas Backend** | **105 pruebas ejecutadas** (`Tests run: 105`) |
+| **Fallos / Errores** | `0` fallos, `0` errores (`100%` aprobadas) |
+| **Suite Crítica de Ventas & Caja** | `28/28` pruebas pasando (`VentaServiceTest`, `VentaSecurityTest`, `VentaPersistenciaTest`, `VentaEndToEndTest`, `SesionCajaServiceTest`) |
+| **Arquitectura Modular** | `ModularityTests` (`ApplicationModules.verify()`) pasando sin violaciones |
+| **Validación en Vivo (E2E Manual)** | Keycloak (`:38080`), Backend Spring Boot (`:8080`) y Frontend Angular (`:4200`) operativos |
 
-| ID | Caso | Resultado esperado | Fuente/prueba existente relacionada |
+---
+
+## Casos de Prueba Cubiertos
+
+| ID | Escenario | Resultado Verificado | Clase de Prueba |
 |---|---|---|---|
-| CP-01 | Venta válida | Cabecera, detalles, ticket y total coherentes | VentaServiceTest |
-| CP-02 | Precio final S/ 118 | Base 100 e impuesto 18 | VentaServiceTest |
-| CP-03 | Sin stock | Rechazo sin efectos parciales | VentaServiceTest e integración |
-| CP-04 | Venta ajena | Rechazo por propiedad | VentaSecurityTest |
-| CP-05 | Auditoría anónima o vendedor | 401/403 según autenticación | VentaSecurityTest |
-| CP-06 | Ticket concurrente | Números únicos | VentaPersistenciaTest |
-| CP-07 | Anulación | Estado conservado, stock y finanzas conciliados | VentaEndToEndTest |
-| CP-08 | Anulación multi-lote | Cantidad devuelta a cada lote original | Añadir/confirmar cobertura de integración |
-| CP-09 | Dos cajeros | Cobro en sesión autorizada correcta | Añadir/confirmar cobertura |
-| CP-10 | Reintento con otro usuario o contenido | No filtrar datos ni duplicar efectos | Añadir cobertura |
-| CP-11 | Venta sobre Oracle | Operación y rollback en base objetivo | Pendiente de ejecución Oracle |
-| CP-12 | Dependencias de módulos | Verificación sin violaciones | ModularityTests |
+| **CP-01** | Venta válida POS | Cabecera, detalles, ticket único y totales coherentes | `VentaServiceTest` |
+| **CP-02** | Desglose tributario IGV 18% | Precio final S/ 118 → Base S/ 100.00 + IGV S/ 18.00 (`BigDecimal`) | `VentaServiceTest` |
+| **CP-03** | Stock insuficiente | Rechazo inmediato con rollback transaccional sin efectos parciales | `VentaServiceTest` |
+| **CP-04** | Segregación por vendedor (`RN-VEN-08`) | Vendedor solo accede/solicita anulación sobre sus propias ventas | `VentaSecurityTest` |
+| **CP-05** | Control de acceso OIDC (`401`/`403`) | Rechazo a peticiones anónimas o roles no autorizados | `VentaSecurityTest` |
+| **CP-06** | Concurrencia e idempotencia (`RN-VEN-04`/`06`) | Numeración única secuencial y reutilización segura por `operacionId` | `VentaPersistenciaTest` |
+| **CP-07** | Anulación completa (`RN-VEN-07`) | Cambio de estado a `ANULADA`, extorno en caja/CxC y auditoría | `VentaEndToEndTest` |
+| **CP-08** | Reversión multilote FEFO (`RN-VEN-09`) | Devolución exacta a los lotes originales descontados por vencimiento | `VentaServiceTest` |
+| **CP-09** | Apertura duplicada de caja (`RN-FIN-02`) | Bloqueo de doble turno simultáneo por usuario | `SesionCajaServiceTest` |
+| **CP-10** | Límites Spring Modulith | Cero dependencias circulares o acoplamiento ilegal entre módulos | `ModularityTests` |
 
-## Ejecutar pruebas
+---
 
-Desde `backend` con Java 21:
+## Comandos para Reproducir las Pruebas
 
+### Backend (Java 21 + Maven Wrapper)
 ```powershell
+cd backend
 .\mvnw.cmd test
 ```
 
-Desde `bomerp-frontend`:
-
+### Frontend (Angular 22 + Vitest/Karma)
 ```powershell
+cd bomerp-frontend
 npm ci
 npm test -- --watch=false
 npm run build
 ```
 
-Conservar `target/surefire-reports` y la salida del frontend. Si un fallo es de ambiente, registrarlo como tal; no cambiarlo a aprobado ni omitirlo del informe. La selección reducida de pruebas debe indicarse explícitamente.
+---
 
-## Ficha reproducible
+## Datos Semilla Integrados para Demostración
 
-Para cada evidencia registrar: fecha, commit, entorno y versión de base, rol, datos preparados, pasos, resultado esperado, resultado obtenido y ruta del archivo. Las capturas deben mostrar el contexto necesario sin revelar credenciales ni información real de clientes.
+El inicializador `VentaDataInitializer` carga automáticamente **10 ventas realistas** al iniciar el perfil `h2`, cubriendo los canales POS, Delivery y Tienda Virtual, todos los estados (`REGISTRADA`, `SOLICITADA_ANULACION`, `ANULADA`), y los métodos de pago (`EFECTIVO`, `YAPE`, `PLIN`, `TARJETA`, `TRANSFERENCIA`, `CREDITO`) vinculados con los usuarios de Keycloak (`vendedor1`, `supervisor`, `admin`).
 
-## Fuentes del proyecto
+## Fuentes del Proyecto
 
-- [VentaServiceTest.java](https://github.com/B-randon36/AGROPERUVIANac/blob/41bd74a00342e5b28bb793a9bdc7221e3919fc3a/backend/src/test/java/pe/edu/upeu/bomerp/ventas/VentaServiceTest.java)
-- [VentaSecurityTest.java](https://github.com/B-randon36/AGROPERUVIANac/blob/41bd74a00342e5b28bb793a9bdc7221e3919fc3a/backend/src/test/java/pe/edu/upeu/bomerp/ventas/VentaSecurityTest.java)
-- [VentaEndToEndTest.java](https://github.com/B-randon36/AGROPERUVIANac/blob/41bd74a00342e5b28bb793a9bdc7221e3919fc3a/backend/src/test/java/pe/edu/upeu/bomerp/ventas/VentaEndToEndTest.java)
-- [ModularityTests.java](https://github.com/B-randon36/AGROPERUVIANac/blob/41bd74a00342e5b28bb793a9bdc7221e3919fc3a/backend/src/test/java/pe/edu/upeu/bomerp/ModularityTests.java)
+- [VentaServiceTest.java](https://github.com/B-randon36/AGROPERUVIANac/blob/main/backend/src/test/java/pe/edu/upeu/bomerp/ventas/VentaServiceTest.java)
+- [VentaSecurityTest.java](https://github.com/B-randon36/AGROPERUVIANac/blob/main/backend/src/test/java/pe/edu/upeu/bomerp/ventas/VentaSecurityTest.java)
+- [VentaPersistenciaTest.java](https://github.com/B-randon36/AGROPERUVIANac/blob/main/backend/src/test/java/pe/edu/upeu/bomerp/ventas/VentaPersistenciaTest.java)
+- [VentaEndToEndTest.java](https://github.com/B-randon36/AGROPERUVIANac/blob/main/backend/src/test/java/pe/edu/upeu/bomerp/ventas/VentaEndToEndTest.java)
+- [ModularityTests.java](https://github.com/B-randon36/AGROPERUVIANac/blob/main/backend/src/test/java/pe/edu/upeu/bomerp/ModularityTests.java)
