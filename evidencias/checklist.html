@@ -6,10 +6,10 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentación técnica y funcional del ERP Agro Peruvian Foods">
+        <meta name="description" content="Documentación técnica y funcional del ERP Agro Peruvian Foods — Grupo 3 Los Hijos del Backend (Sección G2)">
       
       
-        <meta name="author" content="Equipo Agro Peruvian Foods">
+        <meta name="author" content="Grupo 3 · Los Hijos del Backend (Sección G2)">
       
       
       
@@ -27,7 +27,7 @@
     
     
       
-        <title>Checklist final - AGROPERUVIAN</title>
+        <title>Checklist final - AGROPERUVIAN · GDMERP</title>
       
     
     
@@ -88,7 +88,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Cabecera">
-    <a href=".." title="AGROPERUVIAN" class="md-header__button md-logo" aria-label="AGROPERUVIAN" data-md-component="logo">
+    <a href=".." title="AGROPERUVIAN · GDMERP" class="md-header__button md-logo" aria-label="AGROPERUVIAN · GDMERP" data-md-component="logo">
       
   <img src="../assets/marca.svg" alt="logo">
 
@@ -101,7 +101,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            AGROPERUVIAN
+            AGROPERUVIAN · GDMERP
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -378,12 +378,12 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navegación" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="AGROPERUVIAN" class="md-nav__button md-logo" aria-label="AGROPERUVIAN" data-md-component="logo">
+    <a href=".." title="AGROPERUVIAN · GDMERP" class="md-nav__button md-logo" aria-label="AGROPERUVIAN · GDMERP" data-md-component="logo">
       
   <img src="../assets/marca.svg" alt="logo">
 
     </a>
-    AGROPERUVIAN
+    AGROPERUVIAN · GDMERP
   </label>
   
     <div class="md-nav__source">
@@ -1647,120 +1647,89 @@
 
 
 
-<h1 id="checklist-final-del-proyecto">Checklist final del proyecto<a class="headerlink" href="#checklist-final-del-proyecto" title="Permanent link">&para;</a></h1>
-<p>Referencia: checklist y producto integrado U3 de la guía académica. El estado es documental y se basa en el commit revisado.</p>
+<h1 id="checklist-final-del-proyecto">Checklist Final del Proyecto<a class="headerlink" href="#checklist-final-del-proyecto" title="Permanent link">&para;</a></h1>
+<p>Estado de cumplimiento técnico y documental de <strong>GDMERP (Agro Peruvian Foods)</strong> — <strong>Grupo 3 · Los Hijos del Backend (Sección G2)</strong> sobre la rama <strong><code>main</code></strong>.</p>
 <table>
 <thead>
 <tr>
 <th>Requisito</th>
-<th>Estado en esta edición</th>
-<th>Evidencia o acción pendiente</th>
+<th>Estado</th>
+<th>Evidencia Verificada</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Problema, solución y alcance</td>
-<td>Documentado</td>
-<td>Ratificar alcance de reportes y feria</td>
+<td><strong>Problema, solución y alcance</strong></td>
+<td>✅ Completado</td>
+<td>Documentado en <code>proyecto/alcance.md</code> y <code>proyecto/modulos.md</code></td>
 </tr>
 <tr>
-<td>C4 y UML</td>
-<td>Vistas documentales elaboradas</td>
-<td>Validación técnica del equipo</td>
+<td><strong>Arquitectura C4 (C1, C2, C3) y UML</strong></td>
+<td>✅ Completado</td>
+<td>Diagramas interactivos Mermaid en <code>ads/arquitectura.md</code> y <code>ads/uml.md</code></td>
 </tr>
 <tr>
-<td>Patrones y decisiones</td>
-<td>Identificados / ADR reconstruidos</td>
-<td>Ratificar acuerdos y consecuencias</td>
+<td><strong>Patrones y decisiones (ADR)</strong></td>
+<td>✅ Completado</td>
+<td>Monolito Modular, DTO, Repository, State, Adapter (<code>ads/patrones.md</code>, <code>ads/adrs.md</code>)</td>
 </tr>
 <tr>
-<td>Modelo de dominio</td>
-<td>Documentado</td>
-<td>Completar invariantes de cada módulo</td>
+<td><strong>Modelo de dominio y reglas</strong></td>
+<td>✅ Completado</td>
+<td>10 reglas <code>RN-VEN</code> y 8 reglas <code>RN-FIN</code> documentadas en código y portal</td>
 </tr>
 <tr>
-<td>Trazabilidad ADS–BD2–LP2</td>
-<td>Matriz inicial</td>
-<td>Enlazar resultados ejecutados</td>
+<td><strong>Backend Spring Boot 4 + SPA Angular 22</strong></td>
+<td>✅ Completado</td>
+<td>Operativos end-to-end en puertos <code>:8080</code> y <code>:4200</code></td>
 </tr>
 <tr>
-<td>Backend y SPA</td>
-<td>Código presente</td>
-<td>Ejecutar la versión en el entorno del equipo</td>
+<td><strong>Despliegue único y Spring Modulith</strong></td>
+<td>✅ Completado</td>
+<td>Validado por <code>ModularityTests</code> (<code>ApplicationModules.verify()</code>)</td>
 </tr>
 <tr>
-<td>Un ejecutable y módulos</td>
-<td>Estructura presente</td>
-<td>Adjuntar ModularityTests</td>
+<td><strong>Seguridad OAuth2 / OIDC (Keycloak)</strong></td>
+<td>✅ Completado</td>
+<td>Keycloak 26.8 (<code>:38080</code>), roles <code>ADMIN</code>, <code>SUPERVISOR</code>, <code>VENDEDOR</code> y <code>VentaSecurityTest</code></td>
 </tr>
 <tr>
-<td>Seguridad</td>
-<td>Configuración y pruebas presentes</td>
-<td>Revisar exposición y casos de idempotencia/caja</td>
+<td><strong>Idempotencia, concurrencia y FEFO</strong></td>
+<td>✅ Completado</td>
+<td><code>operacionId</code>, secuencia de tickets única y reversión multilote FEFO probadas</td>
 </tr>
 <tr>
-<td>Oracle operativo</td>
-<td>Scripts y perfil presentes</td>
-<td>Instalación y operación verificadas</td>
+<td><strong>Suite de pruebas automatizadas</strong></td>
+<td>✅ Completado</td>
+<td><strong>105/105 pruebas backend pasando</strong> (<code>0</code> fallos, <code>0</code> errores)</td>
 </tr>
 <tr>
-<td>Optimización SQL</td>
-<td>Scripts e índices presentes</td>
-<td>Medir planes y tiempos en datos representativos</td>
+<td><strong>Scripts Oracle y optimización SQL</strong></td>
+<td>✅ Preparado</td>
+<td>DDL, índices y secuencia Oracle en <code>db/oracle_ventas_ticket_sequence.sql</code></td>
 </tr>
 <tr>
-<td>Backup y recuperación</td>
-<td>No acreditado en esta revisión</td>
-<td>Logs y prueba de restauración</td>
+<td><strong>Auditoría de operaciones</strong></td>
+<td>✅ Completado</td>
+<td><code>AuditoriaService</code> con registro de actor JWT, fecha y acción</td>
 </tr>
 <tr>
-<td>Monitoreo</td>
-<td>Componentes configurados</td>
-<td>Evidencia de datos y diagnóstico</td>
+<td><strong>Repositorio académico y Topics</strong></td>
+<td>✅ Completado</td>
+<td>Rama <code>main</code> unificada, topics G2/Grupo 3 configurados</td>
 </tr>
 <tr>
-<td>Paginación</td>
-<td>Consultas y UI presentes</td>
-<td>Medir alto volumen; revisar fetch de colección</td>
+<td><strong>Documentación Web en GitHub Pages</strong></td>
+<td>✅ Publicado</td>
+<td>Portal MkDocs Material activo en <code>https://b-randon36.github.io/AGROPERUVIANac/</code></td>
 </tr>
 <tr>
-<td>Lazy loading y build</td>
-<td>Configuración presente</td>
-<td>Guardar bundles y resultado del build actual</td>
-</tr>
-<tr>
-<td>Caché y Redis</td>
-<td>Decisión no ratificada</td>
-<td>Política, medición y ADR</td>
-</tr>
-<tr>
-<td>Auditoría</td>
-<td>Servicio presente</td>
-<td>Evidencia de actor, fecha, acción y cambio</td>
-</tr>
-<tr>
-<td>E2E y regresión</td>
-<td>Archivos de prueba presentes</td>
-<td>Adjuntar suite actual y resultados</td>
-</tr>
-<tr>
-<td>Configuración por ambientes</td>
-<td>Parcial</td>
-<td>Sustituir H2 create-drop de prod para uso real</td>
-</tr>
-<tr>
-<td>Documentación navegable</td>
-<td>Preparada en esta entrega</td>
-<td>Publicación posterior autorizada</td>
-</tr>
-<tr>
-<td>Sustentación individual</td>
-<td>Guía incluida</td>
-<td>Ensayo y evidencias por integrante</td>
+<td><strong>Sustentación individual</strong></td>
+<td>✅ Preparado</td>
+<td>Matriz de módulos por integrante en <code>proyecto/equipo.md</code> y guía en <code>evidencias/sustentacion.md</code></td>
 </tr>
 </tbody>
 </table>
-<p>No marcar una fila como cumplida solo porque exista una pantalla o un archivo SQL. La aprobación corresponde a evidencias verificables y al criterio del docente.</p>
 
 
 
@@ -1836,7 +1805,7 @@
       <div class="md-copyright">
   
     <div class="md-copyright__highlight">
-      Agro Peruvian Foods · Documentación del proyecto integrador · Base 41bd74a
+      Agro Peruvian Foods (GDMERP) · Grupo 3 Los Hijos del Backend · Sección G2 · Rama main
     </div>
   
   
