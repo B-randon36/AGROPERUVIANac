@@ -10,53 +10,13 @@ La composición entre `Venta` y `DetalleVenta` garantiza el ciclo de vida conjun
 
 ## Diagrama de Secuencia · Registro de Venta POS
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor V as Vendedor (Angular SPA)
-    participant S as Spring Security (JWT)
-    participant C as VentaController
-    participant VS as VentaServiceImpl
-    participant T as NumeroTicketService
-    participant I as InventarioService (FEFO)
-    participant F as FinanzasApiImpl
-    participant R as VentaRepository
-
-    V->>S: POST /api/v1/ventas (VentaRequest + Bearer JWT)
-    S->>S: Valida firma OIDC y rol VENDEDOR/ADMIN
-    S->>C: Petición autenticada
-    C->>VS: registrarVenta(request, jwt.sub)
-    VS->>R: findByOperacionId(request.operacionId)
-    alt Venta ya registrada (Idempotencia RN-VEN-06)
-        R-->>VS: Venta existente
-        VS-->>C: VentaResponse existente
-    else Nueva operación
-        VS->>T: generarSiguienteNumero()
-        T-->>VS: Ticket único (ej. T001-000015)
-        VS->>I: descontarStockFEFO(producto, cantidad, ticket)
-        I-->>VS: Lotes asignados por vencimiento próximo
-        VS->>VS: Desglosa Base e IGV 18% (BigDecimal)
-        VS->>R: save(Venta + DetalleVenta)
-        VS->>F: registrarIngresoVenta(venta, sesionCaja)
-        F-->>VS: MovimientoCaja o CuentaPorCobrar
-        VS-->>C: VentaResponse (201 Created)
-    end
-    C-->>V: JSON con ticket listo para impresión 80mm
-```
+![UML · Diagrama de Secuencia: Registro de Venta POS](../assets/secuencia.svg)
 
 ---
 
 ## Máquina de Estados de la Venta (`EstadoVenta`)
 
-```mermaid
-stateDiagram-v2
-    [*] --> REGISTRADA: Venta confirmada (POS / Delivery / Web)
-    REGISTRADA --> SOLICITADA_ANULACION: Vendedor solicita anulación con motivo
-    REGISTRADA --> ANULADA: Admin/Supervisor anula directamente
-    SOLICITADA_ANULACION --> ANULADA: Admin/Supervisor aprueba anulación<br/>(Reversión FEFO + Extornos en Caja/CxC)
-    SOLICITADA_ANULACION --> REGISTRADA: Admin/Supervisor rechaza solicitud
-    ANULADA --> [*]: Estado terminal inmutable (RN-VEN-07)
-```
+![UML · Máquina de Estados de la Venta](../assets/estados.svg)
 
 ### Reglas de Transición
 - **Idempotencia (`RN-VEN-06`):** Si el cliente reenvía un `operacionId` ya procesado (por reconexión o doble clic), el servicio retorna la venta original sin duplicar ticket, stock ni movimientos de caja.

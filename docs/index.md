@@ -22,7 +22,7 @@
 
 - **ADS · Arquitectura y Diseño C4**
 
-    Diagramas interactivos en Mermaid de Contexto (C1), Contenedores (C2), Componentes (C3), secuencia UML y ADRs.
+    Diagramas vectoriales SVG de Contexto (C1), Contenedores (C2), Componentes (C3), secuencia UML, estados y ADRs.
 
     [Explorar arquitectura](ads/arquitectura.md)
 

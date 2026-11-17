@@ -1,1 +1,67 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 530" role="img" aria-label="UML · Estados de la venta"><defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#60766b" stroke-width="1.5"/></marker></defs><rect width="1040" height="530" rx="20" fill="#f2f7f3"/><text x="36" y="40" font-family="Arial,sans-serif" font-size="23" font-weight="700" fill="#153e31">UML · Estados de la venta</text><text x="36" y="66" font-family="Arial,sans-serif" font-size="14" fill="#4e655b">El control de rol se realiza en seguridad; la reversión ocurre en el servicio.</text><path d="M330,175.0 L675,175.0" stroke="#60766b" stroke-width="1.7" marker-end="url(#arrow)" fill="none"/><rect x="412.5" y="163.0" width="180" height="23" rx="6" fill="#f2f7f3"/><text x="502.5" y="179.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#415b4d">Solicitar anulación</text><path d="M187.5,230 L515.0,365" stroke="#60766b" stroke-width="1.7" marker-end="url(#arrow)" fill="none"/><rect x="261.25" y="285.5" width="180" height="23" rx="6" fill="#f2f7f3"/><text x="351.25" y="301.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#415b4d">Anular autorizado</text><path d="M832.5,230 L515.0,365" stroke="#60766b" stroke-width="1.7" marker-end="url(#arrow)" fill="none"/><rect x="583.75" y="285.5" width="180" height="23" rx="6" fill="#f2f7f3"/><text x="673.75" y="301.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#415b4d">Aprobar anulación</text><rect x="45" y="120" width="285" height="110" rx="12" fill="#fff" stroke="#bdd1c3" stroke-width="1.5"/><rect x="45" y="120" width="6" height="110" rx="3" fill="#237651"/><text x="63" y="149" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#153e31">REGISTRADA</text><text x="63" y="173" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Venta confirmada</text><text x="63" y="193" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Puede solicitarse anulación</text><rect x="675" y="120" width="315" height="110" rx="12" fill="#fff" stroke="#bdd1c3" stroke-width="1.5"/><rect x="675" y="120" width="6" height="110" rx="3" fill="#237651"/><text x="693" y="149" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#153e31">SOLICITADA_ANULACION</text><text x="693" y="173" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Solicitud pendiente</text><text x="693" y="193" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Gestor aprueba o rechaza</text><rect x="360" y="365" width="310" height="110" rx="12" fill="#fff" stroke="#bdd1c3" stroke-width="1.5"/><rect x="360" y="365" width="6" height="110" rx="3" fill="#237651"/><text x="378" y="394" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#153e31">ANULADA</text><text x="378" y="418" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Se conserva el historial</text><text x="378" y="438" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">No admite segunda anulación</text><path d="M675,245 C590,305 430,305 330,245" fill="none" stroke="#60766b" stroke-width="1.7" marker-end="url(#arrow)"/><text x="510" y="288" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#415b4d">Rechazar solicitud → REGISTRADA</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 530" role="img" aria-label="UML · Máquina de Estados de la Venta (EstadoVenta)">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#475569" stroke-width="1.6"/>
+    </marker>
+  </defs>
+
+  <rect width="1040" height="530" rx="20" fill="#f2f7f3"/>
+  <text x="36" y="40" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#153e31">UML · Máquina de Estados de la Venta (EstadoVenta)</text>
+  <text x="36" y="64" font-family="Arial,sans-serif" font-size="13.5" fill="#4e655b">Ciclo de vida controlado por roles (RN-VEN-07 / RN-VEN-08) y reversión atómica FEFO + Caja (RN-VEN-09 / RN-VEN-10).</text>
+
+  <!-- Estado inicial -->
+  <circle cx="192" cy="112" r="10" fill="#153e31"/>
+  <path d="M192,122 L192,158" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <rect x="206" y="128" width="160" height="20" rx="5" fill="#f2f7f3"/>
+  <text x="286" y="142" text-anchor="middle" font-family="Arial,sans-serif" font-size="11.5" fill="#334155">POS / Delivery / Web</text>
+
+  <!-- REGISTRADA -->
+  <rect x="46" y="162" width="292" height="114" rx="12" fill="#ffffff" stroke="#166534" stroke-width="1.6"/>
+  <rect x="46" y="162" width="6" height="114" rx="3" fill="#166534"/>
+  <text x="66" y="192" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#153e31">REGISTRADA</text>
+  <text x="66" y="216" font-family="Arial,sans-serif" font-size="12.5" fill="#475569">Venta confirmada con ticket único</text>
+  <text x="66" y="236" font-family="Arial,sans-serif" font-size="12.5" fill="#475569">Stock y caja/crédito aplicados</text>
+  <text x="66" y="256" font-family="Arial,sans-serif" font-size="12" fill="#64748b">Puede solicitarse o aprobarse anulación</text>
+
+  <!-- SOLICITADA_ANULACION -->
+  <rect x="650" y="162" width="344" height="114" rx="12" fill="#ffffff" stroke="#b45309" stroke-width="1.6"/>
+  <rect x="650" y="162" width="6" height="114" rx="3" fill="#b45309"/>
+  <text x="670" y="192" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#92400e">SOLICITADA_ANULACION</text>
+  <text x="670" y="216" font-family="Arial,sans-serif" font-size="12.5" fill="#475569">Solicitud enviada por vendedor (motivo)</text>
+  <text x="670" y="236" font-family="Arial,sans-serif" font-size="12.5" fill="#475569">Pendiente de resolución por gestor</text>
+  <text x="670" y="256" font-family="Arial,sans-serif" font-size="12" fill="#64748b">Solo ADMIN o SUPERVISOR resuelve</text>
+
+  <!-- ANULADA -->
+  <rect x="348" y="366" width="344" height="114" rx="12" fill="#ffffff" stroke="#991b1b" stroke-width="1.6"/>
+  <rect x="348" y="366" width="6" height="114" rx="3" fill="#991b1b"/>
+  <text x="368" y="396" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#991b1b">ANULADA</text>
+  <text x="368" y="420" font-family="Arial,sans-serif" font-size="12.5" fill="#475569">Estado terminal inmutable (RN-VEN-07)</text>
+  <text x="368" y="440" font-family="Arial,sans-serif" font-size="12.5" fill="#475569">Stock repuesto + reversión FEFO por lote</text>
+  <text x="368" y="460" font-family="Arial,sans-serif" font-size="12.5" fill="#475569">Extorno en Caja / CuentaPorCobrar</text>
+
+  <!-- Estado final -->
+  <circle cx="804" cy="423" r="13" fill="none" stroke="#153e31" stroke-width="2"/>
+  <circle cx="804" cy="423" r="7" fill="#153e31"/>
+  <path d="M692,423 L786,423" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <text x="739" y="414" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#475569">Inmutable</text>
+
+  <!-- REGISTRADA -> SOLICITADA_ANULACION -->
+  <path d="M338,196 L646,196" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <rect x="394" y="175" width="196" height="20" rx="5" fill="#f2f7f3"/>
+  <text x="492" y="189" text-anchor="middle" font-family="Arial,sans-serif" font-size="11.5" fill="#334155">Vendedor solicita anulación</text>
+
+  <!-- SOLICITADA_ANULACION -> REGISTRADA -->
+  <path d="M650,248 L342,248" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <rect x="394" y="253" width="196" height="20" rx="5" fill="#f2f7f3"/>
+  <text x="492" y="267" text-anchor="middle" font-family="Arial,sans-serif" font-size="11.5" fill="#334155">Admin/Supervisor rechaza solicitud</text>
+
+  <!-- REGISTRADA -> ANULADA -->
+  <path d="M192,276 L192,423 L344,423" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <rect x="74" y="346" width="206" height="20" rx="5" fill="#f2f7f3"/>
+  <text x="177" y="360" text-anchor="middle" font-family="Arial,sans-serif" font-size="11.5" fill="#334155">Admin/Supervisor anula directo</text>
+
+  <!-- SOLICITADA_ANULACION -> ANULADA -->
+  <path d="M822,276 L822,334 L520,334 L520,362" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <rect x="572" y="322" width="212" height="22" rx="5" fill="#f2f7f3"/>
+  <text x="678" y="337" text-anchor="middle" font-family="Arial,sans-serif" font-size="11.5" fill="#334155">Admin/Supervisor aprueba anulación</text>
+</svg>

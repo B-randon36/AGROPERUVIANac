@@ -15,7 +15,7 @@ Para comprobar Java utiliza `java -version`. El repositorio incorpora Maven Wrap
 ## 1. Obtener la rama
 
 ```powershell
-git clone --branch ventas_avance https://github.com/B-randon36/AGROPERUVIANac.git
+git clone https://github.com/B-randon36/AGROPERUVIANac.git
 cd AGROPERUVIANac
 code .
 ```

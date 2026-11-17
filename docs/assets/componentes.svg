@@ -1,1 +1,94 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 510" role="img" aria-label="C3 · Componentes de ventas"><defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#60766b" stroke-width="1.5"/></marker></defs><rect width="1040" height="510" rx="20" fill="#f2f7f3"/><text x="36" y="40" font-family="Arial,sans-serif" font-size="23" font-weight="700" fill="#153e31">C3 · Componentes de ventas</text><text x="36" y="66" font-family="Arial,sans-serif" font-size="14" fill="#4e655b">Servicios Java internos; la transacción coordina efectos en otros módulos.</text><path d="M306,165.0 L385,165.0" stroke="#60766b" stroke-width="1.7" marker-end="url(#arrow)" fill="none"/><rect x="255.5" y="153.0" width="180" height="23" rx="6" fill="#f2f7f3"/><text x="345.5" y="169.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#415b4d">Invoca caso de uso</text><path d="M670,165.0 L735,165.0" stroke="#60766b" stroke-width="1.7" marker-end="url(#arrow)" fill="none"/><rect x="612.5" y="153.0" width="180" height="23" rx="6" fill="#f2f7f3"/><text x="702.5" y="169.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#415b4d">Persiste y consulta</text><path d="M527.5,215 L347.5,355" stroke="#60766b" stroke-width="1.7" marker-end="url(#arrow)" fill="none"/><rect x="347.5" y="273.0" width="180" height="23" rx="6" fill="#f2f7f3"/><text x="437.5" y="289.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#415b4d">Solicita movimientos</text><path d="M527.5,215 L732.5,355" stroke="#60766b" stroke-width="1.7" marker-end="url(#arrow)" fill="none"/><rect x="540.0" y="273.0" width="180" height="23" rx="6" fill="#f2f7f3"/><text x="630.0" y="289.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#415b4d">Solicita efecto financiero</text><rect x="36" y="115" width="270" height="100" rx="12" fill="#fff" stroke="#bdd1c3" stroke-width="1.5"/><rect x="36" y="115" width="6" height="100" rx="3" fill="#237651"/><text x="54" y="144" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#153e31">VentaController</text><text x="54" y="168" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Contrato HTTP</text><text x="54" y="188" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Usuario autenticado</text><rect x="385" y="115" width="285" height="100" rx="12" fill="#fff" stroke="#bdd1c3" stroke-width="1.5"/><rect x="385" y="115" width="6" height="100" rx="3" fill="#237651"/><text x="403" y="144" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#153e31">VentaServiceImpl</text><text x="403" y="168" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Reglas y coordinación</text><text x="403" y="188" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Creación y anulación</text><rect x="735" y="115" width="270" height="100" rx="12" fill="#fff" stroke="#bdd1c3" stroke-width="1.5"/><rect x="735" y="115" width="6" height="100" rx="3" fill="#237651"/><text x="753" y="144" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#153e31">VentaRepository</text><text x="753" y="168" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Consultas JPA</text><text x="753" y="188" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Cabecera y detalles</text><rect x="205" y="355" width="285" height="100" rx="12" fill="#fff" stroke="#bdd1c3" stroke-width="1.5"/><rect x="205" y="355" width="6" height="100" rx="3" fill="#237651"/><text x="223" y="384" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#153e31">Catálogo e Inventario</text><text x="223" y="408" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Precio y stock</text><text x="223" y="428" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Despacho FEFO y Kardex</text><rect x="590" y="355" width="285" height="100" rx="12" fill="#fff" stroke="#bdd1c3" stroke-width="1.5"/><rect x="590" y="355" width="6" height="100" rx="3" fill="#237651"/><text x="608" y="384" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#153e31">FinanzasApi</text><text x="608" y="408" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Registro de cobro o crédito</text><text x="608" y="428" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Extorno financiero</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 560" role="img" aria-label="C3 · Diagrama de Componentes (Ventas, Inventario y Finanzas)">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#475569" stroke-width="1.6"/>
+    </marker>
+  </defs>
+
+  <rect width="1080" height="560" rx="20" fill="#f2f7f3"/>
+  <text x="36" y="40" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#153e31">C3 · Diagrama de Componentes (Módulos Ventas ↔ Inventario ↔ Finanzas)</text>
+  <text x="36" y="64" font-family="Arial,sans-serif" font-size="13.5" fill="#4e655b">Colaboración interna dentro de la misma JVM mediante interfaces públicas y repositorios con atomicidad @Transactional.</text>
+
+  <!-- Controller -->
+  <rect x="36" y="195" width="235" height="120" rx="12" fill="#ffffff" stroke="#0369a1" stroke-width="1.6"/>
+  <rect x="36" y="195" width="6" height="120" rx="3" fill="#0369a1"/>
+  <text x="54" y="224" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#0369a1">VentaController</text>
+  <text x="54" y="246" font-family="Arial,sans-serif" font-size="12" font-weight="700" fill="#0284c7">/api/v1/ventas</text>
+  <text x="54" y="268" font-family="Arial,sans-serif" font-size="12" fill="#475569">Valida DTO (@Valid)</text>
+  <text x="54" y="286" font-family="Arial,sans-serif" font-size="12" fill="#475569">Extrae 'sub' del JWT (RN-VEN-05)</text>
+  <text x="54" y="304" font-family="Arial,sans-serif" font-size="12" fill="#475569">Aplica filtro ABAC por rol</text>
+
+  <!-- Service Impl -->
+  <rect x="340" y="175" width="265" height="160" rx="14" fill="#166534" stroke="#14532d" stroke-width="2"/>
+  <text x="472.5" y="206" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#ffffff">VentaServiceImpl</text>
+  <text x="472.5" y="227" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="700" fill="#bbf7d0">Orquestador @Transactional</text>
+  <line x1="365" y1="242" x2="580" y2="242" stroke="#22c55e" stroke-opacity="0.4" stroke-width="1"/>
+  <text x="472.5" y="264" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#ecfdf5">• Reglas RN-VEN-01 a RN-VEN-10</text>
+  <text x="472.5" y="284" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#ecfdf5">• Idempotencia (operacionId)</text>
+  <text x="472.5" y="304" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#ecfdf5">• Desglose Base + IGV 18%</text>
+  <text x="472.5" y="324" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#ecfdf5">• Anulación y reporte omnicanal</text>
+
+  <!-- Repositorios abajo -->
+  <rect x="36" y="415" width="235" height="96" rx="12" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/>
+  <rect x="36" y="415" width="6" height="96" rx="3" fill="#b45309"/>
+  <text x="54" y="444" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#92400e">PedidoDeliveryRepository</text>
+  <text x="54" y="466" font-family="Arial,sans-serif" font-size="12" fill="#475569">Pedidos vinculados por ventaId</text>
+  <text x="54" y="484" font-family="Arial,sans-serif" font-size="12" fill="#475569">Consolidado omnicanal</text>
+
+  <rect x="340" y="415" width="265" height="96" rx="12" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/>
+  <rect x="340" y="415" width="6" height="96" rx="3" fill="#b45309"/>
+  <text x="358" y="444" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#92400e">VentaRepository</text>
+  <text x="358" y="466" font-family="Arial,sans-serif" font-size="12" fill="#475569">Persistencia JPA cabecera/detalles</text>
+  <text x="358" y="484" font-family="Arial,sans-serif" font-size="12" fill="#475569">Bloqueo pesimista (FOR UPDATE)</text>
+
+  <!-- Columna derecha: Interfaces y servicios colaborando -->
+  <rect x="688" y="96" width="356" height="72" rx="10" fill="#ffffff" stroke="#bdd1c3" stroke-width="1.5"/>
+  <rect x="688" y="96" width="6" height="72" rx="3" fill="#0f766e"/>
+  <text x="706" y="122" font-family="Arial,sans-serif" font-size="14.5" font-weight="700" fill="#0f766e">NumeroTicketService</text>
+  <text x="706" y="142" font-family="Arial,sans-serif" font-size="12" fill="#475569">Secuencia nativa SEQ_TICKET_VENTA (TKT-S-...)</text>
+
+  <rect x="688" y="182" width="356" height="72" rx="10" fill="#ffffff" stroke="#bdd1c3" stroke-width="1.5"/>
+  <rect x="688" y="182" width="6" height="72" rx="3" fill="#0f766e"/>
+  <text x="706" y="208" font-family="Arial,sans-serif" font-size="14.5" font-weight="700" fill="#0f766e">ProductoService (interfaz · catalogo)</text>
+  <text x="706" y="228" font-family="Arial,sans-serif" font-size="12" fill="#475569">Precio oficial, descuento y reposición de stock</text>
+
+  <rect x="688" y="268" width="356" height="72" rx="10" fill="#ffffff" stroke="#bdd1c3" stroke-width="1.5"/>
+  <rect x="688" y="268" width="6" height="72" rx="3" fill="#0f766e"/>
+  <text x="706" y="294" font-family="Arial,sans-serif" font-size="14.5" font-weight="700" fill="#0f766e">InventarioService (interfaz · inventario)</text>
+  <text x="706" y="314" font-family="Arial,sans-serif" font-size="12" fill="#475569">Despacho FEFO y reversión exacta por lote/ticket</text>
+
+  <rect x="688" y="354" width="356" height="72" rx="10" fill="#ffffff" stroke="#bdd1c3" stroke-width="1.5"/>
+  <rect x="688" y="354" width="6" height="72" rx="3" fill="#0f766e"/>
+  <text x="706" y="380" font-family="Arial,sans-serif" font-size="14.5" font-weight="700" fill="#0f766e">FinanzasApi (interfaz · finanzas)</text>
+  <text x="706" y="400" font-family="Arial,sans-serif" font-size="12" fill="#475569">SesionCaja activa, CuentaPorCobrar y extornos</text>
+
+  <rect x="688" y="440" width="356" height="72" rx="10" fill="#ffffff" stroke="#bdd1c3" stroke-width="1.5"/>
+  <rect x="688" y="440" width="6" height="72" rx="3" fill="#0f766e"/>
+  <text x="706" y="466" font-family="Arial,sans-serif" font-size="14.5" font-weight="700" fill="#0f766e">AuditoriaService (ventas)</text>
+  <text x="706" y="486" font-family="Arial,sans-serif" font-size="12" fill="#475569">Bitácora de creación, solicitud y anulación (JWT)</text>
+
+  <!-- Conexiones -->
+  <!-- Controller -> Service -->
+  <path d="M271,255 L336,255" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)" fill="none"/>
+  <rect x="275" y="232" width="58" height="19" rx="5" fill="#f2f7f3"/>
+  <text x="304" y="245" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#334155">Delega</text>
+
+  <!-- Service -> VentaRepository -->
+  <path d="M472.5,335 L472.5,411" stroke="#b45309" stroke-width="1.7" marker-end="url(#arrow)" fill="none"/>
+  <rect x="415" y="364" width="115" height="20" rx="5" fill="#f2f7f3"/>
+  <text x="472.5" y="378" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#92400e">JPA / Lock</text>
+
+  <!-- Service -> PedidoDeliveryRepository -->
+  <path d="M390,335 L390,375 L154,375 L154,411" stroke="#b45309" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <rect x="195" y="364" width="118" height="20" rx="5" fill="#f2f7f3"/>
+  <text x="254" y="378" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#92400e">Reporte omnicanal</text>
+
+  <!-- Bus de distribución desde VentaServiceImpl hacia los 5 colaboradores -->
+  <line x1="605" y1="255" x2="646" y2="255" stroke="#475569" stroke-width="1.7"/>
+  <line x1="646" y1="132" x2="646" y2="476" stroke="#475569" stroke-width="1.7"/>
+  <path d="M646,132 L684,132" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <path d="M646,218 L684,218" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <path d="M646,304 L684,304" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <path d="M646,390 L684,390" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <path d="M646,476 L684,476" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+</svg>

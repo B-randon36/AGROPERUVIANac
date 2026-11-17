@@ -5,7 +5,7 @@ Estado de cumplimiento técnico y documental de **GDMERP (Agro Peruvian Foods)**
 | Requisito | Estado | Evidencia Verificada |
 |---|---|---|
 | **Problema, solución y alcance** | ✅ Completado | Documentado en `proyecto/alcance.md` y `proyecto/modulos.md` |
-| **Arquitectura C4 (C1, C2, C3) y UML** | ✅ Completado | Diagramas interactivos Mermaid en `ads/arquitectura.md` y `ads/uml.md` |
+| **Arquitectura C4 (C1, C2, C3) y UML** | ✅ Completado | Diagramas vectoriales SVG en `ads/arquitectura.md` y `ads/uml.md` |
 | **Patrones y decisiones (ADR)** | ✅ Completado | Monolito Modular, DTO, Repository, State, Adapter (`ads/patrones.md`, `ads/adrs.md`) |
 | **Modelo de dominio y reglas** | ✅ Completado | 10 reglas `RN-VEN` y 8 reglas `RN-FIN` documentadas en código y portal |
 | **Backend Spring Boot 4 + SPA Angular 22** | ✅ Completado | Operativos end-to-end en puertos `:8080` y `:4200` |

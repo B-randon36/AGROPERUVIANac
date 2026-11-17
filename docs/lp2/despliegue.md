@@ -21,9 +21,7 @@
 
 ## GitHub Pages
 
-GitHub Pages puede alojar esta documentación estática. No ejecuta el backend Java ni aloja por sí solo Oracle o Keycloak. Publicar las páginas documentales no equivale a desplegar el ERP completo.
-
-Esta entrega contiene fuentes de MkDocs y web compilada para consulta local. No incorpora un workflow que publique automáticamente ni cambia la configuración de Pages del repositorio.
+GitHub Pages aloja esta documentación estática mediante el flujo automático `.github/workflows/deploy-docs.yml` al actualizar `docs/` o `mkdocs.yml` en `main` (compilación con `mkdocs build --strict` y despliegue a `gh-pages`). No ejecuta el backend Java ni aloja Oracle o Keycloak: publicar el portal documental no equivale a desplegar el ERP completo.
 
 ## Fuentes del proyecto
 

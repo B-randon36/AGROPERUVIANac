@@ -7,8 +7,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.transaction.annotation.Transactional;
-import pe.edu.upeu.bomerp.catalogo.producto.entity.Producto;
-import pe.edu.upeu.bomerp.catalogo.producto.repository.ProductoRepository;
+import pe.edu.upeu.bomerp.catalogo.producto.dto.ProductoResponse;
+import pe.edu.upeu.bomerp.catalogo.producto.service.ProductoService;
 import pe.edu.upeu.bomerp.finanzas.entity.EstadoCaja;
 import pe.edu.upeu.bomerp.finanzas.entity.SesionCaja;
 import pe.edu.upeu.bomerp.finanzas.repository.SesionCajaRepository;
@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 public class VentaDataInitializer implements CommandLineRunner {
 
     private final VentaRepository ventaRepository;
-    private final ProductoRepository productoRepository;
+    private final ProductoService productoService;
     private final LoteRepository loteRepository;
     private final MovimientoKardexRepository kardexRepository;
     private final SesionCajaRepository sesionCajaRepository;
@@ -71,8 +71,8 @@ public class VentaDataInitializer implements CommandLineRunner {
 
         log.info("Inicializando datos de prueba de Ventas POS y Omnicanalidad para Agro Peruvian Foods...");
 
-        Map<Long, Producto> productosPorId = productoRepository.findAll().stream()
-                .collect(Collectors.toMap(Producto::getId, Function.identity()));
+        Map<Long, ProductoResponse> productosPorId = productoService.listar().stream()
+                .collect(Collectors.toMap(ProductoResponse::getId, Function.identity()));
 
         if (productosPorId.isEmpty()) {
             log.warn("No se encontraron productos en catálogo para generar ventas semilla.");
@@ -287,7 +287,7 @@ public class VentaDataInitializer implements CommandLineRunner {
             Long sesionCajaId,
             String operacionId,
             List<ItemSeed> items,
-            Map<Long, Producto> productos,
+            Map<Long, ProductoResponse> productos,
             Map<Long, List<Lote>> lotesPorProducto) {
 
         // Obtener ticket correlativo oficial avanzando la secuencia atómica nativa
@@ -308,7 +308,7 @@ public class VentaDataInitializer implements CommandLineRunner {
         BigDecimal total = BigDecimal.ZERO;
 
         for (ItemSeed item : items) {
-            Producto prod = productos.get(item.productoId);
+            ProductoResponse prod = productos.get(item.productoId);
             if (prod == null) {
                 continue;
             }

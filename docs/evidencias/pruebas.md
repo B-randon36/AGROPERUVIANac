@@ -8,7 +8,7 @@ El proyecto cuenta con una batería automatizada ejecutada sobre **Spring Boot T
 |---|---|
 | **Total de Pruebas Backend** | **105 pruebas ejecutadas** (`Tests run: 105`) |
 | **Fallos / Errores** | `0` fallos, `0` errores (`100%` aprobadas) |
-| **Suite Crítica de Ventas & Caja** | `28/28` pruebas pasando (`VentaServiceTest`, `VentaSecurityTest`, `VentaPersistenciaTest`, `VentaEndToEndTest`, `SesionCajaServiceTest`) |
+| **Suite Crítica de Ventas & Caja** | `44/44` pruebas pasando (`VentaServiceTest`: 18, `VentaSecurityTest`: 12, `VentaPersistenciaTest`: 4, `VentaEndToEndTest`: 3, `SesionCajaServiceTest`: 7) |
 | **Arquitectura Modular** | `ModularityTests` (`ApplicationModules.verify()`) pasando sin violaciones |
 | **Validación en Vivo (E2E Manual)** | Keycloak (`:38080`), Backend Spring Boot (`:8080`) y Frontend Angular (`:4200`) operativos |
 

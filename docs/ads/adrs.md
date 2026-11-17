@@ -20,7 +20,7 @@ Estos registros se reconstruyen a partir de la implementación. **Estado: observ
 
 ## ADR-DOC-05 · Documentación con MkDocs Material
 
-**Contexto:** se necesita una web navegable similar a la guía académica. **Decisión de esta entrega:** Markdown, navegación por áreas, búsqueda y diagramas SVG locales. **Consecuencia:** edición sencilla en VS Code y salida estática; requiere reconstruir la web cuando cambie el contenido. Publicar es un paso posterior que depende de autorización.
+**Contexto:** se necesita una web navegable similar a la guía académica. **Decisión de esta entrega:** Markdown, navegación por áreas, búsqueda, diagramas vectoriales SVG locales (`contexto.svg`, `contenedores.svg`, `componentes.svg`, `secuencia.svg`, `estados.svg`, `clases.svg`) y despliegue automático en GitHub Pages mediante `.github/workflows/deploy-docs.yml`. **Consecuencia:** edición sencilla en VS Code, visualización nítida sin dependencias externas de renderizado y publicación continua al hacer push sobre `docs/` o `mkdocs.yml` en `main`.
 
 ## Caché y Redis
 
