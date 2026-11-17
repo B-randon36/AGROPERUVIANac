@@ -1828,8 +1828,7 @@
 <li>Evidencias de pruebas, volumen, rendimiento y restauración.</li>
 </ul>
 <h2 id="github-pages">GitHub Pages<a class="headerlink" href="#github-pages" title="Permanent link">&para;</a></h2>
-<p>GitHub Pages puede alojar esta documentación estática. No ejecuta el backend Java ni aloja por sí solo Oracle o Keycloak. Publicar las páginas documentales no equivale a desplegar el ERP completo.</p>
-<p>Esta entrega contiene fuentes de MkDocs y web compilada para consulta local. No incorpora un workflow que publique automáticamente ni cambia la configuración de Pages del repositorio.</p>
+<p>GitHub Pages aloja esta documentación estática mediante el flujo automático <code>.github/workflows/deploy-docs.yml</code> al actualizar <code>docs/</code> o <code>mkdocs.yml</code> en <code>main</code> (compilación con <code>mkdocs build --strict</code> y despliegue a <code>gh-pages</code>). No ejecuta el backend Java ni aloja Oracle o Keycloak: publicar el portal documental no equivale a desplegar el ERP completo.</p>
 <h2 id="fuentes-del-proyecto">Fuentes del proyecto<a class="headerlink" href="#fuentes-del-proyecto" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="https://github.com/B-randon36/AGROPERUVIANac/blob/41bd74a00342e5b28bb793a9bdc7221e3919fc3a/backend/src/main/resources/application-prod.yml">application-prod.yml</a></li>

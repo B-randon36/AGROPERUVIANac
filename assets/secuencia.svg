@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 680" role="img" aria-label="UML · Diagrama de Secuencia: Registro de Venta POS">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+    </marker>
+    <marker id="arrow-ret" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#475569" stroke-width="1.5"/>
+    </marker>
+  </defs>
+
+  <rect width="1080" height="680" rx="20" fill="#f2f7f3"/>
+  <text x="36" y="40" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#153e31">UML · Diagrama de Secuencia: Registro de Venta POS</text>
+  <text x="36" y="64" font-family="Arial,sans-serif" font-size="13.5" fill="#4e655b">Flujo autenticado con JWT, control de idempotencia (RN-VEN-06), ticket secuencial, despacho FEFO e integración financiera.</text>
+
+  <!-- Participantes (cabecera) -->
+  <g font-family="Arial,sans-serif" font-size="12" font-weight="700" text-anchor="middle">
+    <rect x="26" y="88" width="114" height="44" rx="8" fill="#0f766e"/>
+    <text x="83" y="108" fill="#ffffff">Vendedor</text>
+    <text x="83" y="123" fill="#ccfbf1" font-size="10.5">(Angular SPA)</text>
+
+    <rect x="154" y="88" width="118" height="44" rx="8" fill="#7c3aed"/>
+    <text x="213" y="108" fill="#ffffff">Spring Security</text>
+    <text x="213" y="123" fill="#ede9fe" font-size="10.5">(JWT / OIDC)</text>
+
+    <rect x="286" y="88" width="118" height="44" rx="8" fill="#0369a1"/>
+    <text x="345" y="108" fill="#ffffff">VentaController</text>
+    <text x="345" y="123" fill="#e0f2fe" font-size="10.5">POST /ventas</text>
+
+    <rect x="418" y="88" width="122" height="44" rx="8" fill="#166534"/>
+    <text x="479" y="108" fill="#ffffff">VentaServiceImpl</text>
+    <text x="479" y="123" fill="#dcfce7" font-size="10.5">@Transactional</text>
+
+    <rect x="554" y="88" width="114" height="44" rx="8" fill="#0f766e"/>
+    <text x="611" y="108" fill="#ffffff">NumeroTicket</text>
+    <text x="611" y="123" fill="#ccfbf1" font-size="10.5">Service</text>
+
+    <rect x="682" y="88" width="120" height="44" rx="8" fill="#0f766e"/>
+    <text x="742" y="108" fill="#ffffff">Producto / Inv.</text>
+    <text x="742" y="123" fill="#ccfbf1" font-size="10.5">(Stock &amp; FEFO)</text>
+
+    <rect x="816" y="88" width="114" height="44" rx="8" fill="#0f766e"/>
+    <text x="873" y="108" fill="#ffffff">FinanzasApi</text>
+    <text x="873" y="123" fill="#ccfbf1" font-size="10.5">(Caja / CxC)</text>
+
+    <rect x="944" y="88" width="110" height="44" rx="8" fill="#b45309"/>
+    <text x="999" y="108" fill="#ffffff">VentaRepository</text>
+    <text x="999" y="123" fill="#fef3c7" font-size="10.5">(JPA / BD)</text>
+  </g>
+
+  <!-- Líneas de vida -->
+  <g stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="5 5">
+    <line x1="83" y1="132" x2="83" y2="650"/>
+    <line x1="213" y1="132" x2="213" y2="650"/>
+    <line x1="345" y1="132" x2="345" y2="650"/>
+    <line x1="479" y1="132" x2="479" y2="650"/>
+    <line x1="611" y1="132" x2="611" y2="650"/>
+    <line x1="742" y1="132" x2="742" y2="650"/>
+    <line x1="873" y1="132" x2="873" y2="650"/>
+    <line x1="999" y1="132" x2="999" y2="650"/>
+  </g>
+
+  <!-- Mensajes iniciales -->
+  <path d="M83,164 L209,164" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+  <text x="146" y="158" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#1e293b">1. POST /api/v1/ventas + JWT</text>
+
+  <path d="M213,194 L341,194" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+  <text x="277" y="188" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#1e293b">2. Firma OIDC y rol válidos</text>
+
+  <path d="M345,224 L475,224" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+  <text x="410" y="218" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#1e293b">3. crear(request, jwt.sub)</text>
+
+  <path d="M479,254 L995,254" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+  <text x="737" y="248" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#1e293b">4. findByOperacionId(request.operacionId)</text>
+
+  <!-- Caja ALT -->
+  <rect x="305" y="272" width="735" height="316" rx="10" fill="#ffffff" fill-opacity="0.65" stroke="#64748b" stroke-width="1.4"/>
+  <rect x="305" y="272" width="44" height="22" rx="4" fill="#334155"/>
+  <text x="327" y="287" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="#ffffff">alt</text>
+  <text x="360" y="287" font-family="Arial,sans-serif" font-size="11.5" font-weight="700" fill="#0f766e">[operacionId ya registrado · Idempotencia RN-VEN-06]</text>
+
+  <path d="M999,310 L483,310" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-ret)" fill="none"/>
+  <text x="737" y="304" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#475569">5a. Retorna Venta existente</text>
+
+  <path d="M479,336 L349,336" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-ret)" fill="none"/>
+  <text x="414" y="330" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#475569">VentaResponse (sin duplicar)</text>
+
+  <!-- Divisor else -->
+  <line x1="305" y1="354" x2="1040" y2="354" stroke="#64748b" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <text x="360" y="370" font-family="Arial,sans-serif" font-size="11.5" font-weight="700" fill="#153e31">[Nueva operación]</text>
+
+  <!-- Flujo nueva venta -->
+  <path d="M479,394 L607,394" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+  <text x="543" y="388" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#1e293b">5b. siguiente()</text>
+
+  <path d="M611,420 L483,420" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-ret)" fill="none"/>
+  <text x="547" y="414" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#475569">TKT-S-0000000001</text>
+
+  <path d="M479,448 L738,448" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+  <text x="608" y="442" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#1e293b">6. descontarStock() + registrarSalidaVentaFEFO()</text>
+
+  <path d="M742,474 L483,474" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-ret)" fill="none"/>
+  <text x="612" y="468" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#475569">loteId asignado + Kardex</text>
+
+  <path d="M479,502 L995,502" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+  <text x="737" y="496" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#1e293b">7. Calcula Base/IGV 18% y save(Venta + Detalles)</text>
+
+  <path d="M479,534 L869,534" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+  <text x="674" y="528" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#1e293b">8. registrarIngresoVentaPos(...) o registrarVentaACredito(...)</text>
+
+  <path d="M873,560 L483,560" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-ret)" fill="none"/>
+  <text x="678" y="554" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#475569">MovimientoCaja / CuentaPorCobrar</text>
+
+  <!-- Respuestas finales -->
+  <path d="M479,612 L349,612" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-ret)" fill="none"/>
+  <text x="414" y="606" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#475569">9. VentaResponse</text>
+
+  <path d="M345,636 L87,636" stroke="#166534" stroke-width="1.7" stroke-dasharray="4 3" marker-end="url(#arrow-ret)" fill="none"/>
+  <text x="216" y="630" text-anchor="middle" font-family="Arial,sans-serif" font-size="11.5" font-weight="700" fill="#166534">10. 201 Created · Ticket listo para impresión 80mm</text>
+</svg>

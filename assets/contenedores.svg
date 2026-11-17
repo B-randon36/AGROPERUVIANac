@@ -1,1 +1,111 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 505" role="img" aria-label="C2 · Contenedores"><defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#60766b" stroke-width="1.5"/></marker></defs><rect width="1040" height="505" rx="20" fill="#f2f7f3"/><text x="36" y="40" font-family="Arial,sans-serif" font-size="23" font-weight="700" fill="#153e31">C2 · Contenedores</text><text x="36" y="66" font-family="Arial,sans-serif" font-size="14" fill="#4e655b">Un frontend y un backend empresarial; datos separados de la identidad.</text><path d="M425,170.0 L615,170.0" stroke="#60766b" stroke-width="1.7" marker-end="url(#arrow)" fill="none"/><rect x="430.0" y="158.0" width="180" height="23" rx="6" fill="#f2f7f3"/><text x="520.0" y="174.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#415b4d">HTTPS / JSON</text><path d="M245.0,225 L245.0,345" stroke="#60766b" stroke-width="1.7" marker-end="url(#arrow)" fill="none"/><rect x="155.0" y="273.0" width="180" height="23" rx="6" fill="#f2f7f3"/><text x="245.0" y="289.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#415b4d">OIDC con PKCE</text><path d="M795.0,225 L795.0,345" stroke="#60766b" stroke-width="1.7" marker-end="url(#arrow)" fill="none"/><rect x="705.0" y="273.0" width="180" height="23" rx="6" fill="#f2f7f3"/><text x="795.0" y="289.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#415b4d">JPA / JDBC</text><rect x="65" y="115" width="360" height="110" rx="12" fill="#fff" stroke="#bdd1c3" stroke-width="1.5"/><rect x="65" y="115" width="6" height="110" rx="3" fill="#237651"/><text x="83" y="144" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#153e31">SPA Angular</text><text x="83" y="168" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Navegación y formularios</text><text x="83" y="188" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Guardas e interceptores</text><text x="83" y="208" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Navegador del operador</text><rect x="615" y="115" width="360" height="110" rx="12" fill="#fff" stroke="#bdd1c3" stroke-width="1.5"/><rect x="615" y="115" width="6" height="110" rx="3" fill="#237651"/><text x="633" y="144" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#153e31">Spring Boot</text><text x="633" y="168" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">API REST y transacciones</text><text x="633" y="188" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Módulos de negocio</text><text x="633" y="208" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Java 21</text><rect x="65" y="345" width="360" height="110" rx="12" fill="#fff" stroke="#bdd1c3" stroke-width="1.5"/><rect x="65" y="345" width="6" height="110" rx="3" fill="#237651"/><text x="83" y="374" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#153e31">Keycloak</text><text x="83" y="398" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Autenticación OIDC</text><text x="83" y="418" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Persistencia propia PostgreSQL</text><rect x="615" y="345" width="360" height="110" rx="12" fill="#fff" stroke="#bdd1c3" stroke-width="1.5"/><rect x="615" y="345" width="6" height="110" rx="3" fill="#237651"/><text x="633" y="374" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#153e31">Persistencia del ERP</text><text x="633" y="398" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">H2 en laboratorio</text><text x="633" y="418" font-family="Arial,sans-serif" font-size="13" fill="#4e655b">Oracle como destino empresarial</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 590" role="img" aria-label="C2 · Diagrama de Contenedores">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#475569" stroke-width="1.6"/>
+    </marker>
+  </defs>
+
+  <rect width="1080" height="590" rx="20" fill="#f2f7f3"/>
+  <text x="36" y="40" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#153e31">C2 · Diagrama de Contenedores</text>
+  <text x="36" y="64" font-family="Arial,sans-serif" font-size="13.5" fill="#4e655b">Unidades desplegables, puertos validados, comunicación REST/OIDC y almacenamiento persistente.</text>
+
+  <!-- Usuario -->
+  <rect x="36" y="130" width="185" height="106" rx="12" fill="#ffffff" stroke="#bdd1c3" stroke-width="1.5"/>
+  <rect x="36" y="130" width="6" height="106" rx="3" fill="#0f766e"/>
+  <text x="54" y="158" font-family="Arial,sans-serif" font-size="15.5" font-weight="700" fill="#0f766e">Usuario</text>
+  <text x="54" y="180" font-family="Arial,sans-serif" font-size="12" fill="#475569">Navegador Web</text>
+  <text x="54" y="198" font-family="Arial,sans-serif" font-size="12" fill="#475569">Operador POS /</text>
+  <text x="54" y="216" font-family="Arial,sans-serif" font-size="12" fill="#475569">Supervisor / Admin</text>
+
+  <!-- Frontend Angular -->
+  <rect x="292" y="112" width="268" height="142" rx="12" fill="#ffffff" stroke="#0284c7" stroke-width="1.6"/>
+  <rect x="292" y="112" width="6" height="142" rx="3" fill="#0284c7"/>
+  <text x="310" y="140" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#0369a1">SPA Angular 22</text>
+  <text x="310" y="162" font-family="Arial,sans-serif" font-size="12.5" font-weight="700" fill="#0284c7">Puerto :4200</text>
+  <text x="310" y="184" font-family="Arial,sans-serif" font-size="12" fill="#475569">Standalone Components + Signals</text>
+  <text x="310" y="202" font-family="Arial,sans-serif" font-size="12" fill="#475569">Calculadora POS y Ticket 80mm</text>
+  <text x="310" y="220" font-family="Arial,sans-serif" font-size="12" fill="#475569">Guards RBAC + Interceptor Bearer</text>
+  <text x="310" y="238" font-family="Arial,sans-serif" font-size="12" fill="#475569">Escáner ZXing + Leaflet</text>
+
+  <!-- Backend Spring Boot -->
+  <rect x="652" y="112" width="392" height="142" rx="12" fill="#ffffff" stroke="#15803d" stroke-width="1.6"/>
+  <rect x="652" y="112" width="6" height="142" rx="3" fill="#15803d"/>
+  <text x="670" y="140" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#153e31">API REST Spring Boot 4.0.7</text>
+  <text x="670" y="162" font-family="Arial,sans-serif" font-size="12.5" font-weight="700" fill="#15803d">Java 21 · Puerto :8080 (:48088 prod demo)</text>
+  <text x="670" y="184" font-family="Arial,sans-serif" font-size="12" fill="#475569">Spring Modulith + OAuth2 Resource Server</text>
+  <text x="670" y="202" font-family="Arial,sans-serif" font-size="12" fill="#475569">Módulos: catalogo, ventas, finanzas, inventario,</text>
+  <text x="670" y="220" font-family="Arial,sans-serif" font-size="12" fill="#475569">compras, produccion, terceros, seguridad</text>
+  <text x="670" y="238" font-family="Arial,sans-serif" font-size="12" fill="#475569">OpenPDF / Apache POI (exportación)</text>
+
+  <!-- Docker Auth Group -->
+  <rect x="36" y="330" width="524" height="162" rx="14" fill="#ffffff" fill-opacity="0.55" stroke="#b7cbbd" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="52" y="352" font-family="Arial,sans-serif" font-size="11.5" font-weight="700" fill="#5b21b6" letter-spacing="0.5">INFRAESTRUCTURA DE IDENTIDAD (DOCKER COMPOSE)</text>
+
+  <rect x="52" y="366" width="206" height="110" rx="10" fill="#ffffff" stroke="#bdd1c3" stroke-width="1.5"/>
+  <rect x="52" y="366" width="6" height="110" rx="3" fill="#b45309"/>
+  <text x="70" y="394" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#92400e">PostgreSQL 17 Alpine</text>
+  <text x="70" y="416" font-family="Arial,sans-serif" font-size="12" font-weight="700" fill="#b45309">Puerto :35432</text>
+  <text x="70" y="436" font-family="Arial,sans-serif" font-size="12" fill="#475569">BD dedicada de Keycloak</text>
+  <text x="70" y="454" font-family="Arial,sans-serif" font-size="12" fill="#475569">(bomerp_keycloak)</text>
+
+  <rect x="306" y="366" width="238" height="110" rx="10" fill="#ffffff" stroke="#7c3aed" stroke-width="1.6"/>
+  <rect x="306" y="366" width="6" height="110" rx="3" fill="#7c3aed"/>
+  <text x="324" y="394" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#5b21b6">Keycloak 26.8.0</text>
+  <text x="324" y="416" font-family="Arial,sans-serif" font-size="12" font-weight="700" fill="#7c3aed">Puerto :38080</text>
+  <text x="324" y="436" font-family="Arial,sans-serif" font-size="12" fill="#475569">Realm: bomerp</text>
+  <text x="324" y="454" font-family="Arial,sans-serif" font-size="12" fill="#475569">Cliente: bomerp-frontend</text>
+
+  <!-- Persistencia ERP -->
+  <rect x="652" y="330" width="392" height="162" rx="14" fill="#ffffff" fill-opacity="0.55" stroke="#b7cbbd" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="668" y="352" font-family="Arial,sans-serif" font-size="11.5" font-weight="700" fill="#92400e" letter-spacing="0.5">PERSISTENCIA ERP</text>
+
+  <rect x="670" y="366" width="356" height="110" rx="10" fill="#ffffff" stroke="#b45309" stroke-width="1.6"/>
+  <rect x="670" y="366" width="6" height="110" rx="3" fill="#b45309"/>
+  <text x="688" y="394" font-family="Arial,sans-serif" font-size="15.5" font-weight="700" fill="#92400e">Base de Datos ERP</text>
+  <text x="688" y="418" font-family="Arial,sans-serif" font-size="12" fill="#475569">• H2 en memoria (Perfil activo: h2 / prod demo)</text>
+  <text x="688" y="438" font-family="Arial,sans-serif" font-size="12" fill="#475569">• Oracle Free 23 :1521/FREEPDB1 (Perfil dev)</text>
+  <text x="688" y="458" font-family="Arial,sans-serif" font-size="12" fill="#64748b">Esquemas: BOM_VENTAS, BOM_CATALOGO, etc.</text>
+
+  <!-- Footer observabilidad -->
+  <rect x="36" y="516" width="1008" height="46" rx="10" fill="#ffffff" stroke="#bdd1c3" stroke-width="1.4"/>
+  <rect x="36" y="516" width="6" height="46" rx="3" fill="#334155"/>
+  <text x="56" y="544" font-family="Arial,sans-serif" font-size="12.5" font-weight="700" fill="#1e293b">Observabilidad (Docker Compose):</text>
+  <text x="292" y="544" font-family="Arial,sans-serif" font-size="12.5" fill="#475569">Logs con traceId (logback-spring.xml) → Promtail 3.0.0 → Loki 3.0.0 (:33100) → Grafana 11.4.0 (:33000)</text>
+
+  <!-- Conexiones -->
+  <!-- Usuario -> Angular -->
+  <path d="M221,183 L288,183" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <rect x="228" y="160" width="54" height="19" rx="5" fill="#f2f7f3"/>
+  <text x="255" y="173" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#334155">HTTP</text>
+
+  <!-- Angular -> Spring Boot -->
+  <path d="M560,183 L648,183" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <rect x="564" y="152" width="80" height="28" rx="5" fill="#f2f7f3"/>
+  <text x="604" y="165" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#334155">REST / JSON</text>
+  <text x="604" y="178" text-anchor="middle" font-family="Arial,sans-serif" font-size="10.5" fill="#64748b">+ Bearer JWT</text>
+
+  <!-- Usuario -> Keycloak -->
+  <path d="M128,236 L128,295 L340,295 L340,362" stroke="#7c3aed" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <rect x="172" y="284" width="90" height="20" rx="5" fill="#f2f7f3"/>
+  <text x="217" y="298" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5b21b6">Login OIDC</text>
+
+  <!-- Angular -> Keycloak -->
+  <path d="M425,254 L425,362" stroke="#7c3aed" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <rect x="355" y="298" width="140" height="20" rx="5" fill="#f2f7f3"/>
+  <text x="425" y="312" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5b21b6">PKCE Token Exchange</text>
+
+  <!-- Keycloak -> PostgreSQL -->
+  <path d="M306,421 L262,421" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <rect x="264" y="398" width="40" height="19" rx="5" fill="#f2f7f3"/>
+  <text x="284" y="411" text-anchor="middle" font-family="Arial,sans-serif" font-size="10.5" fill="#334155">JDBC</text>
+
+  <!-- Spring Boot -> Keycloak -->
+  <path d="M720,254 L720,295 L505,295 L505,362" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <rect x="556" y="284" width="126" height="20" rx="5" fill="#f2f7f3"/>
+  <text x="619" y="298" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#334155">Validación firma JWK</text>
+
+  <!-- Spring Boot -> BD ERP -->
+  <path d="M848,254 L848,362" stroke="#b45309" stroke-width="1.6" marker-end="url(#arrow)" fill="none"/>
+  <rect x="772" y="298" width="152" height="20" rx="5" fill="#f2f7f3"/>
+  <text x="848" y="312" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#92400e">Spring Data JPA / JDBC</text>
+</svg>

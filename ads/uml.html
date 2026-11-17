@@ -1820,46 +1820,10 @@
 <p>La composición entre <code>Venta</code> y <code>DetalleVenta</code> garantiza el ciclo de vida conjunto de la cabecera y sus líneas. El producto, el lote FEFO y la sesión de caja se vinculan por identificador, conservando el precio unitario y descripción vigentes al momento de la operación.</p>
 <hr />
 <h2 id="diagrama-de-secuencia-registro-de-venta-pos">Diagrama de Secuencia · Registro de Venta POS<a class="headerlink" href="#diagrama-de-secuencia-registro-de-venta-pos" title="Permanent link">&para;</a></h2>
-<pre class="mermaid"><code>sequenceDiagram
-    autonumber
-    actor V as Vendedor (Angular SPA)
-    participant S as Spring Security (JWT)
-    participant C as VentaController
-    participant VS as VentaServiceImpl
-    participant T as NumeroTicketService
-    participant I as InventarioService (FEFO)
-    participant F as FinanzasApiImpl
-    participant R as VentaRepository
-
-    V-&gt;&gt;S: POST /api/v1/ventas (VentaRequest + Bearer JWT)
-    S-&gt;&gt;S: Valida firma OIDC y rol VENDEDOR/ADMIN
-    S-&gt;&gt;C: Petición autenticada
-    C-&gt;&gt;VS: registrarVenta(request, jwt.sub)
-    VS-&gt;&gt;R: findByOperacionId(request.operacionId)
-    alt Venta ya registrada (Idempotencia RN-VEN-06)
-        R--&gt;&gt;VS: Venta existente
-        VS--&gt;&gt;C: VentaResponse existente
-    else Nueva operación
-        VS-&gt;&gt;T: generarSiguienteNumero()
-        T--&gt;&gt;VS: Ticket único (ej. T001-000015)
-        VS-&gt;&gt;I: descontarStockFEFO(producto, cantidad, ticket)
-        I--&gt;&gt;VS: Lotes asignados por vencimiento próximo
-        VS-&gt;&gt;VS: Desglosa Base e IGV 18% (BigDecimal)
-        VS-&gt;&gt;R: save(Venta + DetalleVenta)
-        VS-&gt;&gt;F: registrarIngresoVenta(venta, sesionCaja)
-        F--&gt;&gt;VS: MovimientoCaja o CuentaPorCobrar
-        VS--&gt;&gt;C: VentaResponse (201 Created)
-    end
-    C--&gt;&gt;V: JSON con ticket listo para impresión 80mm</code></pre>
+<p><img alt="UML · Diagrama de Secuencia: Registro de Venta POS" src="../assets/secuencia.svg" /></p>
 <hr />
 <h2 id="maquina-de-estados-de-la-venta-estadoventa">Máquina de Estados de la Venta (<code>EstadoVenta</code>)<a class="headerlink" href="#maquina-de-estados-de-la-venta-estadoventa" title="Permanent link">&para;</a></h2>
-<pre class="mermaid"><code>stateDiagram-v2
-    [*] --&gt; REGISTRADA: Venta confirmada (POS / Delivery / Web)
-    REGISTRADA --&gt; SOLICITADA_ANULACION: Vendedor solicita anulación con motivo
-    REGISTRADA --&gt; ANULADA: Admin/Supervisor anula directamente
-    SOLICITADA_ANULACION --&gt; ANULADA: Admin/Supervisor aprueba anulación&lt;br/&gt;(Reversión FEFO + Extornos en Caja/CxC)
-    SOLICITADA_ANULACION --&gt; REGISTRADA: Admin/Supervisor rechaza solicitud
-    ANULADA --&gt; [*]: Estado terminal inmutable (RN-VEN-07)</code></pre>
+<p><img alt="UML · Máquina de Estados de la Venta" src="../assets/estados.svg" /></p>
 <h3 id="reglas-de-transicion">Reglas de Transición<a class="headerlink" href="#reglas-de-transicion" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Idempotencia (<code>RN-VEN-06</code>):</strong> Si el cliente reenvía un <code>operacionId</code> ya procesado (por reconexión o doble clic), el servicio retorna la venta original sin duplicar ticket, stock ni movimientos de caja.</li>

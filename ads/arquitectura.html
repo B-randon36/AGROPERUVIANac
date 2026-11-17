@@ -1828,104 +1828,16 @@
 <p>El sistema <strong>GDMERP (Agro Peruvian Foods)</strong> sigue una arquitectura <strong>Monolito Modular</strong> basada en <strong>Spring Modulith</strong>, desacoplada mediante interfaces de servicio internas (<code>FinanzasApi</code>), seguridad federada OIDC con <strong>Keycloak</strong> y una aplicación web <strong>SPA en Angular</strong>.</p>
 <hr />
 <h2 id="c1-diagrama-de-contexto-del-sistema">C1 · Diagrama de Contexto del Sistema<a class="headerlink" href="#c1-diagrama-de-contexto-del-sistema" title="Permanent link">&para;</a></h2>
-<p>La vista C1 muestra la interacción entre los actores del negocio agroindustrial, el núcleo del sistema <strong>GDMERP</strong> y los sistemas externos de identidad y consulta tributaria.</p>
-<pre class="mermaid"><code>flowchart TB
-    subgraph Actores["Actores del Negocio"]
-        VENDEDOR["👤 Ejecutivo de Ventas / Cajero&lt;br/&gt;(Registra ventas POS, abre/cierra caja,&lt;br/&gt;emite tickets 80mm, solicita anulaciones)"]
-        SUPERVISOR["🛡️ Supervisor / Administrador&lt;br/&gt;(Aprueba/rechaza anulaciones, gestiona&lt;br/&gt;catálogo, producción, compras y reportes)"]
-        CLIENTE["🏪 Cliente Mayorista / Minorista&lt;br/&gt;(Compra en ventanilla o delivery,&lt;br/&gt;recibe comprobante y despacho)"]
-    end
-
-    GDMERP["🌿 Sistema ERP Agro Peruvian Foods&lt;br/&gt;(GDMERP)&lt;br/&gt;Gestión integral de Ventas POS, Caja,&lt;br/&gt;Inventario FEFO, Compras y Producción"]
-
-    subgraph Externos["Sistemas Externos"]
-        KEYCLOAK["🔐 Keycloak 26.8 (IdP OIDC)&lt;br/&gt;Autenticación JWT, SSO y roles&lt;br/&gt;(ADMIN, SUPERVISOR, VENDEDOR)"]
-        SUNAT["🏛️ Proveedor Consulta DNI / RUC&lt;br/&gt;Validación de identidad y razón social&lt;br/&gt;para clientes y facturación"]
-    end
-
-    VENDEDOR --&gt;|"Opera POS, cobra efectivo/Yape,&lt;br/&gt;imprime ticket (HTTPS)"| GDMERP
-    SUPERVISOR --&gt;|"Audita operaciones, gestiona lotes,&lt;br/&gt;aprueba anulaciones (HTTPS)"| GDMERP
-    CLIENTE -.-&gt;|"Entrega datos DNI/RUC y pago;&lt;br/&gt;recibe ticket y productos"| VENDEDOR
-
-    GDMERP --&gt;|"Valida tokens JWT y roles (OIDC)"| KEYCLOAK
-    VENDEDOR --&gt;|"Inicia sesión (Authorization Code + PKCE)"| KEYCLOAK
-    SUPERVISOR --&gt;|"Inicia sesión (Authorization Code + PKCE)"| KEYCLOAK
-    GDMERP --&gt;|"Consulta datos fiscales por DNI/RUC (REST)"| SUNAT
-
-    classDef core fill:#166534,stroke:#14532d,color:#ffffff,stroke-width:2px;
-    classDef actor fill:#0f766e,stroke:#115e59,color:#ffffff;
-    classDef ext fill:#334155,stroke:#1e293b,color:#ffffff;
-    class GDMERP core;
-    class VENDEDOR,SUPERVISOR,CLIENTE actor;
-    class KEYCLOAK,SUNAT ext;</code></pre>
+<p>La vista C1 muestra la interacción entre los actores del negocio agroindustrial, el núcleo del sistema <strong>GDMERP</strong> y los sistemas externos de identidad y consulta DNI/RUC.</p>
+<p><img alt="C1 · Diagrama de Contexto del Sistema (GDMERP)" src="../assets/contexto.svg" /></p>
 <hr />
 <h2 id="c2-diagrama-de-contenedores">C2 · Diagrama de Contenedores<a class="headerlink" href="#c2-diagrama-de-contenedores" title="Permanent link">&para;</a></h2>
 <p>La vista C2 detalla las unidades de ejecución desplegables del sistema, sus protocolos de comunicación y almacenamiento persistente.</p>
-<pre class="mermaid"><code>flowchart LR
-    USER["👤 Usuario&lt;br/&gt;(Navegador Web)"]
-
-    subgraph Frontend["Contenedor Frontend"]
-        SPA["🅰️ SPA Angular 22&lt;br/&gt;Puerto :4200&lt;br/&gt;Standalone Components, Signals,&lt;br/&gt;Calculadora POS, Modal Ticket 80mm"]
-    end
-
-    subgraph Backend["Contenedor Backend"]
-        API["🍃 API REST Spring Boot 4.0.7&lt;br/&gt;Java 21 · Puerto :8080&lt;br/&gt;Spring Modulith + OAuth2 Resource Server&lt;br/&gt;Módulos: Ventas, Finanzas, Inventario,&lt;br/&gt;Producto, Compras, Producción, Auditoría"]
-    end
-
-    subgraph Auth["Infraestructura de Identidad (Docker)"]
-        KC["🔐 Keycloak 26.8.0&lt;br/&gt;Puerto :38080&lt;br/&gt;Realm: bomerp"]
-        KCDB[("🐘 PostgreSQL 17&lt;br/&gt;Puerto :35432&lt;br/&gt;Datos de Keycloak")]
-    end
-
-    subgraph Datos["Persistencia ERP"]
-        DB[("🗄️ Base de Datos ERP&lt;br/&gt;H2 (Perfil dev/test)&lt;br/&gt;Oracle Database :1521 (Prod)")]
-    end
-
-    USER --&gt;|"HTTPS / UI"| SPA
-    USER --&gt;|"Login OIDC"| KC
-    SPA --&gt;|"REST / JSON + Bearer JWT&lt;br/&gt;(CORS habilitado)"| API
-    SPA --&gt;|"PKCE Token Exchange"| KC
-    API --&gt;|"Validación de firma JWK"| KC
-    KC --&gt;|"JDBC"| KCDB
-    API --&gt;|"Spring Data JPA / Hibernate"| DB
-
-    classDef web fill:#0284c7,stroke:#0369a1,color:#ffffff;
-    classDef api fill:#15803d,stroke:#166534,color:#ffffff;
-    classDef sec fill:#7c3aed,stroke:#5b21b6,color:#ffffff;
-    classDef db fill:#b45309,stroke:#92400e,color:#ffffff;
-    class SPA web;
-    class API api;
-    class KC sec;
-    class KCDB,DB db;</code></pre>
+<p><img alt="C2 · Diagrama de Contenedores" src="../assets/contenedores.svg" /></p>
 <hr />
 <h2 id="c3-diagrama-de-componentes-modulos-ventas-inventario-finanzas">C3 · Diagrama de Componentes (Módulos Ventas ↔ Inventario ↔ Finanzas)<a class="headerlink" href="#c3-diagrama-de-componentes-modulos-ventas-inventario-finanzas" title="Permanent link">&para;</a></h2>
 <p>El núcleo comercial interactúa internamente dentro de la misma JVM mediante servicios e interfaces declaradas, garantizando atomicidad (<code>@Transactional</code>) sin latencia de red entre módulos.</p>
-<pre class="mermaid"><code>flowchart TB
-    CTRL["VentaController&lt;br/&gt;/api/v1/ventas&lt;br/&gt;Extrae 'sub' del JWT y delega"]
-    SVC["VentaServiceImpl&lt;br/&gt;Orquestador transaccional&lt;br/&gt;(RN-VEN-01 a RN-VEN-10)"]
-    TICKET["NumeroTicketService&lt;br/&gt;Generación única secuencial&lt;br/&gt;(RN-VEN-04)"]
-    PROD["ProductoServiceImpl&lt;br/&gt;Catálogo, precios y stock global"]
-    INV["InventarioServiceImpl&lt;br/&gt;Despacho automático FEFO&lt;br/&gt;y reversión por lote original"]
-    FIN["FinanzasApiImpl&lt;br/&gt;Registro en SesionCaja activa&lt;br/&gt;y CuentaPorCobrar (crédito)"]
-    AUDIT["AuditoriaService&lt;br/&gt;Trazabilidad de eventos"]
-    REPO[("VentaRepository&lt;br/&gt;Persistencia JPA + Lock")]
-
-    CTRL --&gt; SVC
-    SVC --&gt; TICKET
-    SVC --&gt; PROD
-    SVC --&gt; INV
-    SVC --&gt; FIN
-    SVC --&gt; AUDIT
-    SVC --&gt; REPO
-
-    classDef ctrl fill:#0369a1,stroke:#075985,color:#ffffff;
-    classDef svc fill:#166534,stroke:#14532d,color:#ffffff;
-    classDef mod fill:#0f766e,stroke:#115e59,color:#ffffff;
-    classDef repo fill:#b45309,stroke:#92400e,color:#ffffff;
-    class CTRL ctrl;
-    class SVC svc;
-    class TICKET,PROD,INV,FIN,AUDIT mod;
-    class REPO repo;</code></pre>
+<p><img alt="C3 · Diagrama de Componentes" src="../assets/componentes.svg" /></p>
 <hr />
 <h2 id="puertos-y-despliegue-validado">Puertos y Despliegue Validado<a class="headerlink" href="#puertos-y-despliegue-validado" title="Permanent link">&para;</a></h2>
 <table>
@@ -1948,7 +1860,7 @@
 <td><strong>Backend ERP</strong></td>
 <td>Spring Boot 4.0.7 / Java 21</td>
 <td><code>8080</code></td>
-<td>API REST unificada, reglas de negocio y persistencia JPA</td>
+<td>API REST unificada, reglas de negocio y persistencia JPA (<code>48088</code> en perfil <code>prod</code> demo)</td>
 </tr>
 <tr>
 <td><strong>Servidor OIDC</strong></td>
@@ -1963,27 +1875,27 @@
 <td>Almacenamiento de usuarios, clientes y sesiones del IdP</td>
 </tr>
 <tr>
-<td><strong>BD ERP (Dev/Test)</strong></td>
+<td><strong>BD ERP (Default/Test)</strong></td>
 <td>H2 Database (embebida)</td>
 <td>En memoria</td>
-<td>Perfil <code>h2</code> para desarrollo ágil y suite de 105 pruebas</td>
+<td>Perfil <code>h2</code> activo por defecto (<code>create-drop</code>) para desarrollo ágil y suite de 105 pruebas</td>
 </tr>
 <tr>
-<td><strong>BD ERP (Prod)</strong></td>
-<td>Oracle Database</td>
+<td><strong>BD ERP (Oracle)</strong></td>
+<td>Oracle Free 23 (<code>FREEPDB1</code>)</td>
 <td><code>1521</code></td>
-<td>Destino empresarial con secuencias dedicadas para tickets</td>
+<td>Perfil <code>dev</code> en <code>application-dev.yml</code> y destino empresarial con secuencias dedicadas</td>
 </tr>
 <tr>
 <td><strong>Observabilidad</strong></td>
-<td>Grafana / Loki (Compose)</td>
+<td>Grafana / Loki / Promtail (Compose)</td>
 <td><code>33000</code> / <code>33100</code></td>
 <td>Recolección centralizada de logs y métricas de contenedores</td>
 </tr>
 </tbody>
 </table>
 <h2 id="limites-modulares-spring-modulith">Límites Modulares (Spring Modulith)<a class="headerlink" href="#limites-modulares-spring-modulith" title="Permanent link">&para;</a></h2>
-<p>La estructura de paquetes respeta el principio de <strong>Monolito Modular</strong>: un único artefacto desplegable (<code>BomerpBackendApplication</code>) dividido en dominios autónomos (<code>ventas</code>, <code>finanzas</code>, <code>inventario</code>, <code>producto</code>, <code>compras</code>, <code>produccion</code>, <code>terceros</code>, <code>auditoria</code>). La comunicación entre módulos se realiza exclusivamente mediante interfaces públicas (como <code>FinanzasApi</code>), verificada automáticamente por la prueba de arquitectura <code>ModularityTests</code>.</p>
+<p>La estructura de paquetes respeta el principio de <strong>Monolito Modular</strong>: un único artefacto desplegable (<code>BomerpBackendApplication</code>) dividido en dominios (<code>catalogo</code>, <code>ventas</code>, <code>finanzas</code>, <code>inventario</code>, <code>compras</code>, <code>produccion</code>, <code>terceros</code>, <code>seguridad</code>). La comunicación entre módulos utiliza interfaces públicas (como <code>FinanzasApi</code>, <code>ProductoService</code>, <code>InventarioService</code>) y paquetes expuestos mediante <code>@NamedInterface</code>, verificada automáticamente por <code>ModularityTests</code>.</p>
 <h2 id="fuentes-del-proyecto">Fuentes del Proyecto<a class="headerlink" href="#fuentes-del-proyecto" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="https://github.com/B-randon36/AGROPERUVIANac/blob/main/backend/src/main/java/pe/edu/upeu/bomerp/BomerpBackendApplication.java">BomerpBackendApplication.java</a></li>

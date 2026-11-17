@@ -933,10 +933,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#publicar-despues-de-revisar-la-documentacion" class="md-nav__link">
+  <a href="#despliegue-automatico-desde-main" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Publicar después de revisar la documentación
+        Despliegue automático desde main
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compilacion-y-publicacion-manual-opcional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compilación y publicación manual (opcional)
       
     </span>
   </a>
@@ -1731,10 +1742,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#publicar-despues-de-revisar-la-documentacion" class="md-nav__link">
+  <a href="#despliegue-automatico-desde-main" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Publicar después de revisar la documentación
+        Despliegue automático desde main
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compilacion-y-publicacion-manual-opcional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compilación y publicación manual (opcional)
       
     </span>
   </a>
@@ -1782,10 +1804,15 @@
 
 <h1 id="publicacion-en-github-pages">Publicación en GitHub Pages<a class="headerlink" href="#publicacion-en-github-pages" title="Permanent link">&para;</a></h1>
 <h2 id="estado">Estado<a class="headerlink" href="#estado" title="Permanent link">&para;</a></h2>
-<p>El repositorio no tenía Pages activado al preparar esta documentación. Subir las fuentes a una rama no activa el alojamiento web. La cuenta conectada puede escribir código, pero no tiene permisos de administración para cambiar Pages.</p>
-<h2 id="publicar-despues-de-revisar-la-documentacion">Publicar después de revisar la documentación<a class="headerlink" href="#publicar-despues-de-revisar-la-documentacion" title="Permanent link">&para;</a></h2>
+<p>GitHub Pages está activo y publicado desde la rama <code>gh-pages</code> mediante el flujo automático <code>.github/workflows/deploy-docs.yml</code>.</p>
+<h2 id="despliegue-automatico-desde-main">Despliegue automático desde <code>main</code><a class="headerlink" href="#despliegue-automatico-desde-main" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Incorporar la solicitud de documentación en la rama <code>ventas_avance</code> y obtener esa versión en VS Code.</li>
+<li>Editar los archivos Markdown en <code>docs/</code> o la configuración en <code>mkdocs.yml</code>.</li>
+<li>Hacer commit y push hacia la rama <code>main</code>.</li>
+<li>El flujo <code>.github/workflows/deploy-docs.yml</code> instala <code>requirements-docs.txt</code>, ejecuta <code>mkdocs build --strict</code> y publica la salida estática en <code>gh-pages</code>.</li>
+</ol>
+<h2 id="compilacion-y-publicacion-manual-opcional">Compilación y publicación manual (opcional)<a class="headerlink" href="#compilacion-y-publicacion-manual-opcional" title="Permanent link">&para;</a></h2>
+<ol>
 <li>Desde la raíz del proyecto, preparar el entorno de documentación siguiendo <code>LEEME_DOCUMENTACION.md</code>.</li>
 <li>Comprobar la compilación:</li>
 </ol>
@@ -1796,12 +1823,6 @@
 </ol>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">.\.</span><span class="n">venv-docs</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">python</span><span class="p">.</span><span class="n">exe</span> <span class="n">-m</span> <span class="n">mkdocs</span> <span class="n">gh-deploy</span>
 </code></pre></div>
-<p>Este comando publica mediante Git: ejecutarlo cuando se haya decidido publicar, no como requisito para consultar localmente. Conserva el historial de <code>gh-pages</code> si ya existe; revisar la estrategia antes de combinarla con otro sitio.</p>
-<ol>
-<li>El propietario abre <strong>Settings → Pages</strong>, selecciona <strong>Deploy from a branch</strong>, rama <strong>gh-pages</strong>, carpeta <strong>/(root)</strong> y guarda.</li>
-<li>Esperar la finalización de Pages y abrir el enlace que GitHub muestre en esa pantalla.</li>
-<li>Revisar portada, búsqueda, diagramas y enlaces desde la URL pública.</li>
-</ol>
 <p>El sitio expone documentación del proyecto. No ejecuta la aplicación Spring Boot, la SPA del ERP, Oracle ni Keycloak. No se necesita publicar credenciales del entorno para servir estas páginas.</p>
 <h2 id="mantener-el-sitio">Mantener el sitio<a class="headerlink" href="#mantener-el-sitio" title="Permanent link">&para;</a></h2>
 <p>Actualizar Markdown, reconstruir en modo estricto y publicar de nuevo cuando corresponda. Conservar en las páginas el commit del código descrito y las evidencias pendientes.</p>
